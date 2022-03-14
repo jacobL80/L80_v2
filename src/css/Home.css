@@ -1,0 +1,147 @@
+.app {
+	height: 100vh;
+	width: 100vw;
+	background-color: #F1F1F1;
+}
+
+.appContainer {
+	display: flex;
+	flex-direction: row;
+	max-width: 2600px;
+	margin: auto
+}
+
+.leftPane {
+	background-color: #FFF;
+	width: 25%;
+}
+
+.rightPane {
+	background-color: #F1F1F1;
+	width: 75%;
+}
+
+.innerPanel {
+	/*background-color: #333;*/
+	margin: 40px;
+	height: calc(100vh - 80px);
+	display: flex;
+  	flex-direction: column;
+}
+
+.left {
+	margin-left: 80px;
+}
+.right {
+	margin-right: 80px;
+}
+
+.logo, .menu {
+	width: 100px;
+	height: 100px;
+}
+
+.arrowIcon {
+	width: 30px;
+	margin-left: 4px;
+}
+
+.contactRow {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 60%;
+	max-width: 500px;
+	margin: auto;
+}
+
+.contactIcon {
+	width: 40px;
+	height: 40px;
+}
+
+.menuContainer {
+	display: flex;
+	flex-direction: row;
+}
+
+.menuLink {
+    margin-left: auto
+}
+
+.contentContainer {
+	height: calc(100vh - 200px);
+	display: flex;
+  	flex-direction: column;
+	justify-content: space-between;
+}
+
+.contentRight {
+	text-align: right;
+	height: 70%;
+	max-height: 800px;
+	margin: auto 0 auto auto;
+}
+
+.contentBlock {
+	width: 70%;
+	margin: auto 20% auto auto;
+	text-align: center;
+}
+
+.introBlock {
+	display: flex;
+  	flex-direction: column;
+	text-align: center;
+}
+
+.worksList {
+	display: flex;
+  	flex-direction: column;
+	justify-content: space-between;
+	height: 90%;
+}
+
+.text {
+	font-weight: 400;
+	font-size: 36px;
+}
+
+.textTitle {
+	font-size: 60px;
+	font-weight: 600;
+	margin-bottom: 20px;
+}
+
+.textBold {
+	font-weight: 700;
+}
+
+.textHighlight {
+	color: #FFF;
+	background-color: #ec6f00;
+	padding: 2px 8px 2px 8px;
+	min-width: min-content;
+	margin: auto;
+}
+
+.textHighlightBlue {
+	background-color: #1696b6;
+}
+
+.textSubtitle {
+	font-size: 22px;
+	color: #953f2d;
+	text-transform: uppercase;
+}
+
+
+
+@keyframes App-logo-spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}

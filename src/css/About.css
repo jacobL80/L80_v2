@@ -50,10 +50,34 @@
     opacity: 1;
 }
 
-.logo {
+.logoAbout, .menuAbout {
+	width: 100px;
+	height: 100px;
+	transition: .3s ease;
+}
+
+.logoAbout {
     margin-right: 50px;
+    transition: 0.3s ease;
+}
+
+.logoAbout:hover {
+    opacity: 0.6;
+}
+
+.menuAbout:hover {
+    opacity: unset;
 }
 
 .menuLinkAbout {
     margin-left: 0;
+}
+
+.textAbout {
+	font-weight: 400;
+	font-size: 24px;
+}
+
+.textBold {
+	font-weight: 700;
 }

@@ -7,9 +7,7 @@ import {
   } from "react-router-dom";
 import '../css/Home.css';
 import logo_1 from '../assets/logo_1.png'
-import logo_2 from '../assets/logo_2.png'
 import menu_1 from '../assets/menu_1.png'
-import menu_2 from '../assets/menu_2.png'
 import resume_icon from '../assets/resume_icon.png'
 import email_icon from '../assets/email_icon.png'
 import phone_icon from '../assets/phone_icon.png'
@@ -27,14 +25,13 @@ function Home() {
 					<div className='menuContainer'>
 						<img src={logo_1} className="logo"/>
 						<div className="contactRow">
-							<img src={resume_icon} className="contactIcon"/>
-							<img src={email_icon} className="contactIcon"/>
-							<img src={phone_icon} className="contactIcon"/>
-							<img src={linkedin_icon} className="contactIcon"/>
+							<a href="../Jacob_Leighty_Resume.pdf" target="_blank"><img src={resume_icon} className="contactIcon"/></a>
+							<a href="mailto:jacob.leighty@gmail.com"><img src={email_icon} className="contactIcon"/></a>
+							<a href="tel:12538806289"><img src={phone_icon} className="contactIcon"/></a>
+							<a href="https://www.linkedin.com/in/jacob-leighty/" target="_blank"><img src={linkedin_icon} className="contactIcon"/></a>
 						</div>
 					</div>
 					<div className='contentContainer'>
-						
 						<div className='contentBlock introBlock'>
 							<text className='text textTitle'>Hi there!</text>
 							<text className='text textGeneric'>{"My name is "}</text>

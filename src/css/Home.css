@@ -40,6 +40,11 @@
 .logo, .menu {
 	width: 100px;
 	height: 100px;
+	transition: .3s ease;
+}
+
+.menu:hover {
+	opacity: 0.6;
 }
 
 .arrowIcon {
@@ -59,6 +64,11 @@
 .contactIcon {
 	width: 40px;
 	height: 40px;
+	transition: .3s ease;
+}
+
+.contactIcon:hover {
+	opacity: 0.5;
 }
 
 .menuContainer {
@@ -144,7 +154,7 @@
     text-transform: uppercase;
     margin: auto 0 auto auto;
     opacity: 0;
-    transition: 0.3s;
+    transition: 0.3s ease;
     color: #953f2d;
 }
 
@@ -152,13 +162,8 @@
     opacity: 1;
 }
 
-
-
-@keyframes App-logo-spin {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(360deg);
-	}
-}
+a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
+	outline: 0;
+	border: none;
+	-moz-outline-style: none;
+  }

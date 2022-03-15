@@ -1,0 +1,59 @@
+.app {
+	height: 100vh;
+	width: 100vw;
+	background-color: #F1F1F1;
+}
+
+.appContainer {
+	display: flex;
+	flex-direction: row;
+	max-width: 2600px;
+	margin: auto
+}
+
+.rightPaneAbout {
+	background-color: #FFF;
+	width: 25%;
+    min-width: 500px;
+}
+
+.leftPaneAbout {
+	background-color: #F1F1F1;
+	width: 75%;
+}
+
+.innerPanel {
+	/*background-color: #333;*/
+	margin: 40px;
+	height: calc(100vh - 80px);
+	display: flex;
+  	flex-direction: column;
+}
+
+.left {
+	margin-left: 80px;
+}
+
+.right {
+	margin-right: 80px;
+}
+
+.menuTextAbout {
+    text-transform: uppercase;
+    margin: auto auto auto 0;
+    opacity: 0;
+    transition: 0.3s;
+    color: #953f2d;
+}
+
+.menuTextHoverAbout {
+    opacity: 1;
+}
+
+.logo {
+    margin-right: 50px;
+}
+
+.menuLinkAbout {
+    margin-left: 0;
+}

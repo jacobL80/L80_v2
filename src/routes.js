@@ -19,4 +19,4 @@ function SiteRoutes(){
     )
 }
 
-export default Routes;
+export default SiteRoutes;

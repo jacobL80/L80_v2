@@ -14,6 +14,7 @@
 .leftPane {
 	background-color: #FFF;
 	width: 25%;
+    min-width: 500px;
 }
 
 .rightPane {
@@ -66,7 +67,7 @@
 }
 
 .menuLink {
-    margin-left: auto
+    margin-left: 50px;
 }
 
 .contentContainer {
@@ -133,6 +134,22 @@
 	font-size: 22px;
 	color: #953f2d;
 	text-transform: uppercase;
+}
+
+.textSubtitleBottom {
+    margin-top: 10%;
+}
+
+.menuText {
+    text-transform: uppercase;
+    margin: auto 0 auto auto;
+    opacity: 0;
+    transition: 0.3s;
+    color: #953f2d;
+}
+
+.menuTextHover {
+    opacity: 1;
 }
 
 

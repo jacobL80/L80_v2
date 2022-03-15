@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
 	BrowserRouter as Router,
 	Route,
@@ -17,6 +17,8 @@ import linkedin_icon from '../assets/linkedin_icon.png'
 import arrow from '../assets/arrow.png'
 
 function Home() {
+	const [menuHover, toggleMenuHover] = useState(true);
+
 	return (
 	<div className="app">
 		<div className='appContainer'>
@@ -59,7 +61,11 @@ function Home() {
 			<div className='rightPane'>
 				<div className='innerPanel right'>
 					<div className='menuContainer'>
-						<Link to="/about" className='menuLink'>
+						<text className={menuHover ? 'menuText' : 'menuText menuTextHover'}>Go to 'About Me'</text>
+						<Link to="/about" 
+							className='menuLink' 
+							onMouseEnter={() => toggleMenuHover(false)} 
+							onMouseLeave={() => toggleMenuHover(true)}>
 							<img src={menu_1} className="menu"/>
 						</Link>
 					</div>
@@ -73,7 +79,7 @@ function Home() {
 							<text className='text textBold'>T-Mobile Internal Mobile Apps</text>
 							<text className='text textBold'>Graphic Design at T-Mobile</text>
 						</div>
-						<text className='text textSubtitle'>See More</text>
+						<text className='text textSubtitle textSubtitleBottom'>See More</text>
 					</div>
 				</div>
 			</div>

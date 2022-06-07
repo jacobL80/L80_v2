@@ -71,6 +71,8 @@
 
 .menuLinkAbout {
     margin-left: 0;
+	margin-right: 50px;
+	width: 100px;
 }
 
 .textAbout {
@@ -80,4 +82,10 @@
 
 .textBold {
 	font-weight: 700;
+}
+
+.contentBlockAbout {
+	width: 70%;
+	margin: auto auto auto auto;
+	text-align: center;
 }

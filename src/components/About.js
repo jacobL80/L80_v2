@@ -49,11 +49,11 @@ function About() {
 						</div>
 						<img src={menu_2} className="menuAbout"/>
 					</div>
-					<div className='contentBlock introBlock'>
+					<div className='contentBlockAbout introBlock'>
                         <text className='text textGeneric'>{"My name is "}</text>
                         <text className='text textHighlight'>Jacob Leighty.</text>
                     </div>
-					<div className='contentBlock infoBlock'>
+					<div className='contentBlockAbout infoBlock'>
                         <text className='textAbout textGeneric'>
                             {"I'm a hybrid "}
                             <text className='textAbout textBold'>UX/UI Designer and Software Developer.</text>
@@ -67,7 +67,7 @@ function About() {
                         </text>
                     </div>
 
-                    <div className='contentBlock infoBlock'>
+                    <div className='contentBlockAbout infoBlock'>
                         <text className='textAbout textGeneric'>In my free time, I enjoy collecting music, working out, and competitive gaming.</text>
                     </div>
 				</div>

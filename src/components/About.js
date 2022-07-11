@@ -18,6 +18,7 @@ import '../css/About.css'
 
 function About() {
     const [menuHover, toggleMenuHover] = useState(true);
+	const [hoveredIcon, setHoveredIcon] = useState("none");
 
 	return (
 	<div className="app">
@@ -41,11 +42,18 @@ function About() {
 			<div className='rightPaneAbout'>
 				<div className='innerPanel right'>
 					<div className='menuContainer'>
-                        <div className="contactRow">
-                            <a href="../Jacob_Leighty_Resume.pdf" target="_blank"><img src={resume_icon} className="contactIcon"/></a>
-							<a href="mailto:jacob.leighty@gmail.com"><img src={email_icon} className="contactIcon"/></a>
-							<a href="tel:12538806289"><img src={phone_icon} className="contactIcon"/></a>
-							<a href="https://www.linkedin.com/in/jacob-leighty/" target="_blank"><img src={linkedin_icon} className="contactIcon"/></a>
+					<div className='contactOuterContainer'>
+							<div className="contactRow">
+								<a href="../Jacob_Leighty_Resume.pdf" target="_blank">
+									<img src={resume_icon} alt="resume" className={hoveredIcon !== "none" && hoveredIcon !== "resume" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("resume")} onMouseOut={() => setHoveredIcon("none")}/></a>
+								<a href="mailto:jacob.leighty@gmail.com">
+									<img src={email_icon} alt="email" className={hoveredIcon !== "none" && hoveredIcon !== "email address" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("email address")} onMouseOut={() => setHoveredIcon("none")}/></a>
+								<a href="tel:12538806289">
+									<img src={phone_icon} alt="phone number" className={hoveredIcon !== "none" && hoveredIcon !== "phone number" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("phone number")} onMouseOut={() => setHoveredIcon("none")}/></a>
+								<a href="https://www.linkedin.com/in/jacob-leighty/" target="_blank" rel="noreferrer" >
+									<img src={linkedin_icon} alt="LinkedIn" className={hoveredIcon !== "none" && hoveredIcon !== "linkedin" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("linkedin")} onMouseOut={() => setHoveredIcon("none")}/></a>
+							</div>
+							<div className='contactTitleContainer'><text className={hoveredIcon !== "none" ? 'contactTitle' : 'contactTitle contactTitleNone'}>{hoveredIcon}</text></div>
 						</div>
 						<img src={menu_2} className="menuAbout"/>
 					</div>
@@ -56,14 +64,14 @@ function About() {
 					<div className='contentBlockAbout infoBlock'>
                         <text className='textAbout textGeneric'>
                             {"I'm a hybrid "}
-                            <text className='textAbout textBold'>UX/UI Designer and Software Developer.</text>
+                            <text className='textAbout textBold'>UX/UI Designer and Software Engineer.</text>
                             {" While I have a passion for expressive and intuitive designs, I also pride myself in my coding prowess; this is especially true with both "}
                             <text className='textAbout textBold'>React and React Native.</text>
                             {" I studied "}
                             <text className='textAbout textBold'>Information Science</text>
                         </text>
                         <text className='textAbout textGeneric'>
-                            {" at the University of Washington. All designs shown, as well as the code running this portfolio, were written/created by me!"}
+                            {" at the University of Washington. All designs shown, as well as the code running this portfolio, were written and created by me!"}
                         </text>
                     </div>
 

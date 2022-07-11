@@ -17,6 +17,7 @@ import arrow from '../assets/arrow.png'
 function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
 	const [hoveredIcon, setHoveredIcon] = useState("none");
+	const [hoveredWork, setHoveredWork] = useState("");
 
 	return (
 	<div className="app">
@@ -50,7 +51,7 @@ function Home() {
 								{"I'm a "}
 								<text className='text textBold'>UX/UI Designer</text>
 								{" and "}
-								<text className='text textBold'>Software Developer</text>
+								<text className='text textBold'>Software Engineer</text>
 								{" based in "}
 								<text className='text textHighlight textHighlightBlue'>Seattle, WA.</text>
 							</text>
@@ -78,13 +79,13 @@ function Home() {
 					<div className='contentContainer contentRight'>
 						<text className='text textSubtitle'>Featured Works</text>
 						<div className='worksList'>
-							<text className='text textBold'>Quantum App Center</text>
-							<text className='text textBold'>Quantum Branding</text>
-							<text className='text textBold'>Customer Insights (Web)</text>
-							<text className='text textBold'>Customer Insights (Mobile)</text>
-							<text className='text textBold'>Q-Help</text>
+							<text className={hoveredWork !== "" && hoveredWork !== "app-center" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("app-center")} onMouseOut={() => setHoveredWork("")}>Quantum App Center</text>
+							<text className={hoveredWork !== "" && hoveredWork !== "branding" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("branding")} onMouseOut={() => setHoveredWork("")}>Quantum Branding</text>
+							<text className={hoveredWork !== "" && hoveredWork !== "insights-web" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("insights-web")} onMouseOut={() => setHoveredWork("")}>Customer Insights (Web)</text>
+							<text className={hoveredWork !== "" && hoveredWork !== "insights-mobile" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("insights-mobile")} onMouseOut={() => setHoveredWork("")}>Customer Insights (Mobile)</text>
+							<text className={hoveredWork !== "" && hoveredWork !== "q-help" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("q-help")} onMouseOut={() => setHoveredWork("")}>Q-Help</text>
 						</div>
-						<text className='text textSubtitle textSubtitleBottom'>See More</text>
+						{/*<text className='text textSubtitle textSubtitleBottom'>See More</text>*/}
 					</div>
 				</div>
 			</div>

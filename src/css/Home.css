@@ -56,6 +56,7 @@
 	width: 60%;
 	max-width: 500px;
 	margin: auto;
+	margin-top: 25px;
 }
 
 .contactRow {
@@ -66,10 +67,12 @@
 
 .contactTitleContainer {
 	text-align: center;
+	margin-top: 10px;
 }
 
 .contactTitle {
 	text-transform: uppercase;
+	color: #953f2d;
 	/*transition: .3s ease;*/
 }
 

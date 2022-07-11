@@ -84,6 +84,15 @@
 	font-weight: 700;
 }
 
+.textWorkLabel {
+	transition: 0.3s ease;
+	cursor: pointer;
+}
+
+.textNotSelected {
+	opacity: 0.2;
+}
+
 .contentBlockAbout {
 	width: 70%;
 	margin: auto auto auto auto;

@@ -16,6 +16,7 @@ import arrow from '../assets/arrow.png'
 
 function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
+	const [hoveredIcon, setHoveredIcon] = useState("none");
 
 	return (
 	<div className="app">
@@ -23,12 +24,19 @@ function Home() {
 			<div className='leftPane'>
 				<div className='innerPanel left'>
 					<div className='menuContainer'>
-						<img src={logo_1} className="logo"/>
-						<div className="contactRow">
-							<a href="../Jacob_Leighty_Resume.pdf" target="_blank"><img src={resume_icon} className="contactIcon"/></a>
-							<a href="mailto:jacob.leighty@gmail.com"><img src={email_icon} className="contactIcon"/></a>
-							<a href="tel:12538806289"><img src={phone_icon} className="contactIcon"/></a>
-							<a href="https://www.linkedin.com/in/jacob-leighty/" target="_blank"><img src={linkedin_icon} className="contactIcon"/></a>
+						<img src={logo_1} alt="logo" className="logo"/>
+						<div className='contactOuterContainer'>
+							<div className="contactRow">
+								<a href="../Jacob_Leighty_Resume.pdf" target="_blank">
+									<img src={resume_icon} alt="resume" className={hoveredIcon !== "none" && hoveredIcon !== "resume" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("resume")} onMouseOut={() => setHoveredIcon("none")}/></a>
+								<a href="mailto:jacob.leighty@gmail.com">
+									<img src={email_icon} alt="email" className={hoveredIcon !== "none" && hoveredIcon !== "email address" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("email address")} onMouseOut={() => setHoveredIcon("none")}/></a>
+								<a href="tel:12538806289">
+									<img src={phone_icon} alt="phone number" className={hoveredIcon !== "none" && hoveredIcon !== "phone number" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("phone number")} onMouseOut={() => setHoveredIcon("none")}/></a>
+								<a href="https://www.linkedin.com/in/jacob-leighty/" target="_blank" rel="noreferrer" >
+									<img src={linkedin_icon} alt="LinkedIn" className={hoveredIcon !== "none" && hoveredIcon !== "linkedin" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("linkedin")} onMouseOut={() => setHoveredIcon("none")}/></a>
+							</div>
+							<div className='contactTitleContainer'><text className={hoveredIcon !== "none" ? 'contactTitle' : 'contactTitle contactTitleNone'}>{hoveredIcon}</text></div>
 						</div>
 					</div>
 					<div className='contentContainer'>
@@ -48,7 +56,7 @@ function Home() {
 							</text>
 							<text className='text textGeneric'>
 								{" Take a look at some of my works here. "}
-								<img src={arrow} className="arrowIcon"/>
+								<img src={arrow} alt="look over there" className="arrowIcon"/>
 							</text>
 						</div>
 						
@@ -63,7 +71,7 @@ function Home() {
 							className='menuLink' 
 							onMouseEnter={() => toggleMenuHover(false)} 
 							onMouseLeave={() => toggleMenuHover(true)}>
-							<img src={menu_1} className="menu"/>
+							<img src={menu_1} alt="menu" className="menu"/>
 						</Link>
 					</div>
 					
@@ -72,9 +80,9 @@ function Home() {
 						<div className='worksList'>
 							<text className='text textBold'>Quantum App Center</text>
 							<text className='text textBold'>Quantum Branding</text>
+							<text className='text textBold'>Customer Insights (Web)</text>
+							<text className='text textBold'>Customer Insights (Mobile)</text>
 							<text className='text textBold'>Q-Help</text>
-							<text className='text textBold'>T-Mobile Internal Mobile Apps</text>
-							<text className='text textBold'>Graphic Design at T-Mobile</text>
 						</div>
 						<text className='text textSubtitle textSubtitleBottom'>See More</text>
 					</div>

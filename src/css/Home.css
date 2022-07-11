@@ -52,23 +52,44 @@
 	margin-left: 4px;
 }
 
-.contactRow {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
+.contactOuterContainer {
 	width: 60%;
 	max-width: 500px;
 	margin: auto;
 }
 
+.contactRow {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.contactTitleContainer {
+	text-align: center;
+}
+
+.contactTitle {
+	text-transform: uppercase;
+	/*transition: .3s ease;*/
+}
+
+.contactTitleNone {
+	opacity: 0;
+	user-select: none; /* supported by Chrome and Opera */
+	-webkit-user-select: none; /* Safari */
+	-khtml-user-select: none; /* Konqueror HTML */
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+}
+
 .contactIcon {
 	width: 40px;
 	height: 40px;
-	transition: .3s ease;
+	transition: .5s ease;
 }
 
-.contactIcon:hover {
-	opacity: 0.5;
+.contactIconNotSelected {
+	opacity: 0.3;
 }
 
 .menuContainer {

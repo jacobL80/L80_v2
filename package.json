@@ -1,5 +1,6 @@
 {
   "name": "l80_v2",
+  "homepage": "https://l80.io/build",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

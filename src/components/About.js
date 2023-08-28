@@ -76,7 +76,7 @@ function About() {
                     </div>
 
                     <div className='contentBlockAbout infoBlock'>
-                        <text className='textAbout textGeneric'>In my free time, I enjoy collecting music, working out, and competitive gaming.</text>
+                        <text className='textAbout textGeneric'>In my free time, I enjoy collecting music, working out, and indoor bouldering.</text>
                     </div>
 				</div>
 			</div>

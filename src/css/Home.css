@@ -13,13 +13,14 @@
 
 .leftPane {
 	background-color: #FFF;
-	width: 25%;
+	width: 75%;
     min-width: 500px;
 }
 
 .rightPane {
 	background-color: #F1F1F1;
-	width: 75%;
+	width: 25%;
+	min-width: 500px;
 }
 
 .innerPanel {
@@ -98,6 +99,11 @@
 .menuContainer {
 	display: flex;
 	flex-direction: row;
+}
+
+.menuContainerList {
+	max-width: 35%;
+	min-width: 400px;
 }
 
 .menuLink {

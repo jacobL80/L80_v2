@@ -24,7 +24,7 @@ function Home() {
 		<div className='appContainer'>
 			<div className='leftPane'>
 				<div className='innerPanel left'>
-					<div className='menuContainer'>
+					<div className='menuContainer menuContainerList'>
 						<img src={logo_1} alt="logo" className="logo"/>
 						<div className='contactOuterContainer'>
 							<div className="contactRow">

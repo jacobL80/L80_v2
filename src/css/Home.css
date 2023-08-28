@@ -44,6 +44,10 @@
 	transition: .3s ease;
 }
 
+.logoReturn {
+	cursor: pointer;
+}
+
 .menu:hover {
 	opacity: 0.6;
 }

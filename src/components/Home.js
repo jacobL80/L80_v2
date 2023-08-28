@@ -18,6 +18,7 @@ function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
 	const [hoveredIcon, setHoveredIcon] = useState("none");
 	const [hoveredWork, setHoveredWork] = useState("");
+	const [selectedWork, setSelectedWork] = useState(0);
 
 	return (
 	<div className="app">
@@ -25,22 +26,33 @@ function Home() {
 			<div className='leftPane'>
 				<div className='innerPanel left'>
 					<div className='menuContainer menuContainerList'>
-						<img src={logo_1} alt="logo" className="logo"/>
+						<img src={logo_1} alt="logo" className={selectedWork !==  0 ? "logo logoReturn" : "logo"} 
+							onMouseOver={() => selectedWork !==  0 ? setHoveredIcon("Return Home") : null}
+							onMouseOut={() => selectedWork !==  0 ? setHoveredIcon("none") : null}
+							onClick={() => selectedWork !==  0 ? setSelectedWork(0) : null}/>
 						<div className='contactOuterContainer'>
 							<div className="contactRow">
 								<a href="../Jacob_Leighty_Resume.pdf" target="_blank">
-									<img src={resume_icon} alt="resume" className={hoveredIcon !== "none" && hoveredIcon !== "resume" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("resume")} onMouseOut={() => setHoveredIcon("none")}/></a>
+									<img src={resume_icon} alt="resume" className={hoveredIcon !== "none" && hoveredIcon !== "resume" ? "contactIcon contactIconNotSelected" : "contactIcon"} 
+										onMouseOver={() => setHoveredIcon("resume")} 
+										onMouseOut={() => setHoveredIcon("none")} /></a>
 								<a href="mailto:jacob.leighty@gmail.com">
-									<img src={email_icon} alt="email" className={hoveredIcon !== "none" && hoveredIcon !== "email address" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("email address")} onMouseOut={() => setHoveredIcon("none")}/></a>
+									<img src={email_icon} alt="email" className={hoveredIcon !== "none" && hoveredIcon !== "email address" ? "contactIcon contactIconNotSelected" : "contactIcon"} 
+										onMouseOver={() => setHoveredIcon("email address")} 
+										onMouseOut={() => setHoveredIcon("none")}/></a>
 								<a href="tel:12538806289">
-									<img src={phone_icon} alt="phone number" className={hoveredIcon !== "none" && hoveredIcon !== "phone number" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("phone number")} onMouseOut={() => setHoveredIcon("none")}/></a>
+									<img src={phone_icon} alt="phone number" className={hoveredIcon !== "none" && hoveredIcon !== "phone number" ? "contactIcon contactIconNotSelected" : "contactIcon"} 
+										onMouseOver={() => setHoveredIcon("phone number")} 
+										onMouseOut={() => setHoveredIcon("none")}/></a>
 								<a href="https://www.linkedin.com/in/jacob-leighty/" target="_blank" rel="noreferrer" >
-									<img src={linkedin_icon} alt="LinkedIn" className={hoveredIcon !== "none" && hoveredIcon !== "linkedin" ? "contactIcon contactIconNotSelected" : "contactIcon"} onMouseOver={() => setHoveredIcon("linkedin")} onMouseOut={() => setHoveredIcon("none")}/></a>
+									<img src={linkedin_icon} alt="LinkedIn" className={hoveredIcon !== "none" && hoveredIcon !== "linkedin" ? "contactIcon contactIconNotSelected" : "contactIcon"} 
+										onMouseOver={() => setHoveredIcon("linkedin")} 
+										onMouseOut={() => setHoveredIcon("none")}/></a>
 							</div>
 							<div className='contactTitleContainer'><text className={hoveredIcon !== "none" ? 'contactTitle' : 'contactTitle contactTitleNone'}>{hoveredIcon}</text></div>
 						</div>
 					</div>
-					<div className='contentContainer'>
+					{selectedWork === 0 ? <div className='contentContainer'>
 						<div className='contentBlock introBlock'>
 							<text className='text textTitle'>Hi there!</text>
 							<text className='text textGeneric'>{"My name is "}</text>
@@ -60,8 +72,9 @@ function Home() {
 								<img src={arrow} alt="look over there" className="arrowIcon"/>
 							</text>
 						</div>
-						
-					</div>
+					</div> : 
+					<div className='contentContainer'>
+					</div>}
 				</div>
 			</div>
 			<div className='rightPane'>
@@ -79,13 +92,23 @@ function Home() {
 					<div className='contentContainer contentRight'>
 						<text className='text textSubtitle'>Featured Works</text>
 						<div className='worksList'>
-							<text className={hoveredWork !== "" && hoveredWork !== "app-center" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("app-center")} onMouseOut={() => setHoveredWork("")}>Quantum App Center</text>
-							<text className={hoveredWork !== "" && hoveredWork !== "branding" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("branding")} onMouseOut={() => setHoveredWork("")}>Quantum Branding</text>
-							<text className={hoveredWork !== "" && hoveredWork !== "insights-web" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("insights-web")} onMouseOut={() => setHoveredWork("")}>Customer Insights (Web)</text>
-							<text className={hoveredWork !== "" && hoveredWork !== "insights-mobile" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("insights-mobile")} onMouseOut={() => setHoveredWork("")}>Customer Insights (Mobile)</text>
-							<text className={hoveredWork !== "" && hoveredWork !== "q-help" ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} onMouseOver={() => setHoveredWork("q-help")} onMouseOut={() => setHoveredWork("")}>Q-Help</text>
+							<text className={(hoveredWork !== "" && hoveredWork !== "app-center") || (selectedWork !== 1 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 		
+								onMouseOver={() => setHoveredWork("app-center")} 
+								onMouseOut={() => setHoveredWork("")}
+								onClick={() => setSelectedWork(1)}>Quantum App Center</text>
+							<text className={(hoveredWork !== "" && hoveredWork !== "branding") || (selectedWork !== 2 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 
+								onMouseOver={() => setHoveredWork("branding")} 
+								onMouseOut={() => setHoveredWork("")}
+								onClick={() => setSelectedWork(2)}>Quantum Branding</text>
+							<text className={(hoveredWork !== "" && hoveredWork !== "insights-web") || (selectedWork !== 3 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 
+								onMouseOver={() => setHoveredWork("insights-web")} 
+								onMouseOut={() => setHoveredWork("")}
+								onClick={() => setSelectedWork(3)}>Customer Insights</text>
+							<text className={(hoveredWork !== "" && hoveredWork !== "q-help") || (selectedWork !== 4 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 
+								onMouseOver={() => setHoveredWork("q-help")} 
+								onMouseOut={() => setHoveredWork("")}
+								onClick={() => setSelectedWork(4)}>Q-Help</text>
 						</div>
-						{/*<text className='text textSubtitle textSubtitleBottom'>See More</text>*/}
 					</div>
 				</div>
 			</div>

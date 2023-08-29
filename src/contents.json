@@ -9,10 +9,13 @@
             "sections": {
                 "Background": {
                     "0": "Upon first joining T-Mobile, one of the first things I noticed was how decentralized the internal tools were, particularly those developed by the data analytics team I was joining. As a team primarily servicing other internal T-Mobile teams, the Quantum team developed a variety of analytics tools for many different customers, often with overlapping users between mutliple apps. Despite this, each app was hosted on its own internal domain name, often with its own design language and no clear consistency between any of them.",
-                    "1": "Testing."
+                    "1": "I worked directly with my manager on a proposal for the first version of the Quantum App Center, iterating over several designs until we both were satisfied with the end product. I presented the project proposal to our department director, who was so inspired by the presentation that he immediately approved moving forward with development of it. As an (at the time) passion project, myself and two other developers worked on the creation of this application in between other projects, demonstrating our drive and belief in the viability of what we were making."
                 },
-                "Test": {
-                    "paragraph1": "r."
+                "Understanding the Problem": {
+                    "0": "Before presenting the project to my director, it was important that I fully understood and communicated why such a project was necessary in the first place. During my proposal, I explained that having a unified design language for our team's products would not only result in reduced development times (by reutilizing aspects of past projects for future ones), but would also have a net positive on user interaction and retention from one app to the next (and thereby reducing the amount of time that needed to be spent on training them on how to use the tool). These became the primary goals in designing the App Center."
+                },
+                "Early Iterations": {
+                    "image1": "arrow"
                 }
             }
         },
@@ -22,11 +25,11 @@
             "role": "UX Designer and Graphic Designer",
             "date": "July 2017 - Present",
             "overview": "As the sole designer among a team of developers, I was tasked with defining the branding guidelines and visual language that would define the internal 'Quantum' brand within T-Mobile. This included designing a team logo, drafting a branding bible, standardizing our presentation tools, iconography, and more.",
-            "sections": [{
+            "sections": {
                 "Background": {
-                    "paragraph1": "test"
+                    "0": "test"
                 }
-            }]
+            }
         },
         {
             "projectNumber": 3,
@@ -34,11 +37,11 @@
             "role": "UX Designer",
             "date": "January 2021 - Present",
             "overview": "Customer Insights is an internal troubleshooting tool within T-Mobile that helps developers deep-dive into a customer's data to hone in on why that customer may be having a suboptimal networking experience. The development of this tool includes both a stable web version, as well as an experimental mobile version, which was eventually reincorporated back into the main experience.",
-            "sections": [{
+            "sections": {
                 "Background": {
-                    "paragraph1": "test"
+                    "0": "test"
                 }
-            }]
+            }
         },
         {
             "projectNumber": 4,
@@ -46,11 +49,11 @@
             "role": "Software Developer",
             "date": "July 2021",
             "overview": "Q-Help is an internal JavaScript library used within T-Mobile and developed as a passion project.  Including the library in a project allows a developer to create an overlay on top of their web application that guides first-time users on how to operate it.",
-            "sections": [{
+            "sections": {
                 "Background": {
-                    "paragraph1": "test"
+                    "0": "test"
                 }
-            }]
+            }
         }
     ]
 }

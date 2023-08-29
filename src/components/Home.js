@@ -13,7 +13,7 @@ import email_icon from '../assets/email_icon.png'
 import phone_icon from '../assets/phone_icon.png'
 import linkedin_icon from '../assets/linkedin_icon.png'
 import arrow from '../assets/arrow.png'
-import pageContent from '../contents.json'
+import pageContent from '../contents'
 
 function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
@@ -21,6 +21,7 @@ function Home() {
 	const [hoveredWork, setHoveredWork] = useState("");
 	const [selectedWork, setSelectedWork] = useState(0);
 	const data = pageContent.pages[selectedWork - 1];
+	const images = []
 
 	return (
 	<div className="app">
@@ -91,7 +92,10 @@ function Home() {
 								<div key={i}>
 									<div className='contentSectionTitle'>{key}</div>
 									{Object.keys(data.sections[key]).map((innerKey, j) => (
-										<div className='contentSectionParagraph'>{data.sections[key][innerKey]}</div>
+										<div className='contentSectionParagraph'>{innerKey.startsWith("image")
+											? <img className='contentImage' alt={innerKey + j} src={require ('../assets/' + data.sections[key][innerKey] + '.png')}/>
+											: data.sections[key][innerKey]
+										}</div>
 									))}
 								</div>
 							))}

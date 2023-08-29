@@ -260,3 +260,7 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	font-size: 18px;
 	margin-bottom: 40px;
   }
+
+  .contentImage {
+	width: 100%;
+  }

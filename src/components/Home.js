@@ -13,12 +13,14 @@ import email_icon from '../assets/email_icon.png'
 import phone_icon from '../assets/phone_icon.png'
 import linkedin_icon from '../assets/linkedin_icon.png'
 import arrow from '../assets/arrow.png'
+import pageContent from '../contents.json'
 
 function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
 	const [hoveredIcon, setHoveredIcon] = useState("none");
 	const [hoveredWork, setHoveredWork] = useState("");
 	const [selectedWork, setSelectedWork] = useState(0);
+	const data = pageContent.pages[selectedWork - 1];
 
 	return (
 	<div className="app">
@@ -73,7 +75,28 @@ function Home() {
 							</text>
 						</div>
 					</div> : 
-					<div className='contentContainer'>
+					<div className='contentContainer contentContainerSelected'>
+						<div className='contentSection contentOverview'>
+							<text className='contentText contentTextTitle'>{data.projectName}</text>
+							<text className='contentText contentTextDate'>{data.date}</text>
+							<text className='contentText contentTextLabel'>Role</text>
+							<text className='contentText contentTextRole'>{data.role}</text>
+							
+							<text className='contentText contentTextOverview'>{data.overview}</text>
+						</div>
+
+						<div className='contentSection'>
+							{
+							Object.keys(data.sections).map((key, i) => (
+								<div key={i}>
+									<div className='contentSectionTitle'>{key}</div>
+									{Object.keys(data.sections[key]).map((innerKey, j) => (
+										<div className='contentSectionParagraph'>{data.sections[key][innerKey]}</div>
+									))}
+								</div>
+							))}
+
+							</div>
 					</div>}
 				</div>
 			</div>

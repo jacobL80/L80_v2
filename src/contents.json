@@ -1,0 +1,56 @@
+{
+    "pages":[
+        {
+            "projectNumber": 1,
+            "projectName": "Quantum App Center",
+            "role": "UX Designer and Developer",
+            "date": "November 2019 - Present",
+            "overview": "The Quantum App Center is a centralized internal application hub, home to every application the Quantum team at T-Mobile has developed. This application was created in order to consolidate and simplify the app building and sharing process and create a unified visual language across the team's variety of projects.",
+            "sections": {
+                "Background": {
+                    "0": "Upon first joining T-Mobile, one of the first things I noticed was how decentralized the internal tools were, particularly those developed by the data analytics team I was joining. As a team primarily servicing other internal T-Mobile teams, the Quantum team developed a variety of analytics tools for many different customers, often with overlapping users between mutliple apps. Despite this, each app was hosted on its own internal domain name, often with its own design language and no clear consistency between any of them.",
+                    "1": "Testing."
+                },
+                "Test": {
+                    "paragraph1": "r."
+                }
+            }
+        },
+        {
+            "projectNumber": 2,
+            "projectName": "Quantum Branding",
+            "role": "UX Designer and Graphic Designer",
+            "date": "July 2017 - Present",
+            "overview": "As the sole designer among a team of developers, I was tasked with defining the branding guidelines and visual language that would define the internal 'Quantum' brand within T-Mobile. This included designing a team logo, drafting a branding bible, standardizing our presentation tools, iconography, and more.",
+            "sections": [{
+                "Background": {
+                    "paragraph1": "test"
+                }
+            }]
+        },
+        {
+            "projectNumber": 3,
+            "projectName": "Customer Insights",
+            "role": "UX Designer",
+            "date": "January 2021 - Present",
+            "overview": "Customer Insights is an internal troubleshooting tool within T-Mobile that helps developers deep-dive into a customer's data to hone in on why that customer may be having a suboptimal networking experience. The development of this tool includes both a stable web version, as well as an experimental mobile version, which was eventually reincorporated back into the main experience.",
+            "sections": [{
+                "Background": {
+                    "paragraph1": "test"
+                }
+            }]
+        },
+        {
+            "projectNumber": 4,
+            "projectName": "Q-Help",
+            "role": "Software Developer",
+            "date": "July 2021",
+            "overview": "Q-Help is an internal JavaScript library used within T-Mobile and developed as a passion project.  Including the library in a project allows a developer to create an overlay on top of their web application that guides first-time users on how to operate it.",
+            "sections": [{
+                "Background": {
+                    "paragraph1": "test"
+                }
+            }]
+        }
+    ]
+}

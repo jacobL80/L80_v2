@@ -201,3 +201,62 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	border: none;
 	-moz-outline-style: none;
   }
+
+  .contentContainerSelected {
+	overflow-y: auto;
+  }
+
+  .contentSection {
+	max-width: 1000px;
+	align-self: center;
+	margin-bottom: 40px;
+  }
+
+  .contentOverview {
+	background-color: #F1F1F1;
+	border-radius: 10px;
+	padding: 30px;
+	margin-top: 100px;
+  }
+
+  .contentText {
+	display: block;
+	font-size: 22px;
+	margin-bottom: 40px;
+  }
+
+  .contentTextTitle {
+	font-size: 28px;
+	font-weight: 900;
+	margin-bottom: -5px;
+  }
+
+  .contentTextLabel {
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	color: #999;
+	font-size: 16px;
+	margin-bottom: 0;
+  }
+
+  .contentTextDate {
+	font-style: italic;
+	color: #999;
+  }
+
+  .contentTextOverview {
+	line-height: 40px;
+	margin-bottom: 20px;
+  }
+
+  .contentSectionTitle {
+	font-weight: 900;
+	font-size: 22px;
+	margin-bottom: 10px;
+  }
+
+  .contentSectionParagraph {
+	line-height: 40px;
+	font-size: 18px;
+	margin-bottom: 40px;
+  }

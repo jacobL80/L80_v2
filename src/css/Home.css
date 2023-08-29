@@ -103,6 +103,7 @@
 .menuContainer {
 	display: flex;
 	flex-direction: row;
+	margin-bottom: 40px;
 }
 
 .menuContainerList {
@@ -216,7 +217,7 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	background-color: #F1F1F1;
 	border-radius: 10px;
 	padding: 30px;
-	margin-top: 100px;
+	margin-top: 20px;
   }
 
   .contentText {
@@ -259,6 +260,10 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	line-height: 40px;
 	font-size: 18px;
 	margin-bottom: 40px;
+  }
+  
+  .contentImageHeader {
+	
   }
 
   .contentImage {

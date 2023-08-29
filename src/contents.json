@@ -2,6 +2,7 @@
     "pages":[
         {
             "projectNumber": 1,
+            "projectImage": "app_center",
             "projectName": "Quantum App Center",
             "role": "UX Designer and Developer",
             "date": "November 2019 - Present",
@@ -14,8 +15,28 @@
                 "Understanding the Problem": {
                     "0": "Before presenting the project to my director, it was important that I fully understood and communicated why such a project was necessary in the first place. During my proposal, I explained that having a unified design language for our team's products would not only result in reduced development times (by reutilizing aspects of past projects for future ones), but would also have a net positive on user interaction and retention from one app to the next (and thereby reducing the amount of time that needed to be spent on training them on how to use the tool). These became the primary goals in designing the App Center."
                 },
-                "Early Iterations": {
-                    "image1": "arrow"
+                "Early Design": {
+                    "image1": "app_center_initial"
+                },
+
+                "First Redesign": {
+                    "0": "After being in use for a couple of years, I decided it was time to freshen up the design and theme of the App Center to further hone in on a unified design style. The goal with the redesign was first to further simplify the design language. One of the shortcomings of the previous design was that the icons for apps became less readable as they were scaled down. As part of the redesign, I completely reworked the entire iconography suite to use a more stylish, flat design theme that also better incorporated T-Mobile's iconic magenta color.",
+                    "image1": "app_center_version2"
+                },
+
+                "Iconography": {
+                    "1": "In addition to improving the iconography, another goal was to shift the landing page of the App Center slightly to become more of a hub for the team in general, rather than just for the applications. This meant introducing a new carousel, which could be used to easily and effectively communicate new content and team updates to anyone using the app at a glance.",
+                    "image2": "app_center_icons"
+                },
+
+                "Second Redesign": {
+                    "2": "After reviewing and applying feedback from many team members, finally I landed on the design still in use on the App Center to this day. While The application is always being iterated upon (such as new content management features and content curation), the App Center provided me a great opportunity to really drive the design and development of a project from start to finish and serve the needs of 1000s of internal users.",
+                    "image3": "app_center_current"
+                },
+
+                "Looking Forward": {
+                    "0": "As the team continues to push forward, the needs of our customers are ever changing. In recent months, there has been a greater push to ensure content on the App Center's carousel is as fresh as possible, so the development team and I have continued to do what we can to iterate on the App Center's design and improve it in ways that will make it easier to change this content without having to deploy new code. The content management page, which as of August 2023 is finalizing production, was my solution to this problem, which should enable developers to communicate their updates much more quickly and efficiently moving forward.",
+                    "image1": "app_center_manager"
                 }
             }
         },

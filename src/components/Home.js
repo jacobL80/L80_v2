@@ -32,7 +32,7 @@ function Home() {
 						<img src={logo_1} alt="logo" className={selectedWork !==  0 ? "logo logoReturn" : "logo"} 
 							onMouseOver={() => selectedWork !==  0 ? setHoveredIcon("Return Home") : null}
 							onMouseOut={() => selectedWork !==  0 ? setHoveredIcon("none") : null}
-							onClick={() => selectedWork !==  0 ? setSelectedWork(0) : null}/>
+							onClick={() => selectedWork !==  0 ? (setSelectedWork(0), setHoveredIcon("none")) : null}/>
 						<div className='contactOuterContainer'>
 							<div className="contactRow">
 								<a href="../Jacob_Leighty_Resume.pdf" target="_blank">
@@ -77,6 +77,7 @@ function Home() {
 						</div>
 					</div> : 
 					<div className='contentContainer contentContainerSelected'>
+						<img className='contentImage contentImageHeader' alt={"image" + data.projectNumber} src={require('../assets/screenshots/' + data.projectImage + ".png")}/>
 						<div className='contentSection contentOverview'>
 							<text className='contentText contentTextTitle'>{data.projectName}</text>
 							<text className='contentText contentTextDate'>{data.date}</text>
@@ -93,7 +94,7 @@ function Home() {
 									<div className='contentSectionTitle'>{key}</div>
 									{Object.keys(data.sections[key]).map((innerKey, j) => (
 										<div className='contentSectionParagraph'>{innerKey.startsWith("image")
-											? <img className='contentImage' alt={innerKey + j} src={require ('../assets/' + data.sections[key][innerKey] + '.png')}/>
+											? <img className='contentImage' alt={innerKey + j} src={require ('../assets/screenshots/' + data.sections[key][innerKey] + '.png')}/>
 											: data.sections[key][innerKey]
 										}</div>
 									))}

@@ -153,6 +153,19 @@
 	font-size: 36px;
 }
 
+.textBold {
+	font-weight: 700;
+}
+
+.textWorkLabel {
+	transition: 0.3s ease;
+	cursor: pointer;
+}
+
+.textNotSelected {
+	opacity: 0.2;
+}
+
 .textTitle {
 	font-size: 60px;
 	font-weight: 600;
@@ -261,11 +274,13 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	font-size: 18px;
 	margin-bottom: 40px;
   }
-  
-  .contentImageHeader {
-	
-  }
 
   .contentImage {
 	width: 100%;
+  }
+
+  .contentAnimation {
+	width: 200px;
+	display: block;
+	margin: auto;
   }

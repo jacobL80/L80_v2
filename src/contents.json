@@ -42,18 +42,45 @@
         },
         {
             "projectNumber": 2,
+            "projectImage": "branding",
             "projectName": "Quantum Branding",
             "role": "UX Designer and Graphic Designer",
             "date": "July 2017 - Present",
             "overview": "As the sole designer among a team of developers, I was tasked with defining the branding guidelines and visual language that would define the internal 'Quantum' brand within T-Mobile. This included designing a team logo, drafting a branding bible, standardizing our presentation tools, iconography, and more.",
             "sections": {
                 "Background": {
-                    "0": "test"
+                    "0": "Quantum is an internal data analytics team within the Engineering department at T-Mobile. As a team that primarily produces tools for other T-Mobile engineers and associated partners, the team operates more like a small start-up company than it does like a large corporation. As such, it became clear that the manner in which the team was presenting itself to others was slowly becoming insufficient; without a clear team identity, it was difficult for us to stand out to our partners against competition from other internal teams when vying for buy-ins on potential projects. As the team's sole designer, I set out to define not only my team's visual identity, but provide guidelines for how my teammates should communicate outside of the team and what our products should be developed to look like.",
+                    "image1": "branding_blueprint"
+                },
+                "Logo Work": {
+                    "0": "One of the first challenges I faced was crafting a logo for the Quantum team. The Quantum logo needed to be simple but recognizable, have meaning while being abstract, and be able to reasonably stand alongside the very recognizable T-Mobile logo on internal documents. I quickly landed on the idea of using the hexagon shape as my starting point due to the recurring appearance of the shape within our work (primarily as 'hexbins'). I wanted to incorporate the already existing Quantum brand name into the logo in some way, and decided to do so by shaping the hexagon into a Q formation. From there it was a matter of experimenting and polling teammates on what they did and didn't like about each version, before ultimately settling on the final design seen below. The Quantum logo as it exists now represents the team's evolutionary approach to software development, with each color grade representing growth. The gap in the Q logo seen in the Standard and Simple designs signifies that there will always be room for growth and improvement, even on 'completed' projects. Thanks to the simplicity of the logo, over time many iterations of the logo have been created to celebrate different events or projects, such as those seen in the original image at the top of the page.",
+                    "image1": "branding_logo_iterations"
+                },
+
+                "Iconography": {
+                    "0": "As part of my push towards a unified branding language, I developed a style for icons to be used as both application logos and within presentations. Utilizing a simple, flat design, each icon uses the same 5 colors (white, light pink, magenta, maroon, and opaque) to communicate some aspect of an application's functionality or common concepts talked about in presentations. These icons needed to not only represent their paired application, but be viewable at a variety of sizes while still being recognizable. In order to ensure any given application became recognizable internally as belonging to the Quantum team, the same style and color scheme was applied to each one, further cementing our brand's awareness within the company.",
+                    "image1": "branding_icons"
+                },
+
+                "Communication": {
+                    "0": "Outside of graphic design, the team was also sorely in need of standardized ways of communicating outside of our organization. I created templates, both PowerPoint and Email based, for the team to use to ensure our communication remained consistent in look and feel. Both templates are now used regularly by everyone within the organization, becoming the de facto standard.",
+                    "image1": "branding_docs"
+                },
+
+                "Style Guide": {
+                    "0": "In order to future-proof the team in case I ever leave, or if additional designers are ever brought on in addition to me, I created an extensive branding bible to explain how things should look and feel when designed within the Quantum team, as well as the rationale for each of those choices. This document goes into extensive detail on the does and don'ts of web development within the team, ensuring that nobody-- designer or developer-- has any questions on whether their product is in compliance or not.",
+                    "image1": "branding_style_guide"
+                },
+
+                "Key Takeaways": {
+                    "0": "Designing and evolving the Quantum brand over a 5 year span has been an extremely rewarding and enriching experience for me. Working on it helped me to better understand not only how I can better communicate and deliver useful graphics to non-designers, but also gave me greater insight into how to create simple and effective iconography. My toolset has expanded greatly thanks to this ongoing effort.",
+                    "gif1": "branding_spinner"
                 }
             }
         },
         {
             "projectNumber": 3,
+            "projectImage": "app_center",
             "projectName": "Customer Insights",
             "role": "UX Designer",
             "date": "January 2021 - Present",
@@ -66,13 +93,17 @@
         },
         {
             "projectNumber": 4,
+            "projectImage": "qhelp",
             "projectName": "Q-Help",
             "role": "Software Developer",
             "date": "July 2021",
             "overview": "Q-Help is an internal JavaScript library used within T-Mobile and developed as a passion project.  Including the library in a project allows a developer to create an overlay on top of their web application that guides first-time users on how to operate it.",
             "sections": {
                 "Background": {
-                    "0": "test"
+                    "0": "As a hybrid designer and developer, I sometimes would take up projects as the primary developer for that project. Having a background in both design and development has helped me greatly in my field, as having a better understanding of what is and isn't feasible to develop has left me in a better position to keep my designs realistic and ensured communication with developers directly is productive. One such project that I took on in my spare time while at T-Mobile is Q-Help, a JavaScript library that overlays onto any app it's included in. Q-Help was developed using React to reduce compatibility issues, as most of the Quantum team's products were developed in that language. The tool, when added to an application, stores a cookie in the user's browser that detects whether they have viewed the app before. If it's their first time, the plugin will auto-play a tutorial overlaid on top of the application, pointing at each of the elements in question each step of the way and allowing users to move forwards and backwards through the explanations at their leisure. I developed this library to be extremely flexible and customizable; almost every facet of the tool can be customized, down to how long each bubble stays on the screen (the default scales with text length). A developer who wants to use this need only type out their tutorial and fill out the name of each element they want to point at, though-- it is extremely plug-and-play."
+                },
+                "Accessibility": {
+                    "0": "I designed and developed Q-Help with accessibility in mind, which is why when I put it together, I made sure to include an extensive walkthrough on how to implement and utilize the tool for other developers to use. While Q-Help has been used by many of my T-Mobile collegues now, none of them have ever felt the need to reach out and ask me for help on using it, so the included documentation has proved very successful."
                 }
             }
         }

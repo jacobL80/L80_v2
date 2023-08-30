@@ -18,10 +18,9 @@ import pageContent from '../contents'
 function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
 	const [hoveredIcon, setHoveredIcon] = useState("none");
-	const [hoveredWork, setHoveredWork] = useState("");
+	const [hoveredWork, setHoveredWork] = useState(0);
 	const [selectedWork, setSelectedWork] = useState(0);
 	const data = pageContent.pages[selectedWork - 1];
-	const images = []
 
 	return (
 	<div className="app">
@@ -95,6 +94,8 @@ function Home() {
 									{Object.keys(data.sections[key]).map((innerKey, j) => (
 										<div className='contentSectionParagraph'>{innerKey.startsWith("image")
 											? <img className='contentImage' alt={innerKey + j} src={require ('../assets/screenshots/' + data.sections[key][innerKey] + '.png')}/>
+											: innerKey.startsWith("gif")
+											? <img className='contentAnimation' alt={innerKey + j} src={require ('../assets/screenshots/' + data.sections[key][innerKey] + '.gif')}/>
 											: data.sections[key][innerKey]
 										}</div>
 									))}
@@ -120,21 +121,21 @@ function Home() {
 					<div className='contentContainer contentRight'>
 						<text className='text textSubtitle'>Featured Works</text>
 						<div className='worksList'>
-							<text className={(hoveredWork !== "" && hoveredWork !== "app-center") || (selectedWork !== 1 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 		
-								onMouseOver={() => setHoveredWork("app-center")} 
-								onMouseOut={() => setHoveredWork("")}
+							<text className={(hoveredWork === 1) ||(selectedWork ===  1) || (hoveredWork === 0 && selectedWork === 0) ? "text textBold textWorkLabel" : "text textBold textWorkLabel textNotSelected"} 		
+								onMouseOver={() => setHoveredWork(1)} 
+								onMouseOut={() => setHoveredWork(0)}
 								onClick={() => setSelectedWork(1)}>Quantum App Center</text>
-							<text className={(hoveredWork !== "" && hoveredWork !== "branding") || (selectedWork !== 2 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 
-								onMouseOver={() => setHoveredWork("branding")} 
-								onMouseOut={() => setHoveredWork("")}
+							<text className={(hoveredWork === 2) || (selectedWork ===  2) || (hoveredWork === 0 && selectedWork === 0) ? "text textBold textWorkLabel" : "text textBold textWorkLabel textNotSelected"} 
+								onMouseOver={() => setHoveredWork(2)} 
+								onMouseOut={() => setHoveredWork(0)}
 								onClick={() => setSelectedWork(2)}>Quantum Branding</text>
-							<text className={(hoveredWork !== "" && hoveredWork !== "insights-web") || (selectedWork !== 3 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 
-								onMouseOver={() => setHoveredWork("insights-web")} 
-								onMouseOut={() => setHoveredWork("")}
+							<text className={(hoveredWork === 3) || (selectedWork ===  3) || (hoveredWork === 0 && selectedWork === 0) ? "text textBold textWorkLabel" : "text textBold textWorkLabel textNotSelected"}
+								onMouseOver={() => setHoveredWork(3)} 
+								onMouseOut={() => setHoveredWork(0)}
 								onClick={() => setSelectedWork(3)}>Customer Insights</text>
-							<text className={(hoveredWork !== "" && hoveredWork !== "q-help") || (selectedWork !== 4 && selectedWork !== 0) ? "text textBold textWorkLabel textNotSelected" : "text textBold textWorkLabel"} 
-								onMouseOver={() => setHoveredWork("q-help")} 
-								onMouseOut={() => setHoveredWork("")}
+							<text className={(hoveredWork === 4) || (selectedWork ===  4) || (hoveredWork === 0 && selectedWork === 0) ? "text textBold textWorkLabel" : "text textBold textWorkLabel textNotSelected"}
+								onMouseOver={() => setHoveredWork(4)} 
+								onMouseOut={() => setHoveredWork(0)}
 								onClick={() => setSelectedWork(4)}>Q-Help</text>
 						</div>
 					</div>

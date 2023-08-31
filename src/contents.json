@@ -87,7 +87,34 @@
             "overview": "Customer Insights is an internal troubleshooting tool within T-Mobile that helps developers deep-dive into a customer's data to hone in on why that customer may be having a suboptimal networking experience. The development of this tool includes both a stable web version, as well as an experimental mobile version, which was eventually reincorporated back into the main experience.",
             "sections": {
                 "Background": {
-                    "0": "test"
+                    "0": "The Quantum team at T-Mobile predominantly works with data analytics, but especially data focused on customer experience with the T-Mobile network. The team saw an opportunity to try and improve engineers' troubleshooting experience to aid in sussing out what could be causing a customer's experience on the network to be suboptimal. What started as a proof of concept, hackathon-style project quickly ballooned up to become the team's most used analytics tool, with 1000s of users across engineering, finance, and executive teams. As the team's sole designer, I drove the design and development of this application from conceptualization through multiple iterations over the last few years, including a mobile port."
+                },
+                
+                "Early Iterations": {
+                    "0": "Early on in the project, the team was still finalizing what exactly the application would and wouldn't be capable of. During this time, I created a variety of wireframes to get a better idea of how the various app features would be laid out and interact with each other. These documents proved very valuable during early ideation on finalizing what our initial release target would entail.",
+                    "image1": "customer_insights_wireframe"
+                },
+
+                "Prototype": {
+                    "0": "After the final functionality was decided upon, I began creating more detailed designs to give the team inspiration and guideance. During this time, I created a series of prototypes, which were reviewed regularly with the development team as we continues to hone in on the final product as a team. After countless feedback sessions with both engineers and customers, we finally landed on a design and development began.",
+                    "image1": "customer_insights_prototype"
+                },
+
+                "Mobile Version": {
+                    "0": "A couple of years after the intitial designs the team came together and, in an effort to branch out into a space we had not previously, determined that we were going to make a mobile version of Customer Insights, then called Frontline Advisor. This version of the application was to be created in a bid to break out from being an exclusively internal-only development team and create a tool to be used by front-facing employees in T-Mobile stores to directly help troubleshoot customer issues. While various re-orgs eventually killed the project, a fully functional mobile app was created with myself as its primary designer AND developer.",
+                    "link1": "customer_insights_mobile_mockup",
+                    "1": "Despite working for a telecom company, the Quantum team has very little experience with mobile app development, instead choosing to almost exclusively develope web apps. This, paired with T-Mobile's very strict mobile VPN policies, made mobile a very difficult space to break into within the company. Despite this, I led the development team in the creation of a React Native mobile app that would target primarily the iPads used in T-Mobile stores (but also work on Android tablets, just in case).",
+                    "2": "Because this was not a formally approved project, the team and I went above and beyond in evangelizing management into approving of the project, going as far as creating a series of lifestyle images to aid in pitching the concept to higher-ups.",
+                    "image1": "customer_insights_lifestyle"
+                },
+
+                "Redesign": {
+                    "0": "Despite repeated approval of our mobile application, unrelated re-orgs disbanded the team we had partnered with in the creation of the mobile app, killing any chances of getting it into store employees' hands. While this was a bit of a blow to the team morale, we didn't want to let something such as this put our efforts to waste. There were a number of unique features and designs only present in the mobile version that we decided to bring back to the web version, effectively combining them back together. I created a series of mockups on a short turn-around to aid the team in quickly bringing the web version back up to parity with the mobile app.",
+                    "link1": "customer_insights_redesign_mockup_v4"
+                },
+
+                "Key Takeaways": {
+                    "0": "Working on Customer Insights on its various iterations taught me a lot about working agilely on a software development team. Our team was hungry to prove themselves, which often resulted in a design to turn things out on a very short timeframe. Despite being the only designer on the team, I made it my mission to not be the weak link in this competitive environment, keeping pace with several developers and supplying all of the needed wireframes, prototypes, mockups, iconography, and design audits needed on time while still maintaining my other work duties. While there were times where development of this project proved very stressful, it was overall a very rewarding experience, especially in hindsight, knowing that it has now become Quantum's most widely used tool by an order of magnitude. Our hard work on this project was regularly recognized within the org, netting the team more than one award from the directors."
                 }
             }
         },
@@ -103,7 +130,8 @@
                     "0": "As a hybrid designer and developer, I sometimes would take up projects as the primary developer for that project. Having a background in both design and development has helped me greatly in my field, as having a better understanding of what is and isn't feasible to develop has left me in a better position to keep my designs realistic and ensured communication with developers directly is productive. One such project that I took on in my spare time while at T-Mobile is Q-Help, a JavaScript library that overlays onto any app it's included in. Q-Help was developed using React to reduce compatibility issues, as most of the Quantum team's products were developed in that language. The tool, when added to an application, stores a cookie in the user's browser that detects whether they have viewed the app before. If it's their first time, the plugin will auto-play a tutorial overlaid on top of the application, pointing at each of the elements in question each step of the way and allowing users to move forwards and backwards through the explanations at their leisure. I developed this library to be extremely flexible and customizable; almost every facet of the tool can be customized, down to how long each bubble stays on the screen (the default scales with text length). A developer who wants to use this need only type out their tutorial and fill out the name of each element they want to point at, though-- it is extremely plug-and-play."
                 },
                 "Accessibility": {
-                    "0": "I designed and developed Q-Help with accessibility in mind, which is why when I put it together, I made sure to include an extensive walkthrough on how to implement and utilize the tool for other developers to use. While Q-Help has been used by many of my T-Mobile collegues now, none of them have ever felt the need to reach out and ask me for help on using it, so the included documentation has proved very successful."
+                    "0": "I designed and developed Q-Help with accessibility in mind, which is why when I put it together, I made sure to include an extensive walkthrough on how to implement and utilize the tool for other developers to use. While Q-Help has been used by many of my T-Mobile collegues now, none of them have ever felt the need to reach out and ask me for help on using it, so the included documentation has proved very successful.",
+                    "image1": "qhelp_readme"
                 }
             }
         }

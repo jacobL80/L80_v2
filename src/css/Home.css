@@ -285,3 +285,14 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	display: block;
 	margin: auto;
   }
+
+  .contentLink {
+	color: #1696b6;
+	text-decoration: underline;
+	text-decoration-color: #1696b6;
+  }
+
+  .contentLink:hover {
+	color: #ec6f00;
+	text-decoration-color: #ec6f00;
+  }

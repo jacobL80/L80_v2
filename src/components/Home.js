@@ -14,6 +14,7 @@ import phone_icon from '../assets/phone_icon.png'
 import linkedin_icon from '../assets/linkedin_icon.png'
 import arrow from '../assets/arrow.png'
 import pageContent from '../contents'
+import Resume from "../Jacob_Leighty_Resume.pdf"
 
 function Home() {
 	const [menuHover, toggleMenuHover] = useState(true);
@@ -34,7 +35,7 @@ function Home() {
 							onClick={() => selectedWork !==  0 ? (setSelectedWork(0), setHoveredIcon("none")) : null}/>
 						<div className='contactOuterContainer'>
 							<div className="contactRow">
-								<a href="../Jacob_Leighty_Resume.pdf" target="_blank">
+								<a href={Resume} target="_blank" rel="noreferrer">
 									<img src={resume_icon} alt="resume" className={hoveredIcon !== "none" && hoveredIcon !== "resume" ? "contactIcon contactIconNotSelected" : "contactIcon"} 
 										onMouseOver={() => setHoveredIcon("resume")} 
 										onMouseOut={() => setHoveredIcon("none")} /></a>
@@ -95,8 +96,11 @@ function Home() {
 										<div className='contentSectionParagraph'>{innerKey.startsWith("image")
 											? <img className='contentImage' alt={innerKey + j} src={require ('../assets/screenshots/' + data.sections[key][innerKey] + '.png')}/>
 											: innerKey.startsWith("gif")
-											? <img className='contentAnimation' alt={innerKey + j} src={require ('../assets/screenshots/' + data.sections[key][innerKey] + '.gif')}/>
-											: data.sections[key][innerKey]
+												? <img className='contentAnimation' alt={innerKey + j} src={require ('../assets/screenshots/' + data.sections[key][innerKey] + '.gif')}/>
+												: innerKey.startsWith("link")
+													? <a href={require("../assets/documents/" + data.sections[key][innerKey] + ".pdf")} target="_blank" rel='noopener noreferrer'><text className='contentLink'>{data.sections[key][innerKey] + ".pdf"}</text>
+													</a>
+													: data.sections[key][innerKey]
 										}</div>
 									))}
 								</div>

@@ -15,6 +15,7 @@ import phone_icon from '../assets/phone_icon.png'
 import linkedin_icon from '../assets/linkedin_icon.png'
 import arrow from '../assets/arrow.png'
 import '../css/About.css'
+import selfie from '../assets/me.jpg'
 
 function About() {
     const [menuHover, toggleMenuHover] = useState(true);
@@ -35,7 +36,7 @@ function About() {
                         <text className={menuHover ? 'menuTextAbout' : 'menuTextAbout menuTextHoverAbout'}>Return Home</text>
 					</div>
 					<div className='contentContainer'>
-						
+						<img src={selfie} alt="resume" className="selfie"/>
 					</div>
 				</div>
 			</div>

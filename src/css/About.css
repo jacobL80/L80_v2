@@ -85,3 +85,10 @@
 	margin: auto auto auto auto;
 	text-align: center;
 }
+
+.selfie {
+	width: auto;
+	max-width: 90%;
+	max-height: 90%;
+	margin: auto;
+}

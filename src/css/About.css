@@ -86,9 +86,26 @@
 	text-align: center;
 }
 
+.selfieContentContainer {
+	justify-content: start;
+	padding-right: 0;
+	height: auto;
+	margin: auto;
+}
+
 .selfie {
+	display: block;
 	width: auto;
+	height: auto;
 	max-width: 90%;
 	max-height: 90%;
-	margin: auto;
+	object-fit: cover;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.selfieText {
+	margin-left: auto;
+	margin-right: auto;
+	font-style: italic;
 }

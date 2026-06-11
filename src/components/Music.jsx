@@ -1,7 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import '../css/Music.css';
+import ReleaseTimeline from './ReleaseTimeline';
 
-const API_URL = '/api/artists.php';
+const PlusIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+);
+const CalendarIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+);
+const ClockIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/>
+  </svg>
+);
+const EyeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+const MoonIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+const BarChartIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+  </svg>
+);
+
+const API_URL     = '/api/artists.php';
+const HISTORY_URL = '/api/history.php';
 
 const EMPTY_ARTIST = {
   name: '', lastRelease: '', nextRelease: '', albumTitle: '',
@@ -222,12 +256,13 @@ const UpcomingCard = ({ artist, onEdit, onAcquire, editing }) => {
 
 // ─── Table row ────────────────────────────────────────────────────────────────
 
-const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
+const ArtistRow = ({ artist, dateDisplay, onEdit, onDelete, editing }) => {
+  const [confirmDel, setDel] = useState(false);
   const albumEmpty = !artist.albumTitle && !artist.notes;
   const dateEmpty  = dateDisplay === '—';
   let cardMonth = null, cardYear = null, cardLabel = null;
   if (dateEmpty) {
-    cardYear  = artist.lastRelease || null;
+    cardYear  = artist.lastRelease ? getYear(artist.lastRelease) : null;
     cardLabel = cardYear ? 'LAST' : null;
   } else if (artist.nextRelease) {
     const parts = artist.nextRelease.split('/');
@@ -275,6 +310,16 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
       {editing && (
         <button className="rowEditBtn" onClick={() => onEdit(artist)} title="Edit">✎</button>
       )}
+      {editing && !confirmDel && (
+        <button className="rowDeleteBtn" onClick={() => setDel(true)} title="Delete">✕</button>
+      )}
+      {editing && confirmDel && (
+        <div className="rowDeleteConfirm">
+          <span>Sure?</span>
+          <button className="rowDelYes" onClick={() => onDelete(artist.id)}>Yes</button>
+          <button className="rowDelNo" onClick={() => setDel(false)}>No</button>
+        </div>
+      )}
     </div>
   );
 };
@@ -289,6 +334,9 @@ const Music = () => {
   const [editingArtist,   setEditing]    = useState(null);
   const [saveError,       setSaveErr]    = useState('');
   const [showPassModal,   setPassModal]  = useState(false);
+  const [pendingAdd,      setPendingAdd] = useState(false);
+  const [history,         setHistory]   = useState([]);
+  const [view,            setView]      = useState('schedule');
 
   useEffect(() => {
     const stored = getCookie();
@@ -299,9 +347,22 @@ const Music = () => {
     setToken(password);
     setCookie(password);
     setPassModal(false);
+    if (pendingAdd) {
+      setPendingAdd(false);
+      setEditing({ ...EMPTY_ARTIST });
+    }
   };
 
-  // Fetch artists from PHP API
+  const handleAddNew = () => {
+    if (editToken) {
+      setEditing({ ...EMPTY_ARTIST });
+    } else {
+      setPendingAdd(true);
+      setPassModal(true);
+    }
+  };
+
+  // Fetch artists
   useEffect(() => {
     fetch(API_URL)
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
@@ -309,10 +370,25 @@ const Music = () => {
       .catch(() => { setFetchErr(true); setLoading(false); });
   }, []);
 
+  // Fetch history
+  useEffect(() => {
+    fetch(HISTORY_URL)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setHistory(data))
+      .catch(() => {});
+  }, []);
+
   const saveArtist = async (form) => {
     setSaveErr('');
     const isNew = !form.id;
     const url   = isNew ? API_URL : `${API_URL}?id=${form.id}`;
+    const snapshot = artists;
+
+    if (!isNew) {
+      setArtists(prev => prev.map(a => a.id === form.id ? { ...a, ...form } : a));
+      setEditing(null);
+    }
+
     try {
       const res = await fetch(url, {
         method: isNew ? 'POST' : 'PUT',
@@ -320,17 +396,23 @@ const Music = () => {
         body: JSON.stringify({ ...form, confirmed: hasFullDate(form.nextRelease || '') }),
       });
       if (res.status === 401) {
-        setSaveErr('Incorrect password. Click the ✎ icon to re-authenticate.');
+        setSaveErr('Incorrect password — click Add New to re-authenticate.');
         setToken(null);
         delCookie();
+        if (!isNew) setArtists(snapshot);
         return;
       }
-      if (!res.ok) { setSaveErr('Save failed — please try again.'); return; }
+      if (!res.ok) {
+        setSaveErr('Save failed — please try again.');
+        if (!isNew) setArtists(snapshot);
+        return;
+      }
       const saved = await res.json();
       setArtists(prev => isNew ? [...prev, saved] : prev.map(a => a.id === saved.id ? saved : a));
-      setEditing(null);
+      if (isNew) setEditing(null);
     } catch {
       setSaveErr('Network error — please try again.');
+      if (!isNew) setArtists(snapshot);
     }
   };
 
@@ -353,11 +435,37 @@ const Music = () => {
   };
 
   const acquireArtist = async (artist) => {
+    // Optimistically add to history
+    const tempEntry = {
+      id:           `temp-${Date.now()}`,
+      artist_name:  artist.name,
+      album_title:  artist.albumTitle || '',
+      release_date: artist.nextRelease,
+      acquired_at:  new Date().toISOString().slice(0, 10),
+    };
+    setHistory(prev => [tempEntry, ...prev]);
+
+    try {
+      const res = await fetch(HISTORY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Edit-Token': editToken },
+        body: JSON.stringify({
+          artist_name:  artist.name,
+          album_title:  artist.albumTitle || '',
+          release_date: artist.nextRelease,
+        }),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setHistory(prev => prev.map(e => e.id === tempEntry.id ? saved : e));
+      }
+    } catch {}
+
     await saveArtist({
       ...artist,
       nextRelease: '',
       albumTitle: '',
-      lastRelease: new Date().getFullYear().toString(),
+      lastRelease: artist.nextRelease,
     });
   };
 
@@ -377,12 +485,12 @@ const Music = () => {
       return dy !== 0 ? dy : sortKey(a.name).localeCompare(sortKey(b.name));
     });
 
-  const hiatusYear = new Date().getFullYear() - 10;
+  const hiatusYear = new Date().getFullYear() - 8;
 
   const watching = artists
     .filter(a => !a.nextRelease && !(a.lastRelease && parseInt(a.lastRelease) <= hiatusYear))
     .sort((a, b) => {
-      const dy = (a.lastRelease ? parseInt(a.lastRelease) : 0) - (b.lastRelease ? parseInt(b.lastRelease) : 0);
+      const dy = (a.lastRelease ? parseDate(a.lastRelease) : new Date(0)) - (b.lastRelease ? parseDate(b.lastRelease) : new Date(0));
       return dy !== 0 ? dy : sortKey(a.name).localeCompare(sortKey(b.name));
     });
 
@@ -395,92 +503,140 @@ const Music = () => {
 
   const isEditing = !!editToken;
 
-  if (loading)    return <div className="musicPage musicLoading">Loading…</div>;
-  if (fetchError) return <div className="musicPage musicLoading">Could not load data.</div>;
+  const navSections = [
+    upcoming.length > 0 && { id: 'section-upcoming', label: 'Upcoming', icon: <CalendarIcon /> },
+    expected.length > 0 && { id: 'section-expected', label: 'Expected', icon: <ClockIcon /> },
+    watching.length > 0 && { id: 'section-watching', label: 'Watching', icon: <EyeIcon /> },
+    hiatus.length   > 0 && { id: 'section-hiatus',   label: 'Hiatus',   icon: <MoonIcon /> },
+  ].filter(Boolean);
+
+  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const handleSectionNav = (id) => {
+    if (view !== 'schedule') {
+      setView('schedule');
+      setTimeout(() => scrollTo(id), 60);
+    } else {
+      scrollTo(id);
+    }
+  };
+
+  if (loading)    return <div className="musicOuter musicLoading">Loading…</div>;
+  if (fetchError) return <div className="musicOuter musicLoading">Could not load data.</div>;
 
   return (
-    <div className={`musicPage${isEditing ? ' musicPage--editing' : ''}`}>
+    <div className={`musicOuter${isEditing ? ' musicOuter--editing' : ''}`}>
 
       {isEditing && (
         <div className="editBanner">
           <span className="editBannerLabel">EDIT MODE</span>
-          <div className="editBannerActions">
-            <button className="editBannerAdd" onClick={() => setEditing({ ...EMPTY_ARTIST })}>
-              + Add Artist
-            </button>
-            <button className="editBannerDone" onClick={exitEditMode}>Done</button>
-          </div>
+          <button className="editBannerDone" onClick={exitEditMode}>Done</button>
         </div>
       )}
 
-      {saveError && <p className="saveError">{saveError}</p>}
-
       <div className="musicHeader">
-        <p className="musicEyebrow">Music</p>
-        <h1 className="musicTitle">
-          Release Schedule
-          <button className="titleEditBtn" onClick={() => isEditing ? exitEditMode() : setPassModal(true)}
-            title={isEditing ? 'Exit edit mode' : 'Edit'}>✎</button>
-        </h1>
-        <div className="musicHeaderRule" />
-        <p className="musicLegend">
-          <span className="incompleteDot">●</span> incomplete collection
-        </p>
+        <div className="musicHeaderInner">
+          <p className="musicEyebrow">Music</p>
+          <h1 className="musicTitle">
+            {view === 'timeline' ? 'Listening History' : 'Release Schedule'}
+          </h1>
+          <div className="musicHeaderRule" />
+          {view === 'schedule' && (
+            <p className="musicLegend">
+              <span className="incompleteDot">●</span> incomplete collection
+            </p>
+          )}
+        </div>
       </div>
 
-      {upcoming.length > 0 && (
-        <section className="musicSection musicSection--upcoming">
-          <h2 className="musicSectionTitle">Upcoming</h2>
-          <div className="upcomingGrid">
-            {upcoming.map(a => (
-              <UpcomingCard key={a.id} artist={a} onEdit={setEditing}
-                onAcquire={acquireArtist} editing={isEditing} />
-            ))}
-          </div>
-        </section>
+      <div className="musicPage">
+
+      {saveError && <p className="saveError">{saveError}</p>}
+
+      {view === 'timeline' ? (
+        <ReleaseTimeline history={history} />
+      ) : (
+        <>
+          {upcoming.length > 0 && (
+            <section id="section-upcoming" className="musicSection musicSection--upcoming">
+              <h2 className="musicSectionTitle">Upcoming</h2>
+              <div className="upcomingGrid">
+                {upcoming.map(a => (
+                  <UpcomingCard key={a.id} artist={a} onEdit={setEditing}
+                    onAcquire={acquireArtist} editing={isEditing} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {expected.length > 0 && (
+            <section id="section-expected" className="musicSection musicSection--expected">
+              <h2 className="musicSectionTitle">Expected</h2>
+              <div className="rowGrid">
+                {expected.map(a => (
+                  <ArtistRow key={a.id} artist={a}
+                    dateDisplay={`~${getYear(a.nextRelease)}`}
+                    onEdit={setEditing} onDelete={deleteArtist} editing={isEditing} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {watching.length > 0 && (
+            <section id="section-watching" className="musicSection musicSection--watching">
+              <h2 className="musicSectionTitle">Watching</h2>
+              <div className="rowGrid">
+                {watching.map(a => (
+                  <ArtistRow key={a.id} artist={a}
+                    dateDisplay="—"
+                    onEdit={setEditing} onDelete={deleteArtist} editing={isEditing} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {hiatus.length > 0 && (
+            <section id="section-hiatus" className="musicSection musicSection--hiatus">
+              <h2 className="musicSectionTitle">Hiatus</h2>
+              <div className="rowGrid">
+                {hiatus.map(a => (
+                  <ArtistRow key={a.id} artist={a}
+                    dateDisplay="—"
+                    onEdit={setEditing} onDelete={deleteArtist} editing={isEditing} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
-      {expected.length > 0 && (
-        <section className="musicSection musicSection--expected">
-          <h2 className="musicSectionTitle">Expected</h2>
-          <div className="rowGrid">
-            {expected.map(a => (
-              <ArtistRow key={a.id} artist={a}
-                dateDisplay={`~${getYear(a.nextRelease)}`}
-                onEdit={setEditing} editing={isEditing} />
-            ))}
-          </div>
-        </section>
-      )}
+      <nav className="bottomNav">
+        <button className={`bottomNavBtn bottomNavBtn--add${isEditing ? ' bottomNavBtn--active' : ''}`}
+          onClick={handleAddNew}>
+          <PlusIcon />
+          <span>Add New</span>
+        </button>
+        {navSections.length > 0 && <div className="bottomNavDivider" />}
+        {navSections.map(s => (
+          <button key={s.id} className="bottomNavBtn" onClick={() => handleSectionNav(s.id)}>
+            {s.icon}
+            <span>{s.label}</span>
+          </button>
+        ))}
+        <div className="bottomNavDivider" />
+        <button
+          className={`bottomNavBtn${view === 'timeline' ? ' bottomNavBtn--active' : ''}`}
+          onClick={() => setView(v => v === 'timeline' ? 'schedule' : 'timeline')}
+        >
+          <BarChartIcon />
+          <span>History</span>
+        </button>
+      </nav>
 
-      {watching.length > 0 && (
-        <section className="musicSection musicSection--watching">
-          <h2 className="musicSectionTitle">Watching</h2>
-          <div className="rowGrid">
-            {watching.map(a => (
-              <ArtistRow key={a.id} artist={a}
-                dateDisplay="—"
-                onEdit={setEditing} editing={isEditing} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {hiatus.length > 0 && (
-        <section className="musicSection musicSection--hiatus">
-          <h2 className="musicSectionTitle">Hiatus</h2>
-          <div className="rowGrid">
-            {hiatus.map(a => (
-              <ArtistRow key={a.id} artist={a}
-                dateDisplay="—"
-                onEdit={setEditing} editing={isEditing} />
-            ))}
-          </div>
-        </section>
-      )}
+      </div>{/* end musicPage */}
 
       {showPassModal && (
-        <PasswordModal onSubmit={enterEditMode} onCancel={() => setPassModal(false)} />
+        <PasswordModal onSubmit={enterEditMode} onCancel={() => { setPassModal(false); setPendingAdd(false); }} />
       )}
 
       {editingArtist && (

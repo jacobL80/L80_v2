@@ -183,3 +183,12 @@ INSERT INTO `artists` (`name`, `last_release`, `next_release`, `album_title`, `c
 ('Silversun Pickups','2026', '',           '',                                                0, 0, ''),
 ('Sure Sure',        '2026', '',           '',                                                0, 0, ''),
 ('underscores',      '2026', '',           '',                                                0, 0, '');
+
+-- Acquired releases history (log each ✓ click on an upcoming card)
+CREATE TABLE IF NOT EXISTS `releases` (
+  `id`           INT AUTO_INCREMENT PRIMARY KEY,
+  `artist_name`  VARCHAR(255) NOT NULL,
+  `album_title`  VARCHAR(255) NOT NULL DEFAULT '',
+  `release_date` VARCHAR(20)  NOT NULL DEFAULT '',
+  `acquired_at`  DATE         NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

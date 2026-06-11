@@ -1,18 +1,27 @@
-.musicPage {
+.musicOuter {
   min-height: 100vh;
   background-color: #faf9f7;
   font-family: Calibri, sans-serif;
-  padding: 60px 80px 100px;
+}
+
+.musicPage {
+  padding: 60px 40px 130px;
   box-sizing: border-box;
   max-width: 1100px;
   margin: 0 auto;
 }
 
 .musicHeader {
-  background: linear-gradient(135deg, rgba(149, 63, 45, 0.06) 0%, transparent 55%);
-  margin: -60px -80px 60px;
-  padding: 60px 80px 40px;
+  background: linear-gradient(135deg, rgba(236, 111, 0, 0.06) 0%, transparent 55%);
   border-bottom: 1px solid #ebe7e3;
+  margin-bottom: 0;
+}
+
+.musicHeaderInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 40px 40px;
+  box-sizing: border-box;
 }
 
 .musicEyebrow {
@@ -56,12 +65,12 @@
   color: #ec6f00;
 }
 
-.musicPage--editing .titleEditBtn {
+.musicOuter--editing .titleEditBtn {
   color: #ec6f00;
   opacity: 0.6;
 }
 
-.musicPage--editing .titleEditBtn:hover {
+.musicOuter--editing .titleEditBtn:hover {
   opacity: 1;
 }
 
@@ -75,6 +84,7 @@
 
 .musicSection {
   margin-bottom: 56px;
+  scroll-margin-top: 32px;
 }
 
 .musicSectionTitle {
@@ -88,9 +98,8 @@
   padding-left: 10px;
 }
 
-.musicSection--expected .musicSectionTitle { color: #2e6da4; }
-.musicSection--watching .musicSectionTitle { color: #2e7d5c; }
-.musicSection--hiatus   .musicSectionTitle { color: #6b7a8d; }
+.musicSection--expected .musicSectionTitle { color: #1696b6; }
+.musicSection--hiatus   .musicSectionTitle { color: #999; }
 
 .rowGrid {
   display: grid;
@@ -118,40 +127,31 @@
 
 /* Section-specific card accents */
 .musicSection--expected .musicRow {
-  border-left: 3px solid #2e6da4;
-  background: #f5f8fc;
+  border-left: 3px solid #1696b6;
+  background: #f2fafd;
 }
 .musicSection--expected .musicRow:hover {
-  border-color: #2e6da4;
-  box-shadow: 0 4px 18px rgba(46, 109, 164, 0.09);
-}
-.musicSection--watching .musicRow {
-  border-left: 3px solid #2e7d5c;
-  background: #f5fbf7;
-}
-.musicSection--watching .musicRow:hover {
-  border-color: #2e7d5c;
-  box-shadow: 0 4px 18px rgba(46, 125, 92, 0.09);
+  border-color: #1696b6;
+  box-shadow: 0 4px 18px rgba(22, 150, 182, 0.09);
 }
 .musicSection--hiatus .musicRow {
-  border-left: 3px solid #8a9ab0;
-  background: #f7f8fa;
+  border-left: 3px solid #aaa;
+  background: #f5f5f5;
 }
 .musicSection--hiatus .musicRow:hover {
-  border-color: #8a9ab0;
-  box-shadow: 0 4px 18px rgba(107, 122, 141, 0.09);
+  border-color: #999;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
 }
 
 /* Section-specific date colors */
-.musicSection--expected .rowCardDateYear { color: #2e6da4; }
-.musicSection--expected .rowCardDateLabel { color: #2e6da4; }
-.musicSection--watching .rowCardDateYear { color: #2e7d5c; }
-.musicSection--watching .rowCardDateLabel { color: #2e7d5c; }
-.musicSection--hiatus   .rowCardDateYear { color: #8a9ab0; }
-.musicSection--hiatus   .rowCardDateLabel { color: #8a9ab0; }
+.musicSection--expected .rowCardDateYear { color: #1696b6; }
+.musicSection--expected .rowCardDateLabel { color: #1696b6; }
+.musicSection--hiatus   .rowCardDateYear { color: #999; }
+.musicSection--hiatus   .rowCardDateLabel { color: #999; }
 
 .musicRow--editing {
   padding-right: 44px;
+  padding-bottom: 34px;
 }
 
 .rowCardDate {
@@ -260,8 +260,8 @@
 
 .upcomingCard--imminent {
   border-color: #ec6f00;
-  background: #fdf7f6;
-  box-shadow: 0 4px 18px rgba(149, 63, 45, 0.1);
+  background: #fff4e6;
+  box-shadow: 0 4px 18px rgba(236, 111, 0, 0.1);
 }
 
 .upcomingCard--imminent .upcomingCardDay {
@@ -342,13 +342,9 @@
 
 @media (max-width: 700px) {
   .musicPage {
-    padding: 40px 24px 80px;
+    padding: 40px 24px 120px;
   }
 
-  .musicHeader {
-    margin: -40px -24px 40px;
-    padding: 40px 24px 32px;
-  }
 
   .musicTitle {
     font-size: 36px;
@@ -356,7 +352,10 @@
 
   .editBanner {
     padding: 10px 24px;
-    margin: -40px -24px 40px;
+  }
+
+  .musicHeaderInner {
+    padding: 40px 24px 32px;
   }
 }
 
@@ -368,8 +367,7 @@
   justify-content: space-between;
   background: #ec6f00;
   color: #fff;
-  padding: 10px 80px;
-  margin: -60px -80px 40px;
+  padding: 10px 40px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
@@ -400,7 +398,7 @@
 }
 
 .saveError {
-  background: #fdf2f0;
+  background: #fff3e3;
   border-left: 3px solid #ec6f00;
   color: #ec6f00;
   font-size: 14px;
@@ -449,6 +447,68 @@
 
 .rowEditBtn:hover {
   color: #ec6f00;
+}
+
+.rowDeleteBtn {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #ddd;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.rowDeleteBtn:hover {
+  color: #c0392b;
+}
+
+.rowDeleteConfirm {
+  position: absolute;
+  bottom: 7px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #999;
+}
+
+.rowDelYes, .rowDelNo {
+  background: none;
+  border: 1px solid;
+  font-family: Calibri, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 7px;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rowDelYes {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.rowDelYes:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+.rowDelNo {
+  border-color: #ccc;
+  color: #888;
+}
+
+.rowDelNo:hover {
+  border-color: #888;
 }
 
 .musicLoading {
@@ -596,7 +656,7 @@
 }
 
 .modalDeleteBtn:hover {
-  background: #fdf2f0;
+  background: #fff3e3;
 }
 
 .modalCancelBtn {
@@ -673,7 +733,7 @@
 }
 
 .autocompleteItem:hover {
-  background: #fdf7f6;
+  background: #fff4e6;
   color: #ec6f00;
 }
 
@@ -732,4 +792,71 @@
 .cardAcquireBtn:hover {
   background: #5a9a5a;
   color: #fff;
+}
+
+/* ─── Sticky Bottom Nav ─────────────────────────────────────────────────────── */
+
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 66px;
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  box-shadow: 0 -2px 14px rgba(0,0,0,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 16px;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 50;
+}
+
+.bottomNavBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #aaa;
+  font-family: Calibri, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+  min-width: 64px;
+}
+
+.bottomNavBtn:hover {
+  color: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.bottomNavBtn--add {
+  color: #ec6f00;
+}
+
+.bottomNavBtn--add:hover {
+  color: #be5800;
+  background: #fff4e6;
+}
+
+.bottomNavBtn--active {
+  color: #ec6f00;
+}
+
+.bottomNavDivider {
+  width: 1px;
+  height: 30px;
+  background: #e8e8e8;
+  margin: 0 8px;
+  flex-shrink: 0;
 }

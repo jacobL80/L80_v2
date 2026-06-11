@@ -76,12 +76,15 @@ div {
 	.app {
 		height: 100dvh;
 		overflow: hidden;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.appContainer {
 		flex-direction: column;
-		height: calc(100dvh - 66px);
+		flex: 1;
 		overflow: hidden;
+		margin: 0;
 	}
 
 	.innerPanel {

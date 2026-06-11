@@ -536,6 +536,7 @@ const Music = () => {
         </div>
       )}
 
+      <div className="musicScrollArea">
       <div className="musicHeader">
         <div className="musicHeaderInner">
           <p className="musicEyebrow">Music</p>
@@ -612,6 +613,9 @@ const Music = () => {
         </>
       )}
 
+      </div>{/* end musicPage */}
+      </div>{/* end musicScrollArea */}
+
       <nav className="bottomNav">
         <button className={`bottomNavBtn bottomNavBtn--add${isEditing ? ' bottomNavBtn--active' : ''}`}
           onClick={handleAddNew}>
@@ -634,8 +638,6 @@ const Music = () => {
           <span>History</span>
         </button>
       </nav>
-
-      </div>{/* end musicPage */}
 
       {showPassModal && (
         <PasswordModal onSubmit={enterEditMode} onCancel={() => { setPassModal(false); setPendingAdd(false); }} />

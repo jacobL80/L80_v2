@@ -5,7 +5,7 @@
 }
 
 .musicPage {
-  padding: 60px 40px 130px;
+  padding: 60px 40px 80px;
   box-sizing: border-box;
   max-width: 1100px;
   margin: 0 auto;
@@ -935,7 +935,27 @@
 }
 
 @media (max-width: 700px) {
+  .musicOuter {
+    height: 100dvh;
+    min-height: unset;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .musicScrollArea {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .musicPage {
+    padding-bottom: 30px;
+    margin: 0;
+  }
+
   .bottomNav {
+    position: static;
+    flex-shrink: 0;
     gap: 0;
     padding: 0;
     height: 66px;

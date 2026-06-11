@@ -128,9 +128,14 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
     setSuggestions([]);
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (form.name.trim()) onSave(form);
+  };
+
   return (
     <div className="modalOverlay" onClick={onCancel}>
-      <div className="modalBox" onClick={e => e.stopPropagation()}>
+      <form className="modalBox" onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
         <h3 className="modalTitle">{isNew ? 'Add Artist' : 'Edit Artist'}</h3>
 
         <label className="modalLabel">Name</label>
@@ -196,12 +201,12 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
             </span>
           )}
           <div className="modalActionsRight">
-            <button className="modalCancelBtn" onClick={onCancel}>Cancel</button>
-            <button className="modalSaveBtn" onClick={() => onSave(form)}
+            <button type="button" className="modalCancelBtn" onClick={onCancel}>Cancel</button>
+            <button type="submit" className="modalSaveBtn"
               disabled={!form.name.trim()}>Save</button>
           </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

@@ -1,4 +1,4 @@
- div {
+div {
 	font-family: 'Calibri';
 }
 
@@ -12,5 +12,93 @@
 	display: flex;
 	flex-direction: row;
 	max-width: 2600px;
-	margin: auto
+	margin: auto;
+}
+
+.innerPanel {
+	margin: 40px;
+	height: calc(100vh - 146px);
+	display: flex;
+	flex-direction: column;
+}
+
+.left {
+	margin-left: 80px;
+}
+
+.right {
+	margin-right: 80px;
+}
+
+.contactOuterContainer {
+	width: 60%;
+	max-width: 500px;
+	margin: auto;
+	margin-top: 25px;
+}
+
+.contactRow {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.contactTitleContainer {
+	text-align: center;
+	margin-top: 10px;
+}
+
+.contactTitle {
+	text-transform: uppercase;
+	color: #953f2d;
+}
+
+.contactTitleNone {
+	opacity: 0;
+	user-select: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
+.contactIcon {
+	width: 40px;
+	height: 40px;
+	transition: .5s ease;
+}
+
+.contactIconNotSelected {
+	opacity: 0.3;
+}
+
+@media (max-width: 900px) {
+	.app {
+		height: 100dvh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.appContainer {
+		flex-direction: column;
+		flex: 1;
+		overflow: hidden;
+		margin: 0;
+	}
+
+	.innerPanel {
+		height: calc(100% - 40px);
+		margin: 20px;
+		box-sizing: border-box;
+		justify-content: center;
+	}
+
+	.left {
+		margin-left: 20px;
+	}
+
+	.right {
+		margin-right: 20px;
+	}
 }

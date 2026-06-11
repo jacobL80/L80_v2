@@ -11,6 +11,9 @@
 # production
 /build
 
+# credentials
+api/config.php
+
 # misc
 .DS_Store
 .env.local

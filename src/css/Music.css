@@ -1,0 +1,983 @@
+.musicOuter {
+  min-height: 100vh;
+  background-color: #faf9f7;
+  font-family: Calibri, sans-serif;
+}
+
+.musicPage {
+  padding: 60px 40px 80px;
+  box-sizing: border-box;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.musicHeader {
+  background: linear-gradient(135deg, rgba(236, 111, 0, 0.06) 0%, transparent 55%);
+  border-bottom: 1px solid #ebe7e3;
+  margin-bottom: 0;
+}
+
+.musicHeaderInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 40px 40px;
+  box-sizing: border-box;
+}
+
+.musicEyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: #ec6f00;
+  margin: 0 0 12px 0;
+}
+
+.musicTitle {
+  font-size: 52px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.musicHeaderRule {
+  width: 48px;
+  height: 3px;
+  background: #ec6f00;
+  margin: 20px 0;
+}
+
+.titleEditBtn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #ddd;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 24px;
+  vertical-align: middle;
+  transform: scaleX(-1);
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+.titleEditBtn:hover {
+  color: #ec6f00;
+}
+
+.musicOuter--editing .titleEditBtn {
+  color: #ec6f00;
+  opacity: 0.6;
+}
+
+.musicOuter--editing .titleEditBtn:hover {
+  opacity: 1;
+}
+
+.musicLegend {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #999;
+  margin: 0;
+}
+
+.musicSection {
+  margin-bottom: 56px;
+  scroll-margin-top: 32px;
+}
+
+.musicSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #ec6f00;
+  margin: 0 0 12px 0;
+  border-left: 3px solid currentColor;
+  padding-left: 10px;
+}
+
+.musicSection--expected .musicSectionTitle { color: #1696b6; }
+.musicSection--hiatus   .musicSectionTitle { color: #999; }
+
+.rowGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 12px;
+}
+
+.musicRow {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 20px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 4px;
+  background: #fff;
+  position: relative;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: default;
+}
+
+.musicRow:hover {
+  border-color: #ec6f00;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+}
+
+/* Section-specific card accents */
+.musicSection--expected .musicRow {
+  border-left: 3px solid #1696b6;
+  background: #f2fafd;
+}
+.musicSection--expected .musicRow:hover {
+  border-color: #1696b6;
+  box-shadow: 0 4px 18px rgba(22, 150, 182, 0.09);
+}
+.musicSection--hiatus .musicRow {
+  border-left: 3px solid #aaa;
+  background: #f5f5f5;
+}
+.musicSection--hiatus .musicRow:hover {
+  border-color: #999;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+}
+
+/* Section-specific date colors */
+.musicSection--expected .rowCardDateYear { color: #1696b6; }
+.musicSection--expected .rowCardDateLabel { color: #1696b6; }
+.musicSection--hiatus   .rowCardDateYear { color: #999; }
+.musicSection--hiatus   .rowCardDateLabel { color: #999; }
+
+.musicRow--editing {
+  padding-right: 44px;
+  padding-bottom: 34px;
+}
+
+.rowCardDate {
+  min-width: 42px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.rowCardDateLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ec6f00;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.rowCardDateLabel--last {
+  color: #bbb;
+}
+
+.rowCardDateYear {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.rowCardDivider {
+  width: 1.5px;
+  background: #e8e8e8;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.rowCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowCardArtist {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin-bottom: 5px;
+}
+
+.rowCardAlbum {
+  font-size: 13px;
+  color: #888;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.musicNotes {
+  font-size: 12px;
+  color: #aaa;
+  font-style: normal;
+}
+
+.cardLastRelease {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #ccc;
+  margin-top: 5px;
+}
+
+.incompleteDot {
+  color: #ec6f00;
+  font-size: 9px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* Upcoming cards */
+
+.upcomingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 14px;
+}
+
+.upcomingCard {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 20px;
+  border: 1.5px solid #e8e8e8;
+  border-left: 3px solid #ec6f00;
+  border-radius: 4px;
+  background: #fff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: default;
+}
+
+.upcomingCard:hover {
+  border-color: #ec6f00;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+}
+
+.upcomingCard--imminent {
+  border-color: #ec6f00;
+  background: #fff4e6;
+  box-shadow: 0 4px 18px rgba(236, 111, 0, 0.1);
+}
+
+.upcomingCard--imminent .upcomingCardDay {
+  color: #ec6f00;
+}
+
+.upcomingCard--imminent .upcomingCardDivider {
+  background: #ec6f00;
+  opacity: 0.3;
+}
+
+.upcomingCardImminent {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #ec6f00;
+}
+
+.upcomingCardDate {
+  min-width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.upcomingCardMonth {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ec6f00;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.upcomingCardDay {
+  font-size: 38px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.upcomingCardYear {
+  font-size: 11px;
+  color: #bbb;
+  letter-spacing: 1px;
+}
+
+.upcomingCardDivider {
+  width: 1.5px;
+  background: #e8e8e8;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.upcomingCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.upcomingCardArtist {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin-bottom: 5px;
+}
+
+.upcomingCardAlbum {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 700px) {
+  .musicPage {
+    padding: 40px 14px 120px;
+  }
+
+  .musicTitle {
+    font-size: 28px;
+  }
+
+  .musicHeaderInner {
+    padding: 20px 14px 16px;
+  }
+
+  .musicEyebrow {
+    margin-bottom: 6px;
+  }
+
+  .musicHeaderRule {
+    margin: 10px 0;
+  }
+
+  .upcomingCard,
+  .musicRow {
+    padding: 6px 12px;
+    gap: 10px;
+  }
+
+  .upcomingCardDay {
+    font-size: 22px;
+  }
+
+  .upcomingCardMonth,
+  .upcomingCardYear {
+    font-size: 9px;
+  }
+
+  .upcomingCardDate,
+  .rowCardDate {
+    min-width: 32px;
+  }
+
+  .upcomingCardArtist {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .upcomingCardAlbum {
+    font-size: 12px;
+  }
+
+  .upcomingCardMonth {
+    margin-bottom: 1px;
+  }
+
+  .upcomingCardDay {
+    margin-bottom: 1px;
+  }
+
+  .cardLastRelease {
+    margin-top: 2px;
+  }
+
+  .upcomingCardImminent {
+    margin-top: 3px;
+  }
+
+  .rowCardArtist {
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+
+  .rowCardDateYear {
+    font-size: 20px;
+  }
+
+  .musicRow--editing {
+    padding-bottom: 10px;
+  }
+
+}
+
+/* ─── Edit mode ─────────────────────────────────────────────────────────────── */
+
+.editBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ec6f00;
+  color: #fff;
+  padding: 10px 40px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+@media (max-width: 700px) {
+  .editBanner {
+    padding: 8px 10px;
+  }
+}
+
+.editBannerActions {
+  display: flex;
+  gap: 12px;
+}
+
+.editBannerAdd,
+.editBannerDone {
+  background: none;
+  border: 1.5px solid rgba(255,255,255,0.6);
+  color: #fff;
+  font-family: Calibri, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.editBannerAdd:hover,
+.editBannerDone:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.saveError {
+  background: #fff3e3;
+  border-left: 3px solid #ec6f00;
+  color: #ec6f00;
+  font-size: 14px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
+/* Edit buttons on cards */
+.upcomingCard {
+  position: relative;
+}
+
+.cardEditBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #ccc;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  transform: scaleX(-1);
+  transition: color 0.15s ease;
+}
+
+.cardEditBtn:hover {
+  color: #ec6f00;
+}
+
+/* Edit buttons on rows */
+.rowEditBtn {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  color: #ccc;
+  cursor: pointer;
+  padding: 0;
+  transform: scaleX(-1);
+  transition: color 0.15s ease;
+}
+
+.rowEditBtn:hover {
+  color: #ec6f00;
+}
+
+.rowDeleteBtn {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #ddd;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.rowDeleteBtn:hover {
+  color: #c0392b;
+}
+
+.rowDeleteConfirm {
+  position: absolute;
+  bottom: 7px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #999;
+}
+
+.rowDelYes, .rowDelNo {
+  background: none;
+  border: 1px solid;
+  font-family: Calibri, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 7px;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rowDelYes {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.rowDelYes:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+.rowDelNo {
+  border-color: #ccc;
+  color: #888;
+}
+
+.rowDelNo:hover {
+  border-color: #888;
+}
+
+.musicLoading {
+  color: #999;
+  font-size: 18px;
+  padding-top: 100px;
+  text-align: center;
+}
+
+/* ─── Modal ─────────────────────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalBox {
+  background: #fff;
+  width: 480px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  padding: 36px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+}
+
+.modalBox--narrow {
+  width: 320px;
+}
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 24px;
+  color: #1a1a1a;
+}
+
+.modalLabel {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #999;
+  margin-bottom: 6px;
+  margin-top: 16px;
+}
+
+.modalLabel:first-of-type {
+  margin-top: 0;
+}
+
+.modalInput {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid #ddd;
+  padding: 6px 0;
+  font-family: Calibri, sans-serif;
+  font-size: 17px;
+  color: #1a1a1a;
+  background: transparent;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.modalInput:focus {
+  border-bottom-color: #ec6f00;
+}
+
+.modalInput::placeholder {
+  color: #ccc;
+  font-style: italic;
+}
+
+.modalRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.modalCol {
+  min-width: 0;
+}
+
+.modalChecks {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.modalCheckLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: #444;
+  cursor: pointer;
+}
+
+.modalCheckLabel input[type="checkbox"] {
+  accent-color: #ec6f00;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.modalActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.modalActionsRight {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.modalDeleteConfirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #ec6f00;
+}
+
+.modalDeleteBtn {
+  background: none;
+  border: 1.5px solid #ec6f00;
+  color: #ec6f00;
+  font-family: Calibri, sans-serif;
+  font-size: 14px;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.modalDeleteBtn:hover {
+  background: #fff3e3;
+}
+
+.modalCancelBtn {
+  background: none;
+  border: 1.5px solid #ddd;
+  color: #666;
+  font-family: Calibri, sans-serif;
+  font-size: 14px;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.modalCancelBtn:hover {
+  border-color: #999;
+}
+
+.modalSaveBtn {
+  background: #ec6f00;
+  border: 1.5px solid #ec6f00;
+  color: #fff;
+  font-family: Calibri, sans-serif;
+  font-size: 14px;
+  padding: 7px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.modalSaveBtn:hover {
+  background: #be5800;
+}
+
+.modalSaveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Autocomplete ──────────────────────────────────────────────────────────── */
+
+.autocompleteWrap {
+  position: relative;
+}
+
+.autocompleteDrop {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-top: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.autocompleteItem {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  font-family: Calibri, sans-serif;
+  font-size: 16px;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.autocompleteItem:last-child {
+  border-bottom: none;
+}
+
+.autocompleteItem:hover {
+  background: #fff4e6;
+  color: #ec6f00;
+}
+
+/* ─── Artist URL links ──────────────────────────────────────────────────────── */
+
+.artistLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.artistLink:hover {
+  color: #ec6f00;
+  text-decoration: underline;
+}
+
+.externalIcon {
+  font-size: 10px;
+  margin-left: 3px;
+  opacity: 0.5;
+  vertical-align: super;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* ─── Released (past-date) card ─────────────────────────────────────────────── */
+
+.upcomingCard--released {
+  opacity: 0.7;
+}
+
+.upcomingCard--released .upcomingCardDay {
+  color: #888;
+}
+
+.upcomingCard--released .upcomingCardMonth {
+  color: #bbb;
+}
+
+/* Acquire (checkmark) button */
+.cardAcquireBtn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: none;
+  border: 1.5px solid #5a9a5a;
+  color: #5a9a5a;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 3px 9px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cardAcquireBtn:hover {
+  background: #5a9a5a;
+  color: #fff;
+}
+
+/* ─── Sticky Bottom Nav ─────────────────────────────────────────────────────── */
+
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 66px;
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  box-shadow: 0 -2px 14px rgba(0,0,0,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 16px;
+  z-index: 50;
+  will-change: transform;
+}
+
+.bottomNavBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #aaa;
+  font-family: Calibri, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+  min-width: 64px;
+}
+
+.bottomNavBtn:hover {
+  color: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.bottomNavBtn--add {
+  color: #ec6f00;
+}
+
+.bottomNavBtn--add:hover {
+  color: #be5800;
+  background: #fff4e6;
+}
+
+.bottomNavBtn--active {
+  color: #ec6f00;
+}
+
+.bottomNavDivider {
+  width: 1px;
+  height: 30px;
+  background: #e8e8e8;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .musicOuter {
+    height: 100dvh;
+    min-height: unset;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .musicScrollArea {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .musicPage {
+    padding-bottom: 30px;
+    margin: 0;
+  }
+
+  .bottomNav {
+    position: static;
+    flex-shrink: 0;
+    gap: 0;
+    padding: 0;
+    height: 66px;
+  }
+
+  .bottomNavBtn {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0;
+    font-size: clamp(7px, 2.2vw, 10px);
+    letter-spacing: 0;
+    gap: 2px;
+  }
+
+  .bottomNavBtn svg {
+    width: clamp(14px, 4vw, 20px);
+    height: clamp(14px, 4vw, 20px);
+    flex-shrink: 0;
+  }
+
+  .bottomNavDivider {
+    margin: 0;
+    flex-shrink: 0;
+  }
+}

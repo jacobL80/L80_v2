@@ -1,16 +1,3 @@
-.app {
-	height: 100vh;
-	width: 100vw;
-	background-color: #F1F1F1;
-}
-
-.appContainer {
-	display: flex;
-	flex-direction: row;
-	max-width: 2600px;
-	margin: auto
-}
-
 .rightPaneAbout {
 	background-color: #FFF;
 	width: 25%;
@@ -20,22 +7,6 @@
 .leftPaneAbout {
 	background-color: #F1F1F1;
 	width: 75%;
-}
-
-.innerPanel {
-	/*background-color: #333;*/
-	margin: 40px;
-	height: calc(100vh - 80px);
-	display: flex;
-  	flex-direction: column;
-}
-
-.left {
-	margin-left: 80px;
-}
-
-.right {
-	margin-right: 80px;
 }
 
 .menuTextAbout {
@@ -108,4 +79,15 @@
 	margin-left: auto;
 	margin-right: auto;
 	font-style: italic;
+}
+
+@media (max-width: 900px) {
+	.leftPaneAbout, .rightPaneAbout {
+		width: 100%;
+		min-width: unset;
+	}
+
+	.contentBlockAbout {
+		width: 100%;
+	}
 }

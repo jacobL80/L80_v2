@@ -5,8 +5,8 @@ import {
 	Route,
 	Link
   } from "react-router-dom";
-import App from './App.js';
-import About from './components/About.js'
+import App from './App';
+import About from './components/About';
 
 function SiteRoutes(){
     return (

@@ -1,16 +1,3 @@
-.app {
-	height: 100vh;
-	width: 100vw;
-	background-color: #F1F1F1;
-}
-
-.appContainer {
-	display: flex;
-	flex-direction: row;
-	max-width: 2600px;
-	margin: auto
-}
-
 .leftPane {
 	background-color: #FFF;
 	width: 75%;
@@ -21,21 +8,6 @@
 	background-color: #F1F1F1;
 	width: 25%;
 	min-width: 500px;
-}
-
-.innerPanel {
-	/*background-color: #333;*/
-	margin: 40px;
-	height: calc(100vh - 80px);
-	display: flex;
-  	flex-direction: column;
-}
-
-.left {
-	margin-left: 80px;
-}
-.right {
-	margin-right: 80px;
 }
 
 .logo, .menu {
@@ -55,49 +27,6 @@
 .arrowIcon {
 	width: 30px;
 	margin-left: 4px;
-}
-
-.contactOuterContainer {
-	width: 60%;
-	max-width: 500px;
-	margin: auto;
-	margin-top: 25px;
-}
-
-.contactRow {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-.contactTitleContainer {
-	text-align: center;
-	margin-top: 10px;
-}
-
-.contactTitle {
-	text-transform: uppercase;
-	color: #953f2d;
-	/*transition: .3s ease;*/
-}
-
-.contactTitleNone {
-	opacity: 0;
-	user-select: none; /* supported by Chrome and Opera */
-	-webkit-user-select: none; /* Safari */
-	-khtml-user-select: none; /* Konqueror HTML */
-	-moz-user-select: none; /* Firefox */
-	-ms-user-select: none; /* Internet Explorer/Edge */
-}
-
-.contactIcon {
-	width: 40px;
-	height: 40px;
-	transition: .5s ease;
-}
-
-.contactIconNotSelected {
-	opacity: 0.3;
 }
 
 .menuContainer {
@@ -173,10 +102,6 @@
 	margin-bottom: 20px;
 }
 
-.textBold {
-	font-weight: 700;
-}
-
 .textHighlight {
 	color: #FFF;
 	background-color: #ec6f00;
@@ -215,84 +140,114 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	outline: 0;
 	border: none;
 	-moz-outline-style: none;
-  }
+}
 
-  .contentContainerSelected {
+.contentContainerSelected {
 	overflow-y: auto;
-  }
+}
 
-  .contentSection {
+.contentSection {
 	max-width: 1000px;
 	align-self: center;
 	margin-bottom: 40px;
-  }
+}
 
-  .contentOverview {
+.contentOverview {
 	background-color: #F1F1F1;
 	border-radius: 10px;
 	padding: 30px;
 	margin-top: 20px;
-  }
+}
 
-  .contentText {
+.contentText {
 	display: block;
 	font-size: 22px;
 	margin-bottom: 40px;
-  }
+}
 
-  .contentTextTitle {
+.contentTextTitle {
 	font-size: 28px;
 	font-weight: 900;
 	margin-bottom: -5px;
-  }
+}
 
-  .contentTextLabel {
+.contentTextLabel {
 	text-transform: uppercase;
 	letter-spacing: 2px;
 	color: #999;
 	font-size: 16px;
 	margin-bottom: 0;
-  }
+}
 
-  .contentTextDate {
+.contentTextDate {
 	font-style: italic;
 	color: #999;
-  }
+}
 
-  .contentTextOverview {
+.contentTextOverview {
 	line-height: 40px;
 	margin-bottom: 20px;
-  }
+}
 
-  .contentSectionTitle {
+.contentSectionTitle {
 	font-weight: 900;
 	font-size: 22px;
 	margin-bottom: 10px;
-  }
+}
 
-  .contentSectionParagraph {
+.contentSectionParagraph {
 	line-height: 40px;
 	font-size: 18px;
 	margin-bottom: 40px;
-  }
+}
 
-  .contentImage {
+.contentImage {
 	width: 100%;
-  }
+}
 
-  .contentAnimation {
+.contentAnimation {
 	width: 200px;
 	display: block;
 	margin: auto;
-  }
+}
 
-  .contentLink {
+.contentLink {
 	color: #1696b6;
 	text-decoration: underline;
 	text-decoration-color: #1696b6;
-  }
+}
 
-  .contentLink:hover {
+.contentLink:hover {
 	color: #ec6f00;
 	text-decoration-color: #ec6f00;
-  }
+}
+
+@media (max-width: 900px) {
+	.leftPane, .rightPane {
+		width: 100%;
+		min-width: unset;
+	}
+
+	.menuContainerList {
+		max-width: unset;
+		min-width: unset;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.contentContainer {
+		height: auto;
+	}
+
+	.contentRight {
+		height: auto;
+		max-height: unset;
+		margin: 0;
+		text-align: left;
+	}
+
+	.contentBlock {
+		width: 100%;
+		margin: 0;
+	}
+}

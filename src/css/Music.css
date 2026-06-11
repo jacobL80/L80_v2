@@ -883,8 +883,8 @@
   justify-content: center;
   gap: 4px;
   padding: 0 16px;
-  padding-bottom: env(safe-area-inset-bottom);
   z-index: 50;
+  will-change: transform;
 }
 
 .bottomNavBtn {
@@ -938,8 +938,6 @@
   .bottomNav {
     gap: 0;
     padding: 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    box-sizing: border-box;
     height: 66px;
   }
 

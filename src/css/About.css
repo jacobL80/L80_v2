@@ -55,8 +55,7 @@
 	border-top: 1px solid #e8e8e8;
 	box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.07);
 	z-index: 50;
-	padding-bottom: env(safe-area-inset-bottom);
-	box-sizing: border-box;
+	will-change: transform;
 }
 
 .aboutTabContact {
@@ -87,6 +86,16 @@
 }
 
 @media (max-width: 900px) {
+	.app--about,
+	.app--about .appContainer {
+		height: auto;
+		overflow: visible;
+	}
+
+	.app--about .innerPanel {
+		height: auto;
+	}
+
 	.leftPaneAbout, .rightPaneAbout {
 		width: 100%;
 		min-width: unset;

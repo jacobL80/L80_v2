@@ -287,8 +287,7 @@ a:active, a:focus {
 	border-top: 1px solid #e8e8e8;
 	box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.07);
 	z-index: 50;
-	padding-bottom: env(safe-area-inset-bottom);
-	box-sizing: border-box;
+	will-change: transform;
 }
 
 .mobileTabContact {
@@ -367,9 +366,11 @@ a:active, a:focus {
 
 	.contentContainer {
 		height: auto;
+		padding-right: 0;
 	}
 
 	.contentRight {
+		flex: none;
 		height: auto;
 		max-height: unset;
 		margin: 0;
@@ -412,6 +413,7 @@ a:active, a:focus {
 
 	.contentSection {
 		width: 100%;
+		box-sizing: border-box;
 	}
 
 }

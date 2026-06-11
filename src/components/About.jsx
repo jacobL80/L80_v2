@@ -18,7 +18,7 @@ const LinkedInIcon = () => <S><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2
 
 function About() {
 	return (
-	<div className="app">
+	<div className="app app--about">
 
 		<div className='appContainer'>
 			<div className='leftPaneAbout'>
@@ -40,7 +40,7 @@ function About() {
                             {"I'm a hybrid "}
                             <span className='textAbout textBold'>UX/UI Designer and Software Engineer.</span>
                             {" While I have a passion for expressive and intuitive designs, I also pride myself in my coding prowess; this is especially true with both "}
-                            <span className='textAbout textBold'>React and React Native.</span>
+                            <span className='textAbout textBold'>manual React coding and Agentic Engineering.</span>
                             {" I studied "}
                             <span className='textAbout textBold'>Information Science</span>
                         </span>
@@ -49,7 +49,7 @@ function About() {
                         </span>
                     </div>
                     <div className='contentBlockAbout infoBlock'>
-                        <span className='textAbout textGeneric'>In my free time, I enjoy collecting music, working out, and indoor bouldering.</span>
+                        <span className='textAbout textGeneric'>In my free time, I enjoy collecting music, working out, indoor bouldering, and racquet sports.</span>
                     </div>
 				</div>
 			</div>

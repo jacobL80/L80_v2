@@ -540,7 +540,7 @@ const Music = () => {
         <div className="musicHeaderInner">
           <p className="musicEyebrow">Music</p>
           <h1 className="musicTitle">
-            {view === 'timeline' ? 'Listening History' : 'Release Schedule'}
+            {view === 'timeline' ? 'Release History' : 'Release Schedule'}
           </h1>
           <div className="musicHeaderRule" />
           {view === 'schedule' && (

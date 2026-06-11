@@ -25,6 +25,17 @@ try {
     exit;
 }
 
+// Self-healing: create releases table if it doesn't exist yet
+try {
+    $pdo->exec('CREATE TABLE IF NOT EXISTS releases (
+        id           INT AUTO_INCREMENT PRIMARY KEY,
+        artist_name  VARCHAR(255) NOT NULL DEFAULT \'\',
+        album_title  VARCHAR(255) NOT NULL DEFAULT \'\',
+        release_date VARCHAR(50)  NOT NULL DEFAULT \'\',
+        acquired_at  DATE         NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+} catch (PDOException $e) { /* ignore */ }
+
 function verify_auth() {
     $token = $_SERVER['HTTP_X_EDIT_TOKEN'] ?? '';
     if ($token !== EDIT_SECRET) {

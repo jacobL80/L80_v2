@@ -104,6 +104,7 @@
 .rowGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 12px;
 }
 
@@ -237,6 +238,7 @@
 .upcomingGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 14px;
 }
 
@@ -342,21 +344,83 @@
 
 @media (max-width: 700px) {
   .musicPage {
-    padding: 40px 24px 120px;
+    padding: 40px 14px 120px;
   }
-
 
   .musicTitle {
-    font-size: 36px;
-  }
-
-  .editBanner {
-    padding: 10px 24px;
+    font-size: 28px;
   }
 
   .musicHeaderInner {
-    padding: 40px 24px 32px;
+    padding: 20px 14px 16px;
   }
+
+  .musicEyebrow {
+    margin-bottom: 6px;
+  }
+
+  .musicHeaderRule {
+    margin: 10px 0;
+  }
+
+  .upcomingCard,
+  .musicRow {
+    padding: 6px 12px;
+    gap: 10px;
+  }
+
+  .upcomingCardDay {
+    font-size: 22px;
+  }
+
+  .upcomingCardMonth,
+  .upcomingCardYear {
+    font-size: 9px;
+  }
+
+  .upcomingCardDate,
+  .rowCardDate {
+    min-width: 32px;
+  }
+
+  .upcomingCardArtist {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .upcomingCardAlbum {
+    font-size: 12px;
+  }
+
+  .upcomingCardMonth {
+    margin-bottom: 1px;
+  }
+
+  .upcomingCardDay {
+    margin-bottom: 1px;
+  }
+
+  .cardLastRelease {
+    margin-top: 2px;
+  }
+
+  .upcomingCardImminent {
+    margin-top: 3px;
+  }
+
+  .rowCardArtist {
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+
+  .rowCardDateYear {
+    font-size: 20px;
+  }
+
+  .musicRow--editing {
+    padding-bottom: 10px;
+  }
+
 }
 
 /* ─── Edit mode ─────────────────────────────────────────────────────────────── */
@@ -371,6 +435,15 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+@media (max-width: 700px) {
+  .editBanner {
+    padding: 8px 10px;
+  }
 }
 
 .editBannerActions {
@@ -859,4 +932,34 @@
   background: #e8e8e8;
   margin: 0 8px;
   flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .bottomNav {
+    gap: 0;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+    height: 66px;
+  }
+
+  .bottomNavBtn {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0;
+    font-size: clamp(7px, 2.2vw, 10px);
+    letter-spacing: 0;
+    gap: 2px;
+  }
+
+  .bottomNavBtn svg {
+    width: clamp(14px, 4vw, 20px);
+    height: clamp(14px, 4vw, 20px);
+    flex-shrink: 0;
+  }
+
+  .bottomNavDivider {
+    margin: 0;
+    flex-shrink: 0;
+  }
 }

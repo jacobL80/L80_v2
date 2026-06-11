@@ -39,7 +39,7 @@ const HISTORY_URL = '/api/history.php';
 
 const EMPTY_ARTIST = {
   name: '', lastRelease: '', nextRelease: '', albumTitle: '',
-  confirmed: false, incompleteCollection: false, notes: '', url: '',
+  confirmed: false, incompleteCollection: false, notes: '', url: '', hiatus: false,
 };
 
 const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -50,7 +50,7 @@ const getCookie  = () => { const m = document.cookie.match(new RegExp('(?:^|; )'
 const setCookie  = (v) => { document.cookie = `${COOKIE}=${encodeURIComponent(v)}; max-age=${COOKIE_DAYS * 86400}; path=/; SameSite=Strict`; };
 const delCookie  = ()  => { document.cookie = `${COOKIE}=; max-age=0; path=/; SameSite=Strict`; };
 
-const sortKey     = (name) => name.replace(/^The\s+/i, '');
+const sortKey     = (name) => name.replace(/^(The|A)\s+/i, '');
 const hasFullDate = (s) => s.split('/').length === 3;
 const parseDate   = (s) => {
   const p = s.split('/').map(Number);
@@ -178,6 +178,11 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
               onChange={e => set('incompleteCollection', e.target.checked)} />
             Incomplete collection
           </label>
+          <label className="modalCheckLabel">
+            <input type="checkbox" checked={form.hiatus || false}
+              onChange={e => set('hiatus', e.target.checked)} />
+            Hiatus
+          </label>
         </div>
 
         <label className="modalLabel">Notes</label>
@@ -249,7 +254,7 @@ const UpcomingCard = ({ artist, onEdit, onAcquire, editing }) => {
           </div>
         )}
       </div>
-      {editing && released && (
+      {editing && (released || imminent) && (
         <button className="cardAcquireBtn" onClick={() => onAcquire(artist)} title="Mark as acquired">✓</button>
       )}
       {editing && (
@@ -261,8 +266,7 @@ const UpcomingCard = ({ artist, onEdit, onAcquire, editing }) => {
 
 // ─── Table row ────────────────────────────────────────────────────────────────
 
-const ArtistRow = ({ artist, dateDisplay, onEdit, onDelete, editing }) => {
-  const [confirmDel, setDel] = useState(false);
+const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
   const albumEmpty = !artist.albumTitle && !artist.notes;
   const dateEmpty  = dateDisplay === '—';
   let cardMonth = null, cardYear = null, cardLabel = null;
@@ -314,16 +318,6 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, onDelete, editing }) => {
       </div>
       {editing && (
         <button className="rowEditBtn" onClick={() => onEdit(artist)} title="Edit">✎</button>
-      )}
-      {editing && !confirmDel && (
-        <button className="rowDeleteBtn" onClick={() => setDel(true)} title="Delete">✕</button>
-      )}
-      {editing && confirmDel && (
-        <div className="rowDeleteConfirm">
-          <span>Sure?</span>
-          <button className="rowDelYes" onClick={() => onDelete(artist.id)}>Yes</button>
-          <button className="rowDelNo" onClick={() => setDel(false)}>No</button>
-        </div>
       )}
     </div>
   );
@@ -474,6 +468,8 @@ const Music = () => {
     });
   };
 
+  const markHiatus = (artist) => saveArtist({ ...artist, hiatus: true });
+
   const exitEditMode = () => {
     setToken(null);
     delCookie();
@@ -493,17 +489,18 @@ const Music = () => {
   const hiatusYear = new Date().getFullYear() - 8;
 
   const watching = artists
-    .filter(a => !a.nextRelease && !(a.lastRelease && parseInt(a.lastRelease) <= hiatusYear))
+    .filter(a => !a.nextRelease && !a.hiatus && !(a.lastRelease && parseInt(a.lastRelease) <= hiatusYear))
     .sort((a, b) => {
       const dy = (a.lastRelease ? parseDate(a.lastRelease) : new Date(0)) - (b.lastRelease ? parseDate(b.lastRelease) : new Date(0));
       return dy !== 0 ? dy : sortKey(a.name).localeCompare(sortKey(b.name));
     });
 
   const hiatus = artists
-    .filter(a => !a.nextRelease && a.lastRelease && parseInt(a.lastRelease) <= hiatusYear)
+    .filter(a => !a.nextRelease && (a.hiatus || (a.lastRelease && parseInt(a.lastRelease) <= hiatusYear)))
     .sort((a, b) => {
-      const dy = parseInt(a.lastRelease) - parseInt(b.lastRelease);
-      return dy !== 0 ? dy : sortKey(a.name).localeCompare(sortKey(b.name));
+      const ay = a.lastRelease ? parseInt(a.lastRelease) : 0;
+      const by = b.lastRelease ? parseInt(b.lastRelease) : 0;
+      return ay !== by ? ay - by : sortKey(a.name).localeCompare(sortKey(b.name));
     });
 
   const isEditing = !!editToken;
@@ -581,7 +578,7 @@ const Music = () => {
                 {expected.map(a => (
                   <ArtistRow key={a.id} artist={a}
                     dateDisplay={`~${getYear(a.nextRelease)}`}
-                    onEdit={setEditing} onDelete={deleteArtist} editing={isEditing} />
+                    onEdit={setEditing} editing={isEditing} />
                 ))}
               </div>
             </section>
@@ -594,7 +591,7 @@ const Music = () => {
                 {watching.map(a => (
                   <ArtistRow key={a.id} artist={a}
                     dateDisplay="—"
-                    onEdit={setEditing} onDelete={deleteArtist} editing={isEditing} />
+                    onEdit={setEditing} editing={isEditing} />
                 ))}
               </div>
             </section>
@@ -607,7 +604,7 @@ const Music = () => {
                 {hiatus.map(a => (
                   <ArtistRow key={a.id} artist={a}
                     dateDisplay="—"
-                    onEdit={setEditing} onDelete={deleteArtist} editing={isEditing} />
+                    onEdit={setEditing} editing={isEditing} />
                 ))}
               </div>
             </section>

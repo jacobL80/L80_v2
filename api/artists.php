@@ -25,6 +25,11 @@ try {
     exit;
 }
 
+// Self-healing migration: add hiatus column if missing
+try {
+    $pdo->exec('ALTER TABLE artists ADD COLUMN IF NOT EXISTS hiatus TINYINT(1) NOT NULL DEFAULT 0');
+} catch (PDOException $e) { /* column already exists or unsupported syntax — safe to ignore */ }
+
 function verify_auth() {
     $token = $_SERVER['HTTP_X_EDIT_TOKEN'] ?? '';
     if ($token !== EDIT_SECRET) {
@@ -45,6 +50,7 @@ function row_to_artist(array $row): array {
         'incompleteCollection'=> (bool) $row['incomplete_collection'],
         'notes'               => $row['notes'],
         'url'                 => $row['url'],
+        'hiatus'              => (bool) ($row['hiatus'] ?? false),
     ];
 }
 
@@ -59,18 +65,19 @@ if ($method === 'GET') {
     verify_auth();
     $body = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare(
-        'INSERT INTO artists (name, last_release, next_release, album_title, confirmed, incomplete_collection, notes, url)
-         VALUES (:name, :lr, :nr, :at, :conf, :ic, :notes, :url)'
+        'INSERT INTO artists (name, last_release, next_release, album_title, confirmed, incomplete_collection, notes, url, hiatus)
+         VALUES (:name, :lr, :nr, :at, :conf, :ic, :notes, :url, :hiatus)'
     );
     $stmt->execute([
-        'name'  => trim($body['name'] ?? ''),
-        'lr'    => trim($body['lastRelease'] ?? ''),
-        'nr'    => trim($body['nextRelease'] ?? ''),
-        'at'    => trim($body['albumTitle'] ?? ''),
-        'conf'  => empty($body['confirmed']) ? 0 : 1,
-        'ic'    => empty($body['incompleteCollection']) ? 0 : 1,
-        'notes' => trim($body['notes'] ?? ''),
-        'url'   => trim($body['url'] ?? ''),
+        'name'   => trim($body['name'] ?? ''),
+        'lr'     => trim($body['lastRelease'] ?? ''),
+        'nr'     => trim($body['nextRelease'] ?? ''),
+        'at'     => trim($body['albumTitle'] ?? ''),
+        'conf'   => empty($body['confirmed']) ? 0 : 1,
+        'ic'     => empty($body['incompleteCollection']) ? 0 : 1,
+        'notes'  => trim($body['notes'] ?? ''),
+        'url'    => trim($body['url'] ?? ''),
+        'hiatus' => empty($body['hiatus']) ? 0 : 1,
     ]);
     $newId = (int) $pdo->lastInsertId();
     $row = $pdo->query("SELECT * FROM artists WHERE id = $newId")->fetch(PDO::FETCH_ASSOC);
@@ -82,18 +89,19 @@ if ($method === 'GET') {
     $body = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare(
         'UPDATE artists SET name=:name, last_release=:lr, next_release=:nr, album_title=:at,
-         confirmed=:conf, incomplete_collection=:ic, notes=:notes, url=:url WHERE id=:id'
+         confirmed=:conf, incomplete_collection=:ic, notes=:notes, url=:url, hiatus=:hiatus WHERE id=:id'
     );
     $stmt->execute([
-        'name'  => trim($body['name'] ?? ''),
-        'lr'    => trim($body['lastRelease'] ?? ''),
-        'nr'    => trim($body['nextRelease'] ?? ''),
-        'at'    => trim($body['albumTitle'] ?? ''),
-        'conf'  => empty($body['confirmed']) ? 0 : 1,
-        'ic'    => empty($body['incompleteCollection']) ? 0 : 1,
-        'notes' => trim($body['notes'] ?? ''),
-        'url'   => trim($body['url'] ?? ''),
-        'id'    => $id,
+        'name'   => trim($body['name'] ?? ''),
+        'lr'     => trim($body['lastRelease'] ?? ''),
+        'nr'     => trim($body['nextRelease'] ?? ''),
+        'at'     => trim($body['albumTitle'] ?? ''),
+        'conf'   => empty($body['confirmed']) ? 0 : 1,
+        'ic'     => empty($body['incompleteCollection']) ? 0 : 1,
+        'notes'  => trim($body['notes'] ?? ''),
+        'url'    => trim($body['url'] ?? ''),
+        'hiatus' => empty($body['hiatus']) ? 0 : 1,
+        'id'     => $id,
     ]);
     $row = $pdo->query("SELECT * FROM artists WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
     echo json_encode(row_to_artist($row));

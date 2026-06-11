@@ -1,113 +1,110 @@
 .leftPane {
-	background-color: #FFF;
+	background-color: #fff;
 	width: 75%;
-    min-width: 500px;
+	min-width: 500px;
+	border-right: 1px solid #ebe7e3;
 }
 
 .rightPane {
-	background-color: #F1F1F1;
+	background-color: #faf9f7;
 	width: 25%;
 	min-width: 500px;
 }
 
-.logo, .menu {
-	width: 100px;
-	height: 100px;
-	transition: .3s ease;
-}
-
-.logoReturn {
-	cursor: pointer;
-}
-
-.menu:hover {
+.arrowIcon {
+	width: 22px;
+	margin-left: 5px;
+	vertical-align: middle;
 	opacity: 0.6;
 }
 
-.arrowIcon {
-	width: 30px;
-	margin-left: 4px;
-}
-
-.menuContainer {
-	display: flex;
-	flex-direction: row;
-	margin-bottom: 40px;
-}
-
-.menuContainerList {
-	max-width: 35%;
-	min-width: 400px;
-}
-
-.menuLink {
-    margin-left: 50px;
-}
 
 .contentContainer {
 	height: calc(100vh - 200px);
 	display: flex;
-  	flex-direction: column;
+	flex-direction: column;
 	justify-content: space-between;
 	padding-right: 20px;
 }
 
 .contentRight {
 	text-align: right;
-	height: 70%;
-	max-height: 800px;
+	flex: 1;
 	margin: 0 0 auto auto;
 }
 
 .contentBlock {
-	width: 70%;
+	width: 65%;
 	margin: auto 20% auto auto;
 	text-align: center;
 }
 
 .introBlock {
 	display: flex;
-  	flex-direction: column;
+	flex-direction: column;
 	text-align: center;
+	align-items: center;
 }
 
 .worksList {
 	display: flex;
-  	flex-direction: column;
-	justify-content: space-between;
+	flex-direction: column;
+	gap: 6px;
 	height: 90%;
+	justify-content: flex-start;
+	margin-top: 12px;
 }
+
+/* ─── Typography ─────────────────────────────────────────────────────────────── */
 
 .text {
 	font-weight: 400;
 	font-size: 36px;
+	line-height: 1.4;
+	color: #1a1a1a;
 }
 
 .textBold {
 	font-weight: 700;
 }
 
-.textWorkLabel {
-	transition: 0.3s ease;
-	cursor: pointer;
+.textEyebrow {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 4px;
+	color: #ec6f00;
+	margin: 0 0 14px 0;
 }
 
-.textNotSelected {
-	opacity: 0.2;
+.headerRule {
+	width: 48px;
+	height: 3px;
+	background: #ec6f00;
+	margin: 18px auto 22px;
+}
+
+.headerRuleRight {
+	width: 32px;
+	height: 3px;
+	background: #ec6f00;
+	margin: 10px 0 14px auto;
 }
 
 .textTitle {
 	font-size: 60px;
 	font-weight: 600;
-	margin-bottom: 20px;
+	color: #1a1a1a;
+	margin-bottom: 4px;
+	line-height: 1.1;
 }
 
 .textHighlight {
-	color: #FFF;
+	color: #fff;
 	background-color: #ec6f00;
-	padding: 2px 8px 2px 8px;
-	min-width: min-content;
-	margin: auto;
+	padding: 2px 10px;
+	display: inline-block;
+	margin: 4px auto 0;
 }
 
 .textHighlightBlue {
@@ -115,32 +112,56 @@
 }
 
 .textSubtitle {
-	font-size: 22px;
-	color: #953f2d;
+	font-size: 11px;
+	font-weight: 700;
 	text-transform: uppercase;
+	letter-spacing: 3px;
+	color: #ec6f00;
+	display: block;
+	margin: 0;
+	text-align: right;
 }
 
-.textSubtitleBottom {
-    margin-top: 10%;
+/* ─── Work list items ────────────────────────────────────────────────────────── */
+
+.textWorkLabel {
+	display: block;
+	transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+	cursor: pointer;
+	text-align: right;
+	padding: 8px 12px;
+	border: 1.5px solid transparent;
+	border-radius: 4px;
+	font-size: 36px;
+	font-weight: 700;
+	color: #1a1a1a;
+	line-height: 1.2;
 }
 
-.menuText {
-    text-transform: uppercase;
-    margin: auto 0 auto auto;
-    opacity: 0;
-    transition: 0.3s ease;
-    color: #953f2d;
+.textWorkLabel:hover {
+	border-color: #e0dbd5;
+	background: #fff;
+	color: #ec6f00;
 }
 
-.menuTextHover {
-    opacity: 1;
+.textWorkLabel--selected {
+	border-color: #ec6f00 !important;
+	color: #ec6f00 !important;
+	background: #fff4e6 !important;
+	opacity: 1 !important;
 }
 
-a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
+.textNotSelected {
+	opacity: 0.28;
+}
+
+a:active, a:focus {
 	outline: 0;
 	border: none;
 	-moz-outline-style: none;
 }
+
+/* ─── Project detail view ────────────────────────────────────────────────────── */
 
 .contentContainerSelected {
 	overflow-y: auto;
@@ -153,62 +174,92 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 }
 
 .contentOverview {
-	background-color: #F1F1F1;
-	border-radius: 10px;
-	padding: 30px;
+	background: #fff;
+	border: 1.5px solid #e8e8e8;
+	border-left: 3px solid #ec6f00;
+	border-radius: 4px;
+	padding: 28px 30px;
 	margin-top: 20px;
+	margin-bottom: 24px;
 }
 
 .contentText {
 	display: block;
-	font-size: 22px;
-	margin-bottom: 40px;
+	font-size: 17px;
+	margin-bottom: 16px;
+	color: #1a1a1a;
 }
 
 .contentTextTitle {
-	font-size: 28px;
-	font-weight: 900;
-	margin-bottom: -5px;
+	font-size: 26px;
+	font-weight: 700;
+	margin-bottom: 4px;
+	color: #1a1a1a;
 }
 
 .contentTextLabel {
 	text-transform: uppercase;
 	letter-spacing: 2px;
-	color: #999;
-	font-size: 16px;
-	margin-bottom: 0;
+	color: #aaa;
+	font-size: 10px;
+	font-weight: 700;
+	margin-bottom: 4px;
 }
 
 .contentTextDate {
 	font-style: italic;
 	color: #999;
+	font-size: 14px;
+	margin-bottom: 16px;
+}
+
+.contentTextRole {
+	font-size: 17px;
+	font-weight: 600;
+	margin-bottom: 12px;
 }
 
 .contentTextOverview {
-	line-height: 40px;
-	margin-bottom: 20px;
+	line-height: 1.7;
+	font-size: 16px;
+	color: #555;
+	margin-bottom: 4px;
 }
 
 .contentSectionTitle {
-	font-weight: 900;
-	font-size: 22px;
-	margin-bottom: 10px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 3px;
+	color: #ec6f00;
+	margin: 0 0 12px 0;
+	border-left: 3px solid currentColor;
+	padding-left: 10px;
 }
 
 .contentSectionParagraph {
-	line-height: 40px;
-	font-size: 18px;
-	margin-bottom: 40px;
+	line-height: 1.7;
+	font-size: 17px;
+	margin-bottom: 24px;
+	color: #333;
 }
 
 .contentImage {
 	width: 100%;
+	display: block;
+	border-radius: 4px;
+}
+
+.contentImageHeader {
+	border-radius: 4px 4px 0 0;
+	margin-bottom: 0;
 }
 
 .contentAnimation {
 	width: 200px;
 	display: block;
 	margin: auto;
+	border-radius: 4px;
 }
 
 .contentLink {
@@ -222,18 +273,97 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 	text-decoration-color: #ec6f00;
 }
 
+/* ─── Bottom nav bar ─────────────────────────────────────────────────────────── */
+
+.mobileTabBar {
+	display: flex;
+	align-items: center;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 66px;
+	background: #fff;
+	border-top: 1px solid #e8e8e8;
+	box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.07);
+	z-index: 50;
+	padding-bottom: env(safe-area-inset-bottom);
+	box-sizing: border-box;
+}
+
+.mobileTabContact {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	color: #aaa;
+	font-family: Calibri, sans-serif;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	text-decoration: none;
+	padding: 6px 0;
+	transition: color 0.15s ease;
+}
+
+.mobileTabContact:hover { color: #1a1a1a; }
+
+.mobileTabBtn {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	background: none;
+	border: none;
+	color: #aaa;
+	font-family: Calibri, sans-serif;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	cursor: pointer;
+	padding: 6px 0;
+	transition: color 0.15s ease;
+}
+
+.mobileTabBtn:hover { color: #1a1a1a; }
+.mobileTabBtn--active { color: #ec6f00; }
+
+.mobileTabDivider {
+	width: 1px;
+	height: 32px;
+	background: #e8e8e8;
+	flex-shrink: 0;
+}
+
+/* On desktop both panes are visible — hide the Info/Works toggle buttons */
+@media (min-width: 901px) {
+	.mobileTabBtn {
+		display: none;
+	}
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+
 @media (max-width: 900px) {
+	/* Show only the active pane */
+	.app--works .leftPane { display: none; }
+	.app:not(.app--works) .rightPane { display: none; }
+
 	.leftPane, .rightPane {
 		width: 100%;
 		min-width: unset;
+		border-right: none;
+		height: 100%;
+		overflow-y: auto;
+		box-sizing: border-box;
 	}
 
-	.menuContainerList {
-		max-width: unset;
-		min-width: unset;
-		flex-direction: column;
-		align-items: center;
-	}
 
 	.contentContainer {
 		height: auto;
@@ -250,4 +380,38 @@ a:active, a:focus, .menu:active, .menu:focus, .logo:active, .logo:focus {
 		width: 100%;
 		margin: 0;
 	}
+
+	.introBlock {
+		margin-bottom: 2dvh;
+	}
+
+	.textSubtitle {
+		border-right: none;
+		border-left: none;
+		padding-right: 0;
+		padding-left: 0;
+		text-align: center;
+	}
+
+	.headerRuleRight {
+		margin: 10px auto 14px;
+	}
+
+	.textWorkLabel {
+		text-align: center;
+		font-size: 4.5dvh;
+	}
+
+	.textTitle {
+		font-size: 7.5dvh;
+	}
+
+	.text {
+		font-size: 4.5dvh;
+	}
+
+	.contentSection {
+		width: 100%;
+	}
+
 }

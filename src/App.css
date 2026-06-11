@@ -17,7 +17,7 @@ div {
 
 .innerPanel {
 	margin: 40px;
-	height: calc(100vh - 80px);
+	height: calc(100vh - 146px);
 	display: flex;
 	flex-direction: column;
 }
@@ -73,13 +73,22 @@ div {
 }
 
 @media (max-width: 900px) {
+	.app {
+		height: 100dvh;
+		overflow: hidden;
+	}
+
 	.appContainer {
 		flex-direction: column;
+		height: calc(100dvh - 66px);
+		overflow: hidden;
 	}
 
 	.innerPanel {
-		height: auto;
+		height: calc(100% - 40px);
 		margin: 20px;
+		box-sizing: border-box;
+		justify-content: center;
 	}
 
 	.left {

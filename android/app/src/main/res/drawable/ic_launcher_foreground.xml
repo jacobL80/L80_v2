@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Left note head — outlined circle, center (42,72) r=8 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFF4E6"
+        android:strokeWidth="5.5"
+        android:pathData="M 34,72 C 34,67.6 37.6,64 42,64 C 46.4,64 50,67.6 50,72 C 50,76.4 46.4,80 42,80 C 37.6,80 34,76.4 34,72 Z" />
+
+    <!-- Right note head — outlined circle, center (66,63) r=8 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFF4E6"
+        android:strokeWidth="5.5"
+        android:pathData="M 58,63 C 58,58.6 61.6,55 66,55 C 70.4,55 74,58.6 74,63 C 74,67.4 70.4,71 66,71 C 61.6,71 58,67.4 58,63 Z" />
+
+    <!-- Left stem — attaches at right edge of left note head -->
+    <path
+        android:strokeColor="#FFF4E6"
+        android:strokeWidth="5"
+        android:pathData="M 50,72 L 50,32" />
+
+    <!-- Right stem — attaches at right edge of right note head -->
+    <path
+        android:strokeColor="#FFF4E6"
+        android:strokeWidth="5"
+        android:pathData="M 74,63 L 74,24" />
+
+    <!-- Beam — parallelogram connecting stem tops, slight upward tilt left→right -->
+    <path
+        android:fillColor="#FFF4E6"
+        android:pathData="M 47.5,26 L 76.5,18 L 76.5,24 L 47.5,32 Z" />
+
+</vector>

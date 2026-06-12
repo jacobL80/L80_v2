@@ -24,3 +24,8 @@ api/config.php
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/

@@ -22,10 +22,6 @@
   min-width: 80px;
 }
 
-.tlStat--wide {
-  min-width: 160px;
-  flex: 1;
-}
 
 .tlStatNum {
   font-size: 30px;
@@ -34,6 +30,7 @@
   line-height: 1;
   margin-bottom: 7px;
 }
+
 
 .tlStatNum--md {
   font-size: 19px;
@@ -109,15 +106,20 @@
 
 .tlSvg {
   display: block;
+  min-width: 100%;
 }
 
 .tlDotGroup {
+  cursor: pointer;
+}
+
+.tlDot {
   transform-box: fill-box;
   transform-origin: center;
   transition: transform 0.12s ease;
 }
 
-.tlDotGroup:hover {
+.tlDotGroup:hover .tlDot {
   transform: scale(1.42);
 }
 
@@ -171,11 +173,6 @@
   color: #999;
 }
 
-.tlTipAcquired {
-  font-size: 11px;
-  color: #ccc;
-  margin-top: 3px;
-}
 
 .tlTipClose {
   position: absolute;

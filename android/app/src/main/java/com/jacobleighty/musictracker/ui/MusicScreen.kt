@@ -3,13 +3,17 @@ package com.jacobleighty.musictracker.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +25,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
@@ -32,6 +42,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.Artist
 import com.jacobleighty.musictracker.data.HistoryEntry
+import java.util.Calendar
+import kotlin.math.abs
 
 // ── Colors matching the web ───────────────────────────────────────────────────
 
@@ -524,24 +536,362 @@ private fun ArtistRowItem(
 
 // ── History section ───────────────────────────────────────────────────────────
 
+private val MONTH_SHORT = listOf(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+)
+
+private fun artistColor(name: String): Color {
+    var h = 0
+    for (c in name) h = c.code + ((h shl 5) - h)
+    val hue = ((h % 360) + 360) % 360
+    return hslColor(hue.toFloat(), 0.65f, 0.52f)
+}
+
+private fun hslColor(h: Float, s: Float, l: Float): Color {
+    val c = (1f - abs(2f * l - 1f)) * s
+    val x = c * (1f - abs(h / 60f % 2f - 1f))
+    val m = l - c / 2f
+    val (r, g, b) = when {
+        h < 60f  -> Triple(c, x, 0f)
+        h < 120f -> Triple(x, c, 0f)
+        h < 180f -> Triple(0f, c, x)
+        h < 240f -> Triple(0f, x, c)
+        h < 300f -> Triple(x, 0f, c)
+        else     -> Triple(c, 0f, x)
+    }
+    return Color(r + m, g + m, b + m)
+}
+
+private fun parseRDate(s: String): Calendar? {
+    if (s.isEmpty()) return null
+    val p = s.split("/").mapNotNull { it.toIntOrNull() }
+    val cal = Calendar.getInstance().also {
+        it.set(Calendar.HOUR_OF_DAY, 0); it.set(Calendar.MINUTE, 0)
+        it.set(Calendar.SECOND, 0); it.set(Calendar.MILLISECOND, 0)
+    }
+    return when (p.size) {
+        3    -> { cal.set(p[2], p[0] - 1, p[1]); cal }
+        2    -> { cal.set(p[1], p[0] - 1, 15); cal }
+        1    -> { cal.set(p[0], 6, 1); cal }
+        else -> null
+    }
+}
+
+private fun fmtReleaseDate(s: String): String {
+    val p = s.split("/").mapNotNull { it.toIntOrNull() }
+    return when (p.size) {
+        3    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}, ${p[2]}"
+        2    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}"
+        1    -> "${p[0]}"
+        else -> s
+    }
+}
+
+private fun fmtAcquiredAt(s: String): String {
+    val p = s.split("-").mapNotNull { it.toIntOrNull() }
+    if (p.size < 3) return s
+    return "${MONTH_SHORT.getOrNull(p[1] - 1)} ${p[2]}, ${p[0]}"
+}
+
+private data class RichEntry(val e: HistoryEntry, val cal: Calendar)
+private data class DotInfo(val e: HistoryEntry, val x: Float, val y: Float)
+
+private data class HStats(
+    val total: Int,
+    val thisYear: Int,
+    val artists: Int,
+    val bestYear: Pair<Int, Int>?,
+    val peakMonth: Pair<String, Int>?,
+    val allYears: List<Pair<Int, Int>>,
+    val maxYrCount: Int,
+    val avgGap: Int?,
+    val lastLoggedDays: Int?,
+)
+
+private fun computeHStats(entries: List<RichEntry>): HStats {
+    val now      = Calendar.getInstance()
+    val nowYear  = now.get(Calendar.YEAR)
+    val byYear   = mutableMapOf<Int, Int>()
+    val byMonth  = mutableMapOf<String, Int>()
+    val artistSet = mutableSetOf<String>()
+    entries.forEach { r ->
+        artistSet += r.e.artistName
+        val yr = r.cal.get(Calendar.YEAR)
+        byYear[yr] = (byYear[yr] ?: 0) + 1
+        val mk = "${MONTH_SHORT[r.cal.get(Calendar.MONTH)]} $yr"
+        byMonth[mk] = (byMonth[mk] ?: 0) + 1
+    }
+    var gapSum = 0L; var gapCount = 0
+    for (i in 1 until entries.size) {
+        gapSum += (entries[i].cal.timeInMillis - entries[i - 1].cal.timeInMillis) / 86_400_000L
+        gapCount++
+    }
+    val lastLoggedDays = entries.maxByOrNull { it.cal.timeInMillis }
+        ?.e?.acquiredAt
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { raw ->
+            runCatching {
+                val fmt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+                val d = fmt.parse(raw.take(10)) ?: return@let null
+                ((now.timeInMillis - d.time) / 86_400_000L).toInt()
+            }.getOrNull()
+        }
+    val allYears = byYear.entries.sortedBy { it.key }.map { Pair(it.key, it.value) }
+    return HStats(
+        total         = entries.size,
+        thisYear      = entries.count { it.cal.get(Calendar.YEAR) == nowYear },
+        artists       = artistSet.size,
+        bestYear      = byYear.entries.maxByOrNull { it.value }?.let { Pair(it.key, it.value) },
+        peakMonth     = byMonth.entries.maxByOrNull { it.value }?.let { Pair(it.key, it.value) },
+        allYears      = allYears,
+        maxYrCount    = allYears.maxOfOrNull { it.second } ?: 1,
+        avgGap        = if (gapCount > 0) (gapSum / gapCount).toInt() else null,
+        lastLoggedDays = lastLoggedDays,
+    )
+}
+
 @Composable
 private fun HistorySection(history: List<HistoryEntry>) {
-    if (history.isEmpty()) { CenteredText("No history yet."); return }
-    Column(modifier = Modifier.padding(horizontal = 14.dp)) {
-        history.forEach { entry ->
+    val entries = remember(history) {
+        history.mapNotNull { e -> parseRDate(e.releaseDate)?.let { RichEntry(e, it) } }
+            .sortedBy { it.cal.timeInMillis }
+    }
+    if (entries.isEmpty()) { CenteredText("No history yet."); return }
+
+    val stats    = remember(entries) { computeHStats(entries) }
+    var selected by remember { mutableStateOf<DotInfo?>(null) }
+
+    Column {
+        // Stats strip
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                StatChip(stats.total.toString(), "logged")
+                StatChip(stats.thisYear.toString(), "this year")
+                StatChip(stats.artists.toString(), "artists")
+                stats.lastLoggedDays?.let { StatChip(if (it == 0) "today" else "${it}d", "last logged") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                stats.bestYear?.let  { (yr, cnt) -> StatChip("$yr", "best year · $cnt") }
+                stats.peakMonth?.let { (mk, cnt) -> StatChip(mk, "busiest month · $cnt") }
+                stats.avgGap?.let    { StatChip("${it}d", "avg gap") }
+            }
+        }
+
+        HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 14.dp))
+
+        // Year bar chart
+        if (stats.allYears.isNotEmpty()) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                    .height(IntrinsicSize.Min).clip(cardShape).background(CardBg)
-                    .border(BorderStroke(1.5.dp, BorderColor), cardShape),
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 14.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(Accent))
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-                    Text(entry.artistName, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                    if (entry.albumTitle.isNotEmpty()) {
-                        Text(entry.albumTitle, color = TextSecondary, fontSize = 13.sp, fontStyle = FontStyle.Italic)
+                stats.allYears.forEach { (yr, count) ->
+                    val barH = maxOf((count.toFloat() / stats.maxYrCount * 52).toInt(), 4).dp
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("$count", color = TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 2.dp, bottom = 4.dp)
+                                .width(28.dp)
+                                .height(barH)
+                                .background(Accent, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
+                        )
+                        Text("$yr", color = TextDim, fontSize = 9.sp)
                     }
-                    Text(entry.acquiredAt, color = TextDim, fontSize = 11.sp, modifier = Modifier.padding(top = 3.dp))
                 }
+            }
+            HorizontalDivider(color = BorderColor, modifier = Modifier.padding(horizontal = 14.dp))
+        }
+
+        // Dot timeline
+        Spacer(Modifier.height(8.dp))
+        HistoryTimeline(entries = entries, selected = selected, onTap = { selected = it })
+
+        // Selected dot detail card
+        selected?.let { dot ->
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+                    .clip(cardShape)
+                    .background(CardBg)
+                    .border(BorderStroke(1.5.dp, BorderColor), cardShape)
+                    .padding(end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(artistColor(dot.e.artistName)))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                ) {
+                    Text(dot.e.artistName, color = artistColor(dot.e.artistName),
+                        fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    if (dot.e.albumTitle.isNotEmpty()) {
+                        Text(dot.e.albumTitle, color = TextSecondary, fontSize = 13.sp,
+                            fontStyle = FontStyle.Italic)
+                    }
+                    if (dot.e.releaseDate.isNotEmpty()) {
+                        Text(fmtReleaseDate(dot.e.releaseDate), color = TextDim, fontSize = 11.sp,
+                            modifier = Modifier.padding(top = 2.dp))
+                    }
+                }
+                IconButton(onClick = { selected = null }, modifier = Modifier.size(36.dp)) {
+                    Text("×", color = TextSecondary, fontSize = 20.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatChip(value: String, label: String, valueColor: Color = TextPrimary) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = valueColor, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1)
+        Text(label, color = TextSecondary, fontSize = 10.sp, letterSpacing = 0.3.sp, maxLines = 1)
+    }
+}
+
+@Composable
+private fun HistoryTimeline(
+    entries: List<RichEntry>,
+    selected: DotInfo?,
+    onTap: (DotInfo?) -> Unit,
+) {
+    val density = LocalDensity.current
+
+    val pxPerMonth = with(density) { 40.dp.toPx() }
+    val dotR       = with(density) { 8.dp.toPx() }
+    val timelineY  = with(density) { 130.dp.toPx() }
+    val canvasH    = with(density) { 158.dp.toPx() }
+    val padL       = with(density) { 16.dp.toPx() }
+    val padR       = with(density) { 32.dp.toPx() }
+
+    val nowCal = remember { Calendar.getInstance() }
+
+    val minYear = remember(entries) {
+        entries.minOfOrNull { it.cal.get(Calendar.YEAR) } ?: (nowCal.get(Calendar.YEAR) - 1)
+    }
+    val maxYear = remember(entries) {
+        maxOf(
+            entries.maxOfOrNull { it.cal.get(Calendar.YEAR) } ?: nowCal.get(Calendar.YEAR),
+            nowCal.get(Calendar.YEAR),
+        )
+    }
+
+    fun mToX(yr: Int, mo: Int) = padL + ((yr - minYear) * 12 + mo) * pxPerMonth + pxPerMonth / 2f
+
+    val canvasW = padL + (maxYear - minYear + 2) * 12 * pxPerMonth + padR
+
+    val dots = remember(entries, minYear, pxPerMonth, padL, dotR, timelineY) {
+        val byKey = mutableMapOf<String, MutableList<RichEntry>>()
+        entries.forEach { r ->
+            val key = "${r.cal.get(Calendar.YEAR)}-${r.cal.get(Calendar.MONTH)}"
+            byKey.getOrPut(key) { mutableListOf() }.add(r)
+        }
+        buildList {
+            byKey.forEach { (key, items) ->
+                val parts = key.split("-")
+                val x = mToX(parts[0].toInt(), parts[1].toInt())
+                items.forEachIndexed { i, r ->
+                    add(DotInfo(r.e, x, timelineY - dotR - i * (dotR * 2 + 3f)))
+                }
+            }
+        }
+    }
+
+    val yearTicks = remember(minYear, maxYear, padL, pxPerMonth) {
+        (minYear..maxYear + 1).map { yr -> Pair(yr, padL + (yr - minYear) * 12 * pxPerMonth) }
+    }
+
+    val bandColor = Color(0xFFF5F3F0)
+    val gridColor = Color(0xFFE8E3DE)
+    val baseColor = Color(0xFFCEC9C3)
+
+    val labelPaint = remember(density) {
+        android.graphics.Paint().apply {
+            textSize    = with(density) { 11.dp.toPx() }
+            color       = android.graphics.Color.parseColor("#BFBAB4")
+            typeface    = android.graphics.Typeface.DEFAULT_BOLD
+            isAntiAlias = true
+        }
+    }
+    val nowTextPaint = remember(density) {
+        android.graphics.Paint().apply {
+            textSize    = with(density) { 9.dp.toPx() }
+            color       = android.graphics.Color.argb(115, 236, 111, 0)
+            typeface    = android.graphics.Typeface.DEFAULT_BOLD
+            isAntiAlias = true
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+        Canvas(
+            modifier = Modifier
+                .width(with(density) { canvasW.toDp() })
+                .height(with(density) { canvasH.toDp() })
+                .pointerInput(dots, selected) {
+                    detectTapGestures { offset ->
+                        val hit = dots.firstOrNull { dot ->
+                            val dx = offset.x - dot.x; val dy = offset.y - dot.y
+                            dx * dx + dy * dy <= (dotR * 2f) * (dotR * 2f)
+                        }
+                        onTap(if (hit != null && hit.e.id == selected?.e?.id) null else hit)
+                    }
+                }
+        ) {
+            val topPad = with(density) { 10.dp.toPx() }
+
+            // Alternating year bands
+            yearTicks.forEachIndexed { i, (_, x) ->
+                if (i % 2 == 1) {
+                    drawRect(bandColor, Offset(x, 0f), Size(12 * pxPerMonth, timelineY), alpha = 0.6f)
+                }
+            }
+            // Year grid lines
+            yearTicks.forEach { (_, x) ->
+                drawLine(gridColor, Offset(x, topPad), Offset(x, timelineY), strokeWidth = 1.5f)
+            }
+            // Baseline
+            drawLine(baseColor, Offset(padL, timelineY), Offset(canvasW - padR, timelineY), strokeWidth = 2f)
+            // Year labels
+            yearTicks.forEach { (yr, x) ->
+                drawContext.canvas.nativeCanvas.drawText(
+                    "$yr", x + with(density) { 4.dp.toPx() },
+                    canvasH - with(density) { 4.dp.toPx() }, labelPaint,
+                )
+            }
+            // Today marker (dashed)
+            val todayX = mToX(nowCal.get(Calendar.YEAR), nowCal.get(Calendar.MONTH))
+            if (todayX in padL..(canvasW - padR)) {
+                drawLine(
+                    color       = Accent.copy(alpha = 0.3f),
+                    start       = Offset(todayX, with(density) { 16.dp.toPx() }),
+                    end         = Offset(todayX, timelineY),
+                    strokeWidth = 2f,
+                    pathEffect  = PathEffect.dashPathEffect(floatArrayOf(8f, 6f)),
+                )
+                drawContext.canvas.nativeCanvas.drawText(
+                    "NOW", todayX + with(density) { 3.dp.toPx() },
+                    with(density) { 28.dp.toPx() }, nowTextPaint,
+                )
+            }
+            // Release dots
+            dots.forEach { dot ->
+                val isSelected = selected?.e?.id == dot.e.id
+                drawCircle(artistColor(dot.e.artistName), dotR, Offset(dot.x, dot.y))
+                drawCircle(
+                    color  = if (isSelected) Color(0xFF1A1A1A) else Color.White,
+                    radius = dotR,
+                    center = Offset(dot.x, dot.y),
+                    style  = Stroke(width = if (isSelected) with(density) { 2.5.dp.toPx() } else with(density) { 2.dp.toPx() }),
+                )
             }
         }
     }

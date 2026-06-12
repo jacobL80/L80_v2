@@ -5,13 +5,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.glance.*
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.*
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -25,17 +32,21 @@ import kotlinx.coroutines.withContext
 
 class UpcomingWidget : GlanceAppWidget() {
 
+    companion object {
+        val SINGLE_COLUMN_KEY = booleanPreferencesKey("single_column")
+    }
+
+    override val stateDefinition = PreferencesGlanceStateDefinition
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val upcoming = fetchUpcoming()
         provideContent {
+            val prefs = currentState<Preferences>()
+            val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
             val size = LocalSize.current
-            val twoColumn = size.width >= 250.dp
-            val availableHeight = size.height.value - 32f  // subtract title + padding
-            val rows = maxOf(1, (availableHeight / 44f).toInt())
-            val maxCards = minOf(10, rows * if (twoColumn) 2 else 1)
-            WidgetContent(upcoming.take(maxCards), twoColumn)
+            val twoColumn = !singleColumn && size.width >= 250.dp
+            WidgetContent(upcoming, twoColumn, singleColumn)
         }
     }
 
@@ -49,26 +60,39 @@ class UpcomingWidget : GlanceAppWidget() {
 }
 
 @Composable
-private fun WidgetContent(artists: List<Artist>, twoColumn: Boolean) {
+private fun WidgetContent(artists: List<Artist>, twoColumn: Boolean, singleColumn: Boolean) {
     val bgColor = ColorProvider(Color(0xFF0f0f0f))
     val openApp = actionStartActivity<MainActivity>()
 
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
+            .cornerRadius(android.R.dimen.system_app_widget_background_radius)
             .background(bgColor)
             .clickable(openApp)
             .padding(8.dp),
     ) {
-        Text(
-            text = "Upcoming Releases",
-            style = TextStyle(
-                color = ColorProvider(Color(0xFFEC6F00)),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            modifier = GlanceModifier.padding(start = 6.dp, bottom = 6.dp),
-        )
+        Row(
+            modifier = GlanceModifier.fillMaxWidth().padding(start = 6.dp, top = 8.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.Vertical.CenterVertically,
+        ) {
+            Text(
+                text = "Upcoming Releases",
+                style = TextStyle(
+                    color = ColorProvider(Color(0xFFEC6F00)),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                modifier = GlanceModifier.defaultWeight(),
+            )
+            Text(
+                text = if (singleColumn) "⊞" else "⊟",
+                style = TextStyle(color = ColorProvider(Color(0xFF555555)), fontSize = 13.sp),
+                modifier = GlanceModifier
+                    .padding(end = 4.dp)
+                    .clickable(actionRunCallback<ToggleColumnAction>()),
+            )
+        }
 
         if (artists.isEmpty()) {
             Text(
@@ -79,23 +103,24 @@ private fun WidgetContent(artists: List<Artist>, twoColumn: Boolean) {
         }
 
         if (twoColumn) {
-            Column(modifier = GlanceModifier.fillMaxSize()) {
-                artists.chunked(2).forEach { rowArtists ->
+            val chunks = artists.chunked(2)
+            LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
+                items(chunks, itemId = { row -> row.first().name.hashCode().toLong() }) { rowArtists ->
                     Row(
-                        modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
+                        modifier = GlanceModifier.fillMaxWidth().padding(vertical = 3.dp),
                         horizontalAlignment = Alignment.Horizontal.Start,
                     ) {
                         rowArtists.forEach { a ->
-                            WidgetCard(a, modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(2.dp))
+                            WidgetCard(a, modifier = GlanceModifier.defaultWeight().padding(horizontal = 3.dp))
                         }
                         if (rowArtists.size == 1) Spacer(GlanceModifier.defaultWeight())
                     }
                 }
             }
         } else {
-            Column(modifier = GlanceModifier.fillMaxSize()) {
-                artists.forEach { a ->
-                    WidgetCard(a, modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(vertical = 2.dp))
+            LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
+                items(artists, itemId = { it.name.hashCode().toLong() }) { a ->
+                    WidgetCard(a, modifier = GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), large = true)
                 }
             }
         }
@@ -103,58 +128,69 @@ private fun WidgetContent(artists: List<Artist>, twoColumn: Boolean) {
 }
 
 @Composable
-private fun WidgetCard(artist: Artist, modifier: GlanceModifier = GlanceModifier) {
+private fun WidgetCard(artist: Artist, modifier: GlanceModifier = GlanceModifier, large: Boolean = false) {
     val (month, day, year) = DateUtils.parseParts(artist.nextRelease)
     val daysUntil  = DateUtils.daysUntil(artist.nextRelease)
     val imminent   = daysUntil in 0..6
 
-    val cardBg        = if (imminent) ColorProvider(Color(0xFF1a2a1a)) else ColorProvider(Color(0xFF1e1e1e))
+    val cardBg        = if (imminent) ColorProvider(Color(0xFF2E1600)) else ColorProvider(Color(0xFF1e1e1e))
     val accentColor   = ColorProvider(Color(0xFFEC6F00))
     val textPrimary   = ColorProvider(Color(0xFFe8e8e8))
     val textSecondary = ColorProvider(Color(0xFF888888))
     val imminentColor = ColorProvider(Color(0xFFEC6F00))
+    val dayColor      = if (imminent) imminentColor else textPrimary
 
-    Row(
-        modifier = modifier.background(cardBg).padding(6.dp),
-        verticalAlignment = Alignment.Vertical.CenterVertically,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-            modifier = GlanceModifier.width(36.dp),
+    val dayFontSize   = if (large) 22.sp else 18.sp
+    val monthFontSize = if (large) 10.sp else 8.sp
+    val yearFontSize  = if (large) 11.sp else 9.sp
+    val nameFontSize  = if (large) 17.sp else 11.sp
+    val albumFontSize = if (large) 13.sp else 9.sp
+    val labelFontSize = if (large) 11.sp else 9.sp
+    val dateColWidth  = if (large) 44.dp else 36.dp
+
+    Column(modifier = modifier) {
+        Row(
+            modifier = GlanceModifier.fillMaxWidth().background(cardBg).cornerRadius(8.dp).padding(6.dp),
+            verticalAlignment = Alignment.Vertical.CenterVertically,
         ) {
-            if (month != null) {
-                Text(month, style = TextStyle(color = accentColor, fontSize = 8.sp, fontWeight = FontWeight.Bold))
+            Column(
+                horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+                modifier = GlanceModifier.width(dateColWidth),
+            ) {
+                if (month != null) {
+                    Text(month, style = TextStyle(color = accentColor, fontSize = monthFontSize, fontWeight = FontWeight.Bold))
+                }
+                if (day != null) {
+                    Text(day.toString(), style = TextStyle(color = dayColor, fontSize = dayFontSize, fontWeight = FontWeight.Bold))
+                }
+                if (year != null) {
+                    Text(year.toString(), style = TextStyle(color = textSecondary, fontSize = yearFontSize))
+                }
             }
-            if (day != null) {
-                Text(day.toString(), style = TextStyle(color = textPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold))
-            }
-            if (year != null) {
-                Text(year.toString(), style = TextStyle(color = textSecondary, fontSize = 9.sp))
-            }
-        }
 
-        Spacer(GlanceModifier.width(6.dp))
+            Spacer(GlanceModifier.width(6.dp))
 
-        Column(modifier = GlanceModifier.defaultWeight()) {
-            Text(
-                text = artist.name,
-                style = TextStyle(color = textPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold),
-                maxLines = 1,
-            )
-            if (artist.albumTitle.isNotEmpty()) {
+            Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
-                    text = artist.albumTitle,
-                    style = TextStyle(color = textSecondary, fontSize = 9.sp),
+                    text = artist.name,
+                    style = TextStyle(color = textPrimary, fontSize = nameFontSize, fontWeight = FontWeight.Bold),
                     maxLines = 1,
                 )
-            }
-            if (imminent) {
-                val label = when (daysUntil.toInt()) {
-                    0    -> "Today"
-                    1    -> "Tomorrow"
-                    else -> "${daysUntil}d"
+                if (artist.albumTitle.isNotEmpty()) {
+                    Text(
+                        text = artist.albumTitle,
+                        style = TextStyle(color = textSecondary, fontSize = albumFontSize),
+                        maxLines = 1,
+                    )
                 }
-                Text(label, style = TextStyle(color = imminentColor, fontSize = 9.sp, fontWeight = FontWeight.Bold))
+                if (imminent) {
+                    val label = when (daysUntil.toInt()) {
+                        0    -> "Today"
+                        1    -> "Tomorrow"
+                        else -> "${daysUntil}d"
+                    }
+                    Text(label, style = TextStyle(color = imminentColor, fontSize = labelFontSize, fontWeight = FontWeight.Bold))
+                }
             }
         }
     }

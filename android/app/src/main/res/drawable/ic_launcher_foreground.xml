@@ -23,7 +23,7 @@
     <path
         android:strokeColor="#FFF4E6"
         android:strokeWidth="5"
-        android:pathData="M 50,72 L 50,32" />
+        android:pathData="M 50,72 L 50,28" />
 
     <!-- Right stem — attaches at right edge of right note head -->
     <path

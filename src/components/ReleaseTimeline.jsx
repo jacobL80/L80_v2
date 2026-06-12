@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import '../css/ReleaseTimeline.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -27,12 +27,6 @@ function fmtDate(s) {
   return String(p[0]);
 }
 
-function fmtIso(s) {
-  if (!s) return '';
-  const [y, m, d] = s.split('-').map(Number);
-  return `${MONTHS_SHORT[m-1]} ${d}, ${y}`;
-}
-
 // ─── Layout constants ─────────────────────────────────────────────────────────
 
 const PX_PER_MONTH = 32;
@@ -47,6 +41,15 @@ const PAD_R        = 48;
 const ReleaseTimeline = ({ history }) => {
   const [tooltip, setTooltip] = useState(null); // { dot, x, y }
   const [pinned,  setPinned]  = useState(null); // pinned dot entry
+  const wrapRef  = useRef(null);
+  const [wrapWidth, setWrapWidth] = useState(0);
+
+  useEffect(() => {
+    if (!wrapRef.current) return;
+    const obs = new ResizeObserver(([e]) => setWrapWidth(e.contentRect.width));
+    obs.observe(wrapRef.current);
+    return () => obs.disconnect();
+  }, []);
 
   // Enriched + sorted entries
   const entries = useMemo(() =>
@@ -69,7 +72,7 @@ const ReleaseTimeline = ({ history }) => {
 
   const mToX = (year, month) => PAD_L + ((year - minYear) * 12 + month) * PX_PER_MONTH + PX_PER_MONTH / 2;
   const totalMonths = (maxYear - minYear + 2) * 12;
-  const svgWidth = PAD_L + totalMonths * PX_PER_MONTH + PAD_R;
+  const svgWidth = Math.max(PAD_L + totalMonths * PX_PER_MONTH + PAD_R, wrapWidth);
 
   // Dot positions — stack same-month dots vertically
   const dots = useMemo(() => {
@@ -93,15 +96,13 @@ const ReleaseTimeline = ({ history }) => {
   const stats = useMemo(() => {
     if (!entries.length) return null;
     const thisYear = new Date().getFullYear();
-    const byArtist = {}, byYear = {}, byMonth = {};
+    const byYear = {}, byMonth = {};
     entries.forEach(r => {
-      byArtist[r.artist_name] = (byArtist[r.artist_name] || 0) + 1;
       const y = r._date.getFullYear();
       byYear[y] = (byYear[y] || 0) + 1;
       const mk = `${MONTHS_SHORT[r._date.getMonth()]} ${y}`;
       byMonth[mk] = (byMonth[mk] || 0) + 1;
     });
-    const topArtist  = Object.entries(byArtist).sort((a, b) => b[1] - a[1])[0];
     const bestYear   = Object.entries(byYear).sort((a, b) => b[1] - a[1])[0];
     const peakMonth  = Object.entries(byMonth).sort((a, b) => b[1] - a[1])[0];
     const allYears   = Object.entries(byYear).sort((a, b) => +a[0] - +b[0]);
@@ -111,22 +112,32 @@ const ReleaseTimeline = ({ history }) => {
       gap += (entries[i]._date - entries[i-1]._date) / 86400000;
       gc++;
     }
+    const uniqueArtists = new Set(entries.map(r => r.artist_name)).size;
+    const acquiredDates = entries.map(r => r.acquired_at).filter(Boolean).map(s => new Date(s));
+    const lastLoggedDays = acquiredDates.length
+      ? Math.round((Date.now() - Math.max(...acquiredDates)) / 86400000)
+      : null;
     return {
       total:         entries.length,
       thisYearCount: entries.filter(r => r._date.getFullYear() === thisYear).length,
-      topArtist, bestYear, peakMonth, allYears, maxYrCount,
+      uniqueArtists, lastLoggedDays,
+      bestYear, peakMonth, allYears, maxYrCount,
       avgGapDays: gc ? Math.round(gap / gc) : null,
     };
   }, [entries]);
 
-  // Year tick positions
+  // Year tick positions — extend to fill svgWidth so bands/labels cover the full canvas
   const yearTicks = useMemo(() => {
     const t = [];
-    for (let y = minYear; y <= maxYear + 1; y++) {
-      t.push({ year: y, x: PAD_L + (y - minYear) * 12 * PX_PER_MONTH });
+    let y = minYear;
+    while (true) {
+      const x = PAD_L + (y - minYear) * 12 * PX_PER_MONTH;
+      if (x > svgWidth) break;
+      t.push({ year: y, x });
+      y++;
     }
     return t;
-  }, [minYear, maxYear]);
+  }, [minYear, svgWidth]);
 
   // Tooltip position — flip left if too close to right edge
   const tipPos = tooltip ? (() => {
@@ -157,7 +168,7 @@ const ReleaseTimeline = ({ history }) => {
   );
 
   return (
-    <div className="releaseTimeline" onClick={clearAll}>
+    <div className="releaseTimeline" onClick={clearAll} ref={wrapRef}>
 
       {/* Stats strip */}
       {stats && (
@@ -170,24 +181,26 @@ const ReleaseTimeline = ({ history }) => {
             <div className="tlStatNum">{stats.thisYearCount}</div>
             <div className="tlStatLabel">this year</div>
           </div>
+          <div className="tlStat">
+            <div className="tlStatNum">{stats.uniqueArtists}</div>
+            <div className="tlStatLabel">artists</div>
+          </div>
           {stats.bestYear && (
             <div className="tlStat">
               <div className="tlStatNum">{stats.bestYear[0]}</div>
               <div className="tlStatLabel">best year · {stats.bestYear[1]}</div>
             </div>
           )}
-          {stats.topArtist && (
-            <div className="tlStat tlStat--wide">
-              <div className="tlStatNum tlStatNum--md" style={{ color: artistColor(stats.topArtist[0]) }}>
-                {stats.topArtist[0]}
-              </div>
-              <div className="tlStatLabel">top artist · {stats.topArtist[1]}</div>
-            </div>
-          )}
           {stats.peakMonth && (
             <div className="tlStat">
               <div className="tlStatNum tlStatNum--md">{stats.peakMonth[0]}</div>
-              <div className="tlStatLabel">peak month · {stats.peakMonth[1]}</div>
+              <div className="tlStatLabel">busiest month · {stats.peakMonth[1]}</div>
+            </div>
+          )}
+          {stats.lastLoggedDays !== null && (
+            <div className="tlStat">
+              <div className="tlStatNum">{stats.lastLoggedDays === 0 ? 'today' : `${stats.lastLoggedDays}d`}</div>
+              <div className="tlStatLabel">last logged</div>
             </div>
           )}
           {stats.avgGapDays && (
@@ -261,11 +274,12 @@ const ReleaseTimeline = ({ history }) => {
               className="tlDotGroup"
               transform={`translate(${dot.x}, ${dot.y})`}
               onMouseEnter={(e) => handleEnter(e, dot)}
+              onMouseMove={(e) => !pinned && setTooltip(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : prev)}
               onMouseLeave={handleLeave}
               onClick={(e) => handleClick(e, dot)}
-              style={{ cursor: 'pointer' }}
             >
               <circle
+                className="tlDot"
                 cx={0} cy={0} r={DOT_R}
                 fill={artistColor(dot.artist_name)}
                 stroke={activeDot?.id === dot.id ? '#1a1a1a' : '#fff'}
@@ -290,9 +304,6 @@ const ReleaseTimeline = ({ history }) => {
             <div className="tlTipAlbum">{tooltip.dot.album_title}</div>
           )}
           <div className="tlTipDate">{fmtDate(tooltip.dot.release_date)}</div>
-          {tooltip.dot.acquired_at && (
-            <div className="tlTipAcquired">Logged {fmtIso(tooltip.dot.acquired_at)}</div>
-          )}
           {pinned && <button className="tlTipClose" onClick={clearAll}>×</button>}
         </div>
       )}

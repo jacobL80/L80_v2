@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import '../css/Music.css';
@@ -359,7 +360,8 @@ const Music = () => {
   const [showPassModal,   setPassModal]  = useState(false);
   const [pendingAdd,      setPendingAdd] = useState(false);
   const [history,         setHistory]   = useState([]);
-  const [view,            setView]      = useState('schedule');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('view') === 'history' ? 'timeline' : 'schedule';
 
   useEffect(() => {
     const stored = getCookie();
@@ -392,6 +394,15 @@ const Music = () => {
       .then(data => { setArtists(data); setLoading(false); })
       .catch(() => { setFetchErr(true); setLoading(false); });
   }, []);
+
+  // Scroll to section from URL on initial load
+  useEffect(() => {
+    if (!loading && view === 'schedule') {
+      const section = searchParams.get('section');
+      if (section) setTimeout(() => scrollTo(`section-${section}`), 100);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Fetch history
   useEffect(() => {
@@ -539,10 +550,12 @@ const Music = () => {
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const handleSectionNav = (id) => {
+    const sectionName = id.replace('section-', '');
     if (view !== 'schedule') {
-      setView('schedule');
+      setSearchParams({ section: sectionName });
       setTimeout(() => scrollTo(id), 60);
     } else {
+      setSearchParams({ section: sectionName });
       scrollTo(id);
     }
   };
@@ -656,7 +669,7 @@ const Music = () => {
         <div className="bottomNavDivider" />
         <button
           className={`bottomNavBtn${view === 'timeline' ? ' bottomNavBtn--active' : ''}`}
-          onClick={() => setView(v => v === 'timeline' ? 'schedule' : 'timeline')}
+          onClick={() => setSearchParams(view === 'timeline' ? {} : { view: 'history' })}
         >
           <BarChartIcon />
           <span>History</span>

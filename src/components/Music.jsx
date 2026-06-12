@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 import '../css/Music.css';
 import ReleaseTimeline from './ReleaseTimeline';
 
@@ -64,7 +66,14 @@ const parseParts  = (s) => {
   if (p.length === 2) return { month: MONTHS[p[0] - 1], day: null, year: p[1] };
   return { month: null, day: null, year: p[0] || null };
 };
-const getYear     = (s) => s.split('/').slice(-1)[0];
+const getYear       = (s) => s.split('/').slice(-1)[0];
+const hasDateDetail = (s) => !!s && s.split('/').length > 1;
+const formatLastDate = (s) => {
+  const { month, day, year } = parseParts(s);
+  if (month && day) return `${month} ${day}, ${year}`;
+  if (month) return `${month} ${year}`;
+  return String(year);
+};
 
 // ─── Password modal ───────────────────────────────────────────────────────────
 
@@ -247,7 +256,12 @@ const UpcomingCard = ({ artist, onEdit, onAcquire, editing }) => {
           )}
         </div>
         {artist.albumTitle && <div className="upcomingCardAlbum">{artist.albumTitle}</div>}
-        {artist.lastRelease && <div className="cardLastRelease">Last: {artist.lastRelease}</div>}
+        {artist.lastRelease && (
+          <div className="cardLastRelease"
+            {...(hasDateDetail(artist.lastRelease) && { 'data-tooltip-id': 'last-date-tip', 'data-tooltip-content': formatLastDate(artist.lastRelease) })}>
+            Last: {getYear(artist.lastRelease)}
+          </div>
+        )}
         {imminent && (
           <div className="upcomingCardImminent">
             {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days away`}
@@ -296,7 +310,12 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
           <div className="rowCardDate">
             {cardMonth && <div className="rowCardDateLabel">{cardMonth}</div>}
             {cardLabel && <div className="rowCardDateLabel rowCardDateLabel--last">{cardLabel}</div>}
-            {cardYear && <div className="rowCardDateYear">{cardYear}</div>}
+            {cardYear && (
+              <div className="rowCardDateYear"
+                {...(dateEmpty && hasDateDetail(artist.lastRelease) && { 'data-tooltip-id': 'last-date-tip', 'data-tooltip-content': formatLastDate(artist.lastRelease) })}>
+                {cardYear}
+              </div>
+            )}
           </div>
           <div className="rowCardDivider" />
         </>
@@ -314,7 +333,12 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
             {artist.notes && <span className="musicNotes"> ({artist.notes})</span>}
           </div>
         )}
-        {!dateEmpty && artist.lastRelease && <div className="cardLastRelease">Last: {artist.lastRelease}</div>}
+        {!dateEmpty && artist.lastRelease && (
+          <div className="cardLastRelease"
+            {...(hasDateDetail(artist.lastRelease) && { 'data-tooltip-id': 'last-date-tip', 'data-tooltip-content': formatLastDate(artist.lastRelease) })}>
+            Last: {getYear(artist.lastRelease)}
+          </div>
+        )}
       </div>
       {editing && (
         <button className="rowEditBtn" onClick={() => onEdit(artist)} title="Edit">✎</button>
@@ -489,17 +513,17 @@ const Music = () => {
   const hiatusYear = new Date().getFullYear() - 8;
 
   const watching = artists
-    .filter(a => !a.nextRelease && !a.hiatus && !(a.lastRelease && parseInt(a.lastRelease) <= hiatusYear))
+    .filter(a => !a.nextRelease && !a.hiatus && !(a.lastRelease && parseInt(getYear(a.lastRelease)) <= hiatusYear))
     .sort((a, b) => {
       const dy = (a.lastRelease ? parseDate(a.lastRelease) : new Date(0)) - (b.lastRelease ? parseDate(b.lastRelease) : new Date(0));
       return dy !== 0 ? dy : sortKey(a.name).localeCompare(sortKey(b.name));
     });
 
   const hiatus = artists
-    .filter(a => !a.nextRelease && (a.hiatus || (a.lastRelease && parseInt(a.lastRelease) <= hiatusYear)))
+    .filter(a => !a.nextRelease && (a.hiatus || (a.lastRelease && parseInt(getYear(a.lastRelease)) <= hiatusYear)))
     .sort((a, b) => {
-      const ay = a.lastRelease ? parseInt(a.lastRelease) : 0;
-      const by = b.lastRelease ? parseInt(b.lastRelease) : 0;
+      const ay = a.lastRelease ? parseInt(getYear(a.lastRelease)) : 0;
+      const by = b.lastRelease ? parseInt(getYear(b.lastRelease)) : 0;
       return ay !== by ? ay - by : sortKey(a.name).localeCompare(sortKey(b.name));
     });
 
@@ -638,6 +662,8 @@ const Music = () => {
           <span>History</span>
         </button>
       </nav>
+
+      <Tooltip id="last-date-tip" />
 
       {showPassModal && (
         <PasswordModal onSubmit={enterEditMode} onCancel={() => { setPassModal(false); setPendingAdd(false); }} />

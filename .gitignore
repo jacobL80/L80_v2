@@ -29,3 +29,5 @@ yarn-error.log*
 android/.gradle/
 android/build/
 android/app/build/
+android/app/release/
+android/local.properties

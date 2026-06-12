@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,9 @@ plugins {
 }
 
 layout.buildDirectory.set(File("C:/BuildCache/MusicTracker/app"))
+
+val props = Properties()
+props.load(rootProject.file("local.properties").inputStream())
 
 android {
     namespace = "com.jacobleighty.musictracker"
@@ -18,10 +23,20 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(props["KEYSTORE_PATH"] as String)
+            storePassword = props["STORE_PASSWORD"] as String
+            keyAlias = props["KEY_ALIAS"] as String
+            keyPassword = props["KEY_PASSWORD"] as String
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

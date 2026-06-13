@@ -95,6 +95,63 @@
   letter-spacing: 0.5px;
 }
 
+/* ─── Horizontal bar charts ───────────────────────────────────────────────── */
+
+.tlHBarSection {
+  margin-bottom: 28px;
+  padding: 0 2px;
+}
+
+.tlHBarTitle {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #c4bfba;
+  margin-bottom: 10px;
+}
+
+.tlHBarItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.tlHBarLabel {
+  font-size: 13px;
+  color: #1a1a1a;
+  font-weight: 500;
+  width: 140px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tlHBarTrack {
+  flex: 1;
+  height: 9px;
+  background: #f0eeeb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tlHBar {
+  height: 100%;
+  border-radius: 2px;
+  min-width: 4px;
+  transition: width 0.4s ease;
+}
+
+.tlHBarCount {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  min-width: 18px;
+  text-align: right;
+}
+
 /* ─── SVG scroll container ────────────────────────────────────────────────── */
 
 .tlScrollWrap {

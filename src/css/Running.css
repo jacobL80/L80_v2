@@ -1,0 +1,291 @@
+/* ─── Running layout ─────────────────────────────────────────────────────────── */
+
+.runningOuter {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  min-height: unset !important;
+}
+
+.runningChartArea {
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1px solid #ebe7e3;
+  z-index: 30;
+}
+
+.runningScrollArea {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Chart ──────────────────────────────────────────────────────────────────── */
+
+.runChartWrap {
+  padding: 0 0 0 0;
+  position: relative;
+}
+
+.runChartLegend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 40px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+}
+
+.runChartLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.runChartLegendDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.runChartScroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 16px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #ddd transparent;
+}
+
+.runChartSvg {
+  display: block;
+}
+
+.runChartTip {
+  position: fixed;
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  padding: 10px 14px;
+  pointer-events: none;
+  z-index: 200;
+  min-width: 160px;
+}
+
+.runChartTipWeek {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.runChartTipTotal {
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.runChartTipDays {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.runChartTipDay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #444;
+}
+
+.runChartTipDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ─── Year bar ───────────────────────────────────────────────────────────────── */
+
+.runYearBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.runYearSelect {
+  font-family: Calibri, sans-serif;
+  font-size: 15px;
+  color: #1a1a1a;
+  border: 1.5px solid #ddd;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.runYearSelect:focus {
+  border-color: #47A025;
+}
+
+.runYearTotal {
+  font-size: 15px;
+  color: #666;
+}
+
+.runYearWeeks {
+  color: #aaa;
+  font-size: 13px;
+}
+
+/* ─── Table ──────────────────────────────────────────────────────────────────── */
+
+.runTableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.runTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Calibri, sans-serif;
+  font-size: 14px;
+}
+
+.runTh {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #999;
+  padding: 8px 10px;
+  border-bottom: 1.5px solid #e8e8e8;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.runTh--day {
+  text-align: center;
+  min-width: 36px;
+}
+
+.runTh--total {
+  text-align: right;
+  color: #47A025;
+}
+
+.runRow {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.12s ease;
+}
+
+.runRow:hover {
+  background: #f8f8f8;
+}
+
+.runRow--clickable {
+  cursor: pointer;
+}
+
+.runRowEntry {
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.runCell {
+  padding: 10px 10px;
+  color: #444;
+  vertical-align: middle;
+}
+
+.runCell--week {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.runCell--day {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.runCell--total {
+  text-align: right;
+  font-weight: 700;
+  font-size: 15px;
+  color: #47A025;
+}
+
+.runCell--entryDate {
+  font-size: 12px;
+  color: #999;
+  padding-left: 20px;
+}
+
+.runDash {
+  color: #ddd;
+  font-weight: 400;
+}
+
+.runDeleteBtn {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 17px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.runDeleteBtn:hover {
+  color: #c0392b;
+}
+
+/* On running view the bottom nav is static (inside flex column) */
+.runningOuter .bottomNav {
+  position: static;
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .runningChartArea {
+    padding-top: 0;
+  }
+
+  .runChartLegend {
+    padding: 6px 14px 2px;
+    font-size: 9px;
+    gap: 8px;
+  }
+
+  .runChartScroll {
+    padding: 6px 8px;
+  }
+
+  .runTh--week,
+  .runCell--week {
+    font-size: 11px;
+  }
+
+  .runCell--day {
+    font-size: 12px;
+    padding: 8px 5px;
+  }
+}

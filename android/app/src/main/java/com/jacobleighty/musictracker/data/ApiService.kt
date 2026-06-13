@@ -10,6 +10,8 @@ import com.jacobleighty.musictracker.Constants
 
 interface ApiService {
 
+    // ── Music ─────────────────────────────────────────────────────────────────
+
     @GET("api/artists.php")
     suspend fun getArtists(): List<Artist>
 
@@ -40,6 +42,74 @@ interface ApiService {
         @Header("X-Edit-Token") token: String,
         @Body entry: Map<String, String>,
     ): Response<HistoryEntry>
+
+    // ── Concerts ──────────────────────────────────────────────────────────────
+
+    @GET("api/concerts.php")
+    suspend fun getConcerts(): List<Concert>
+
+    @POST("api/concerts.php")
+    suspend fun createConcert(
+        @Header("X-Edit-Token") token: String,
+        @Body concert: Concert,
+    ): Response<Concert>
+
+    @PUT("api/concerts.php")
+    suspend fun updateConcert(
+        @Query("id") id: Int,
+        @Header("X-Edit-Token") token: String,
+        @Body concert: Concert,
+    ): Response<Concert>
+
+    @DELETE("api/concerts.php")
+    suspend fun deleteConcert(
+        @Query("id") id: Int,
+        @Header("X-Edit-Token") token: String,
+    ): Response<Unit>
+
+    // ── TV / Movies ───────────────────────────────────────────────────────────
+
+    @GET("api/tvmovies.php")
+    suspend fun getTvShows(): List<TvShow>
+
+    @POST("api/tvmovies.php")
+    suspend fun createTvShow(
+        @Header("X-Edit-Token") token: String,
+        @Body show: TvShow,
+    ): Response<TvShow>
+
+    @PUT("api/tvmovies.php")
+    suspend fun updateTvShow(
+        @Query("id") id: Int,
+        @Header("X-Edit-Token") token: String,
+        @Body show: TvShow,
+    ): Response<TvShow>
+
+    @DELETE("api/tvmovies.php")
+    suspend fun deleteTvShow(
+        @Query("id") id: Int,
+        @Header("X-Edit-Token") token: String,
+    ): Response<Unit>
+
+    // ── Running ───────────────────────────────────────────────────────────────
+
+    @GET("api/running.php")
+    suspend fun getRunningWeeks(): List<RunningWeek>
+
+    @GET("api/running.php")
+    suspend fun getRunningWeeksByYear(@Query("year") year: Int): List<RunningWeek>
+
+    @POST("api/running.php")
+    suspend fun createRunEntry(
+        @Header("X-Edit-Token") token: String,
+        @Body entry: Map<String, String>,
+    ): Response<RunningDayEntry>
+
+    @DELETE("api/running.php")
+    suspend fun deleteRunEntry(
+        @Query("id") id: Int,
+        @Header("X-Edit-Token") token: String,
+    ): Response<Unit>
 
     companion object {
         fun create(): ApiService {

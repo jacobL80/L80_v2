@@ -1,0 +1,99 @@
+.hmWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hmBtn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+  width: 34px;
+  height: 34px;
+}
+
+.hmBtn:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+.hmLine {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #666;
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.hmBtn--open .hmLine:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.hmBtn--open .hmLine:nth-child(2) {
+  opacity: 0;
+}
+.hmBtn--open .hmLine:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.hmMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 160px;
+  z-index: 200;
+  overflow: hidden;
+  padding: 4px 0;
+}
+
+.hmItem {
+  display: block;
+  width: 100%;
+  padding: 10px 18px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: Calibri, sans-serif;
+  font-size: 15px;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  letter-spacing: 0.3px;
+}
+
+.hmItem:hover {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+
+.hmItem--active {
+  color: #ec6f00;
+  font-weight: 700;
+}
+
+.hmItem--active:hover {
+  background: #fff4e6;
+}
+
+/* Header row layout with hamburger */
+.musicHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.musicHeaderRow .musicEyebrow {
+  margin: 0;
+}

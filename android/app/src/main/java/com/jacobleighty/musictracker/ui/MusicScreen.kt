@@ -68,14 +68,14 @@ private enum class Section { UPCOMING, EXPECTED, WATCHING, HIATUS }
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 @Composable
-fun MusicScreen(vm: MusicViewModel = viewModel()) {
+fun MusicScreen(vm: MusicViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
     val state by vm.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(PageBg)) {
         when {
             state.loading    -> CenteredText("Loading…")
             state.fetchError -> CenteredText("Could not load data.")
-            else             -> MainContent(state, vm)
+            else             -> MainContent(state, vm, onOpenDrawer)
         }
         if (state.showPasswordDialog) {
             PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
@@ -93,7 +93,7 @@ fun MusicScreen(vm: MusicViewModel = viewModel()) {
 }
 
 @Composable
-private fun MainContent(state: MusicUiState, vm: MusicViewModel) {
+private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: () -> Unit = {}) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -209,7 +209,7 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel) {
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
-            item { PageHeader(state.view) }
+            item { PageHeader(state.view, onOpenDrawer) }
             if (state.view == ViewType.HISTORY) {
                 item { HistorySection(state.history) }
             } else {
@@ -249,12 +249,18 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel) {
 // ── Page header ───────────────────────────────────────────────────────────────
 
 @Composable
-private fun PageHeader(view: ViewType) {
+private fun PageHeader(view: ViewType, onOpenDrawer: () -> Unit = {}) {
     Column(
         modifier = Modifier.fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
-        Text("MUSIC", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
+                Icon(Icons.Default.Menu, "Menu", tint = Accent, modifier = Modifier.size(20.dp))
+            }
+            Text("MUSIC", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp,
+                modifier = Modifier.padding(start = 4.dp))
+        }
         Text(
             text = if (view == ViewType.HISTORY) "Release History" else "Release Schedule",
             color = TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold,

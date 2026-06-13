@@ -57,7 +57,7 @@ function About() {
 
 		{/* Mobile-only bottom nav: Home | contacts */}
 		<div className="aboutTabBar">
-			<Link to="/" className="aboutTabContact">
+			<Link to="/portfolio" className="aboutTabContact">
 				<L80Icon /><span>Home</span>
 			</Link>
 			<div className="aboutTabDivider" />

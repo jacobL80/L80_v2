@@ -1,0 +1,127 @@
+.allCard {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 20px;
+  border: 1.5px solid #e8e8e8;
+  border-left: 3px solid #ec6f00;
+  border-radius: 4px;
+  background: #fff;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: default;
+  position: relative;
+}
+
+.allCard:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+}
+
+.allCard--imminent {
+  background: #fff4e6;
+}
+
+.allCard--released {
+  opacity: 0.65;
+}
+
+.allCardDate {
+  min-width: 44px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.allCardMonth {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.allCardDay {
+  font-size: 38px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.allCardDay--imminent {
+  color: inherit;
+}
+
+.allCardYear {
+  font-size: 11px;
+  color: #bbb;
+  letter-spacing: 1px;
+}
+
+.allCardDivider {
+  width: 1.5px;
+  background: #e8e8e8;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.allCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.allCardType {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.allCardTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.allCardSub {
+  font-size: 13px;
+  color: #888;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.allCardImminent {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.allTypeSummary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.allTypeChip {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1.5px solid;
+  border-radius: 20px;
+  background: transparent;
+}
+
+.allEmpty {
+  color: #999;
+  font-size: 15px;
+  padding: 40px 0;
+  text-align: center;
+}

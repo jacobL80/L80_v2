@@ -4,6 +4,7 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import '../css/Music.css';
 import ReleaseTimeline from './ReleaseTimeline';
+import HamburgerMenu from './HamburgerMenu';
 
 const PlusIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -112,13 +113,14 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
   const [form, setForm]           = useState({ ...EMPTY_ARTIST, ...artist });
   const [confirmDel, setDel]      = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [sugIdx, setSugIdx] = useState(-1);
   const wasNewOnOpen = !artist.id;
   const isNew = !form.id;
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleNameChange = (value) => {
+    setSugIdx(-1);
     if (wasNewOnOpen && form.id) {
-      // User is typing over a previously-selected suggestion — start fresh
       setForm({ ...EMPTY_ARTIST, name: value });
       const q = value.toLowerCase();
       setSuggestions(value.trim() ? allArtists.filter(a => a.name.toLowerCase().includes(q)).slice(0, 6) : []);
@@ -136,6 +138,15 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
   const selectSuggestion = (a) => {
     setForm({ ...EMPTY_ARTIST, ...a });
     setSuggestions([]);
+    setSugIdx(-1);
+  };
+
+  const handleNameKeyDown = (e) => {
+    if (!suggestions.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSugIdx(i => Math.min(i + 1, suggestions.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setSugIdx(i => Math.max(i - 1, -1)); }
+    else if (e.key === 'Enter' && sugIdx >= 0) { e.preventDefault(); selectSuggestion(suggestions[sugIdx]); }
+    else if (e.key === 'Escape') { setSuggestions([]); setSugIdx(-1); }
   };
 
   const handleSubmit = (e) => {
@@ -152,12 +163,13 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
         <div className="autocompleteWrap">
           <input className="modalInput" value={form.name}
             onChange={e => handleNameChange(e.target.value)}
-            onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+            onKeyDown={handleNameKeyDown}
+            onBlur={() => setTimeout(() => { setSuggestions([]); setSugIdx(-1); }, 150)}
             autoFocus />
           {suggestions.length > 0 && (
             <div className="autocompleteDrop">
-              {suggestions.map(a => (
-                <button key={a.id} className="autocompleteItem" onClick={() => selectSuggestion(a)}>
+              {suggestions.map((a, i) => (
+                <button key={a.id} className={`autocompleteItem${i === sugIdx ? ' autocompleteItem--active' : ''}`} onClick={() => selectSuggestion(a)}>
                   {a.name}
                 </button>
               ))}
@@ -576,7 +588,10 @@ const Music = () => {
       <div className="musicScrollArea">
       <div className="musicHeader">
         <div className="musicHeaderInner">
-          <p className="musicEyebrow">Music</p>
+          <div className="musicHeaderRow">
+            <HamburgerMenu />
+            <p className="musicEyebrow">Music</p>
+          </div>
           <h1 className="musicTitle">
             {view === 'timeline' ? 'Release History' : 'Release Schedule'}
           </h1>

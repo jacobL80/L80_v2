@@ -805,7 +805,8 @@
   border-bottom: none;
 }
 
-.autocompleteItem:hover {
+.autocompleteItem:hover,
+.autocompleteItem--active {
   background: #fff4e6;
   color: #ec6f00;
 }

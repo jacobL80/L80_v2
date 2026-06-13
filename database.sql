@@ -184,6 +184,36 @@ INSERT INTO `artists` (`name`, `last_release`, `next_release`, `album_title`, `c
 ('Sure Sure',        '2026', '',           '',                                                0, 0, ''),
 ('underscores',      '2026', '',           '',                                                0, 0, '');
 
+-- Concerts tracker
+CREATE TABLE IF NOT EXISTS `concerts` (
+  `id`        INT AUTO_INCREMENT PRIMARY KEY,
+  `band`      VARCHAR(255) NOT NULL DEFAULT '',
+  `tour_name` VARCHAR(255) NOT NULL DEFAULT '',
+  `venue`     VARCHAR(255) NOT NULL DEFAULT '',
+  `date`      VARCHAR(20)  NOT NULL DEFAULT '',
+  `notes`     VARCHAR(500) NOT NULL DEFAULT '',
+  `attended`  TINYINT(1)   NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- TV / Movies tracker
+CREATE TABLE IF NOT EXISTS `tv_shows` (
+  `id`           INT AUTO_INCREMENT PRIMARY KEY,
+  `program_name` VARCHAR(255) NOT NULL DEFAULT '',
+  `service`      VARCHAR(255) NOT NULL DEFAULT '',
+  `date`         VARCHAR(20)  NOT NULL DEFAULT '',
+  `notes`        VARCHAR(500) NOT NULL DEFAULT '',
+  `watched`      TINYINT(1)   NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Running log (one row per day with mileage)
+-- Import historical data from your spreadsheet here:
+--   INSERT INTO running_logs (run_date, miles) VALUES ('2024-01-08', 5.2), ...
+CREATE TABLE IF NOT EXISTS `running_logs` (
+  `id`       INT AUTO_INCREMENT PRIMARY KEY,
+  `run_date` DATE          NOT NULL,
+  `miles`    DECIMAL(5, 2) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Acquired releases history (log each ✓ click on an upcoming card)
 CREATE TABLE IF NOT EXISTS `releases` (
   `id`           INT AUTO_INCREMENT PRIMARY KEY,

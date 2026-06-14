@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import '../css/Home.css';
 import arrow from '../assets/arrow.png';
@@ -21,6 +21,7 @@ const PhoneIcon    = () => <S><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 
 const LinkedInIcon = () => <S><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></S>;
 
 function Home() {
+	useEffect(() => { document.title = "Jacob Leighty's UX/UI Portfolio"; }, []);
 	const [hoveredWork, setHoveredWork] = useState(0);
 	const [selectedWork, setSelectedWork] = useState(0);
 	const [mobileView, setMobileView] = useState('info');

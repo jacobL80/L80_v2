@@ -80,12 +80,13 @@ try {
 // TV/Movies — not yet watched, full date
 try {
     $rows = $pdo->query(
-        'SELECT program_name, service, date FROM tv_shows WHERE watched = 0 AND date != "" ORDER BY id'
+        'SELECT program_name, service, date, type FROM tv_shows WHERE watched = 0 AND date != "" ORDER BY id'
     )->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $r) {
         if (hasFullDate($r['date'])) {
             $items[] = [
                 'type'     => 'tv',
+                'showType' => $r['type'] ?? '',
                 'date'     => $r['date'],
                 'title'    => $r['program_name'],
                 'subtitle' => $r['service'],

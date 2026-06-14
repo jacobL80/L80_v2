@@ -27,9 +27,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -208,14 +211,16 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
                 }
                 Box(modifier = Modifier.width(1.5.dp).height(48.dp).background(TBorder))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(show.programName, color = TTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    Text(buildAnnotatedString {
+                        withStyle(SpanStyle(color = TTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)) { append(show.programName) }
+                        if (show.type.isNotEmpty()) {
+                            val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
+                            append("  ")
+                            withStyle(SpanStyle(color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)) { append(show.type) }
+                        }
+                    })
                     if (show.service.isNotEmpty()) TruncatedText(show.service, color = TTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 1.dp))
-                    if (show.type.isNotEmpty()) {
-                        val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
-                        Text(show.type, color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
-                    }
                     if (imminent) {
                         val label = when (daysUntil.toInt()) { 0 -> "TODAY"; 1 -> "TOMORROW"; else -> "${daysUntil} DAYS AWAY" }
                         Text(label, color = TAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
@@ -266,15 +271,17 @@ private fun TvRow(show: TvShow, dateDisplay: String, isEditing: Boolean, onEdit:
                 Box(modifier = Modifier.width(1.5.dp).height(40.dp).background(TBorder))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(show.programName, color = TTextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+                Text(buildAnnotatedString {
+                    withStyle(SpanStyle(color = TTextPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)) { append(show.programName) }
+                    if (show.type.isNotEmpty()) {
+                        val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
+                        append("  ")
+                        withStyle(SpanStyle(color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)) { append(show.type) }
+                    }
+                })
                 if (show.service.isNotEmpty()) {
                     TruncatedText(show.service, color = TTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 3.dp))
-                }
-                if (show.type.isNotEmpty()) {
-                    val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
-                    Text(show.type, color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
                 }
             }
         }

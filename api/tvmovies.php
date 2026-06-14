@@ -29,8 +29,12 @@ try {
         service      VARCHAR(255) NOT NULL DEFAULT \'\',
         date         VARCHAR(20)  NOT NULL DEFAULT \'\',
         notes        VARCHAR(500) NOT NULL DEFAULT \'\',
+        type         VARCHAR(50)  NOT NULL DEFAULT \'\',
         watched      TINYINT(1)   NOT NULL DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+} catch (PDOException $e) {}
+try {
+    $pdo->exec('ALTER TABLE tv_shows ADD COLUMN type VARCHAR(50) NOT NULL DEFAULT \'\'');
 } catch (PDOException $e) {}
 
 function verify_auth() {
@@ -49,6 +53,7 @@ function row_to_show(array $row): array {
         'service'     => $row['service'],
         'date'        => $row['date'],
         'notes'       => $row['notes'],
+        'type'        => $row['type'] ?? '',
         'watched'     => (bool) $row['watched'],
     ];
 }
@@ -64,14 +69,15 @@ if ($method === 'GET') {
     verify_auth();
     $body = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare(
-        'INSERT INTO tv_shows (program_name, service, date, notes, watched)
-         VALUES (:prog, :svc, :date, :notes, :watched)'
+        'INSERT INTO tv_shows (program_name, service, date, notes, type, watched)
+         VALUES (:prog, :svc, :date, :notes, :type, :watched)'
     );
     $stmt->execute([
         'prog'    => trim($body['programName'] ?? ''),
         'svc'     => trim($body['service'] ?? ''),
         'date'    => trim($body['date'] ?? ''),
         'notes'   => trim($body['notes'] ?? ''),
+        'type'    => trim($body['type'] ?? ''),
         'watched' => empty($body['watched']) ? 0 : 1,
     ]);
     $newId = (int) $pdo->lastInsertId();
@@ -84,13 +90,14 @@ if ($method === 'GET') {
     $body = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare(
         'UPDATE tv_shows SET program_name=:prog, service=:svc, date=:date,
-         notes=:notes, watched=:watched WHERE id=:id'
+         notes=:notes, type=:type, watched=:watched WHERE id=:id'
     );
     $stmt->execute([
         'prog'    => trim($body['programName'] ?? ''),
         'svc'     => trim($body['service'] ?? ''),
         'date'    => trim($body['date'] ?? ''),
         'notes'   => trim($body['notes'] ?? ''),
+        'type'    => trim($body['type'] ?? ''),
         'watched' => empty($body['watched']) ? 0 : 1,
         'id'      => $id,
     ]);

@@ -26,4 +26,5 @@ data class RunningDayEntry(
     val id: Int = 0,
     val date: String = "",
     val miles: Float = 0f,
+    val paceSeconds: Int? = null,
 )

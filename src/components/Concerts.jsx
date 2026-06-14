@@ -422,6 +422,7 @@ const BarChartIcon = () => (
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const Concerts = () => {
+  useEffect(() => { document.title = 'Concerts | My Tracking'; }, []);
   const [concerts,      setConcerts]  = useState([]);
   const [artistNames,   setArtistNames] = useState([]);
   const [loading,       setLoading]   = useState(true);

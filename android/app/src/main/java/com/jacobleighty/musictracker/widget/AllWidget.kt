@@ -46,6 +46,10 @@ private val TYPE_LABELS = mapOf(
     "tv"      to "TV",
 )
 
+private fun badgeLabel(item: AllItem): String =
+    if (item.type == "tv" && item.showType.isNotEmpty()) item.showType
+    else TYPE_LABELS[item.type] ?: item.type
+
 class AllWidget : GlanceAppWidget() {
     companion object {
         val SINGLE_COLUMN_KEY = booleanPreferencesKey("single_column")
@@ -167,7 +171,7 @@ private fun AllWidgetContent(items: List<AllItem>, twoColumn: Boolean, singleCol
 @Composable
 private fun AllWidgetCard(item: AllItem, modifier: GlanceModifier = GlanceModifier, large: Boolean = true) {
     val typeColor     = TYPE_COLORS[item.type] ?: Color(0xFFEC6F00)
-    val typeLabel     = TYPE_LABELS[item.type] ?: item.type
+    val typeLabel     = badgeLabel(item)
     val (month, day, _) = DateUtils.parseParts(item.date)
     val daysUntil     = DateUtils.daysUntil(item.date)
     val imminent      = daysUntil in 0..6

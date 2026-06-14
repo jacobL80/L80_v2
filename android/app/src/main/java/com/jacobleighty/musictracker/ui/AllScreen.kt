@@ -6,9 +6,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -21,12 +25,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.AllItem
+import java.time.YearMonth
 
 private val APageBg      = Color(0xFFFAF9F7)
 private val ACardBg      = Color(0xFFFFFFFF)
@@ -73,6 +83,11 @@ private fun AMainContent(state: AllUiState, onOpenDrawer: () -> Unit) {
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
         item { APageHeader(onOpenDrawer, state.upcoming) }
+
+        val allItems = state.upcoming + state.past
+        if (allItems.isNotEmpty()) {
+            item { ReleaseCalendarSection(allItems) }
+        }
 
         if (state.upcoming.isEmpty() && state.past.isEmpty()) {
             item {
@@ -122,14 +137,16 @@ private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
                 listOf("music", "concert", "tv").forEach { type ->
                     val count = counts[type] ?: return@forEach
                     val color = TYPE_COLORS[type] ?: AAccent
-                    val label = TYPE_LABELS[type] ?: type
-                    val plural = if (count > 1) when (type) { "music" -> "" else -> "s" } else ""
-                    Box(
+                    val icon  = TYPE_ICONS[type] ?: Icons.Default.Apps
+                    Row(
                         modifier = Modifier
                             .border(BorderStroke(1.5.dp, color), RoundedCornerShape(20.dp))
-                            .padding(horizontal = 10.dp, vertical = 3.dp),
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Text("$count $label$plural", color = color, fontSize = 11.sp,
+                        Icon(icon, contentDescription = type, tint = color, modifier = Modifier.size(13.dp))
+                        Text("$count", color = color, fontSize = 11.sp,
                             fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                 }
@@ -214,6 +231,13 @@ private fun AllItemCard(item: AllItem, dimmed: Boolean = false) {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item.url)))
                         },
                     )
+                } else if (item.type == "tv" && item.showType.isNotEmpty()) {
+                    val tc = when (item.showType) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> Color(0xFF7C3AED) }
+                    Text(buildAnnotatedString {
+                        withStyle(SpanStyle(color = ATextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)) { append(item.title) }
+                        append("  ")
+                        withStyle(SpanStyle(color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)) { append(item.showType) }
+                    }, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 20.sp)
                 } else {
                     TruncatedText(item.title, color = ATextPrimary, fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold, lineHeight = 20.sp, maxLines = 2)
@@ -235,6 +259,154 @@ private fun AllItemCard(item: AllItem, dimmed: Boolean = false) {
         }
     }
 }
+
+@Composable
+private fun ReleaseCalendarSection(items: List<AllItem>) {
+    val grouped = mutableMapOf<Pair<Int, Int>, MutableList<AllItem>>()
+    items.forEach { item ->
+        val d   = DateUtils.parseDate(item.date)
+        val key = Pair(d.year, d.monthValue - 1) // 0-indexed month
+        grouped.getOrPut(key) { mutableListOf() }.add(item)
+    }
+    val months = grouped.entries.sortedWith(compareBy({ it.key.first }, { it.key.second }))
+
+    Column {
+        ASectionHeader("Calendar")
+        Row(
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            months.forEach { (key, monthItems) ->
+                MonthCalendarCard(year = key.first, month = key.second, monthItems = monthItems)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MonthCalendarCard(year: Int, month: Int, monthItems: List<AllItem>) {
+    val monthNames = listOf("JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC")
+    val dayLabels  = listOf("S","M","T","W","T","F","S")
+
+    val ym          = YearMonth.of(year, month + 1)
+    val firstDow    = ym.atDay(1).dayOfWeek.value % 7 // ISO Mon=1..Sun=7 → Sun=0
+    val daysInMonth = ym.lengthOfMonth()
+
+    val byDay = mutableMapOf<Int, MutableList<AllItem>>()
+    monthItems.forEach { item ->
+        val d = DateUtils.parseDate(item.date)
+        byDay.getOrPut(d.dayOfMonth) { mutableListOf() }.add(item)
+    }
+
+    val cells = mutableListOf<Int?>()
+    repeat(firstDow) { cells.add(null) }
+    (1..daysInMonth).forEach { cells.add(it) }
+    while (cells.size < 42) cells.add(null)
+
+    Card(
+        modifier = Modifier.width(210.dp),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.5.dp, ABorder),
+        colors = CardDefaults.cardColors(containerColor = ACardBg),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp)) {
+            Text(
+                text = "${monthNames[month]} $year",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 2.sp,
+                color = ATextSec,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                dayLabels.forEach { label ->
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Text(label, fontSize = 9.sp, color = ATextDim, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+            Spacer(Modifier.height(2.dp))
+            cells.chunked(7).forEach { week ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    week.forEach { day ->
+                        Box(
+                            modifier = Modifier.weight(1f).height(34.dp),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
+                            if (day != null) {
+                                val events = byDay[day]
+                                var menuOpen by remember { mutableStateOf(false) }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = if (events != null) Modifier.clickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                    ) { menuOpen = true } else Modifier,
+                                ) {
+                                    Text(
+                                        text = day.toString(),
+                                        fontSize = 10.sp,
+                                        color = if (events != null) ATextPrimary else ATextDim,
+                                        fontWeight = if (events != null) FontWeight.SemiBold else FontWeight.Normal,
+                                    )
+                                    if (events != null) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                            modifier = Modifier.padding(top = 2.dp),
+                                        ) {
+                                            events.take(3).forEach { item ->
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(6.dp)
+                                                        .clip(CircleShape)
+                                                        .background(TYPE_COLORS[item.type] ?: AAccent),
+                                                )
+                                            }
+                                        }
+                                        DropdownMenu(
+                                            expanded = menuOpen,
+                                            onDismissRequest = { menuOpen = false },
+                                        ) {
+                                            events.forEachIndexed { idx, item ->
+                                                val color = TYPE_COLORS[item.type] ?: AAccent
+                                                Column(
+                                                    modifier = Modifier
+                                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                                        .widthIn(max = 220.dp),
+                                                ) {
+                                                    Text(item.title, fontSize = 14.sp,
+                                                        fontWeight = FontWeight.SemiBold, color = ATextPrimary, maxLines = 2)
+                                                    if (item.subtitle.isNotEmpty()) {
+                                                        Text(item.subtitle, fontSize = 12.sp,
+                                                            color = ATextSec, fontStyle = FontStyle.Italic,
+                                                            modifier = Modifier.padding(top = 2.dp), maxLines = 2)
+                                                    }
+                                                    Text(
+                                                        text = TYPE_LABELS[item.type] ?: "",
+                                                        fontSize = 11.sp, color = color,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(top = 4.dp),
+                                                    )
+                                                }
+                                                if (idx < events.lastIndex) HorizontalDivider(color = ABorder)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun AllLoadingSpinner() {

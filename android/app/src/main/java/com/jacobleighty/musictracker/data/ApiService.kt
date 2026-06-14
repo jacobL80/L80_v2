@@ -110,6 +110,13 @@ interface ApiService {
         @Body entry: Map<String, String>,
     ): Response<RunningDayEntry>
 
+    @PUT("api/running.php")
+    suspend fun updateRunEntry(
+        @Query("id") id: Int,
+        @Header("X-Edit-Token") token: String,
+        @Body entry: Map<String, String>,
+    ): Response<RunningDayEntry>
+
     @DELETE("api/running.php")
     suspend fun deleteRunEntry(
         @Query("id") id: Int,

@@ -209,8 +209,8 @@ const ShowCard = ({ show, onEdit, onWatch, editing, watchable = false }) => {
       </div>
       <div className="upcomingCardDivider" style={watchable ? { background: accent, opacity: 0.3 } : undefined} />
       <div className="upcomingCardInfo">
-        <div className="tvTitleRow">
-          <div className="upcomingCardArtist">{show.programName}</div>
+        <div className="upcomingCardArtist">
+          {show.programName}
           {show.type && <span className="tvTypeBadge" style={{ color: TYPE_COLORS[show.type], borderColor: TYPE_COLORS[show.type] }}>{show.type}</span>}
         </div>
         {show.service && (
@@ -256,8 +256,8 @@ const ShowRow = ({ show, onEdit, editing, accent }) => {
         </>
       )}
       <div className="rowCardInfo">
-        <div className="tvTitleRow">
-          <div className="rowCardArtist">{show.programName}</div>
+        <div className="rowCardArtist">
+          {show.programName}
           {show.type && <span className="tvTypeBadge" style={{ color: TYPE_COLORS[show.type], borderColor: TYPE_COLORS[show.type] }}>{show.type}</span>}
         </div>
         {show.service && (
@@ -358,6 +358,7 @@ const CalendarIcon = () => (
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const TvMovies = () => {
+  useEffect(() => { document.title = 'TV & Movies | My Tracking'; }, []);
   const [shows,       setShows]    = useState([]);
   const [loading,     setLoading]  = useState(true);
   const [fetchError,  setFetchErr] = useState(false);

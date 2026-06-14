@@ -9,19 +9,6 @@
 
 /* ─── Type badge on cards/rows ───────────────────────────────────────────── */
 
-.tvTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 5px;
-}
-
-.tvTitleRow .upcomingCardArtist,
-.tvTitleRow .rowCardArtist {
-  margin-bottom: 0;
-}
-
 .tvTypeBadge {
   display: inline-block;
   font-size: 9px;
@@ -32,8 +19,9 @@
   border-radius: 3px;
   border: 1px solid;
   opacity: 0.85;
-  flex-shrink: 0;
   line-height: 1.5;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 /* ─── Type breakdown in History ──────────────────────────────────────────── */

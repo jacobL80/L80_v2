@@ -260,6 +260,23 @@
   font-weight: 400;
 }
 
+.runEditBtn {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 5px;
+  line-height: 1;
+  transition: color 0.15s;
+  transform: scaleX(-1);
+  display: inline-block;
+}
+
+.runEditBtn:hover {
+  color: #47A025;
+}
+
 .runDeleteBtn {
   background: none;
   border: none;
@@ -317,6 +334,159 @@
 .runningOuter .bottomNav {
   position: static;
   flex-shrink: 0;
+}
+
+/* ─── Stats view ─────────────────────────────────────────────────────────────── */
+
+.runStatsPage {
+  padding-top: 32px;
+}
+
+.runStatsSectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #999;
+  margin: 28px 0 12px;
+}
+
+.runStatsSectionTitle:first-child {
+  margin-top: 0;
+}
+
+.runStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.runStatCard {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+.runStatCard--accent {
+  background: #edf7e8;
+  border-color: rgba(71, 160, 37, 0.3);
+}
+
+.runStatValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+
+.runStatCard--accent .runStatValue {
+  color: #47A025;
+}
+
+.runStatSubtitle {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.runStatLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* ─── Day frequency chart ────────────────────────────────────────────────────── */
+
+.runDayChart {
+  display: flex;
+  gap: 8px;
+  height: 140px;
+  padding: 4px 0 0;
+}
+
+.runDayBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.runDayBarCount {
+  font-size: 10px;
+  font-weight: 700;
+  color: #555;
+  height: 16px;
+  line-height: 16px;
+  flex-shrink: 0;
+}
+
+.runDayBarTrack {
+  flex: 1;
+  width: 100%;
+  max-width: 36px;
+  background: #f2f0ed;
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.runDayBarFill {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+}
+
+.runDayBarLabel {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* ─── Tab nav buttons ────────────────────────────────────────────────────────── */
+
+.bottomNavBtn--tab {
+  color: #aaa;
+}
+
+.bottomNavBtn--tab:hover {
+  color: #555;
+  background: #f5f5f5;
+}
+
+.bottomNavBtn--tabActive {
+  color: var(--accent) !important;
+}
+
+/* ─── Pace display in entry rows ─────────────────────────────────────────────── */
+
+.runEntryPace {
+  color: #888;
+  font-size: 12px;
+}
+
+/* ─── Modal optional label ───────────────────────────────────────────────────── */
+
+.modalLabelOptional {
+  font-weight: 400;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.modalInput--error {
+  border-color: #c0392b !important;
+}
+
+.modalInputError {
+  color: #c0392b;
+  font-size: 12px;
+  margin: -6px 0 0;
 }
 
 @media (max-width: 700px) {

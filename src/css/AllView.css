@@ -92,6 +92,21 @@
   margin-bottom: 4px;
 }
 
+.allCardTitle .tvTypeBadge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid;
+  opacity: 0.85;
+  line-height: 1.5;
+  margin-left: 6px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
 .allCardSub {
   font-size: 13px;
   color: #888;
@@ -109,11 +124,17 @@
   letter-spacing: 1.5px;
 }
 
+.allTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 .allTypeSummary {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 4px;
 }
 
 .allTypeChip {
@@ -132,4 +153,102 @@
   font-size: 15px;
   padding: 40px 0;
   text-align: center;
+}
+
+/* ── Release Calendar ──────────────────────────────────────── */
+.allCalSection {
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.allCalScroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #e0e0e0 transparent;
+}
+
+.allCalScroll::-webkit-scrollbar { height: 3px; }
+.allCalScroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
+
+.allCalMonth {
+  flex-shrink: 0;
+  width: 210px;
+  background: #fff;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px 10px 10px;
+}
+
+.allCalMonthName {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #888;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.allCalGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.allCalDow {
+  font-size: 9px;
+  font-weight: 600;
+  color: #ccc;
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.allCalCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 30px;
+  padding: 1px 0;
+}
+
+.allCalDayNum {
+  font-size: 10px;
+  color: #ccc;
+  line-height: 1.2;
+}
+
+.allCalDayNum--event {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.allCalDots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.allCalDotWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.allCalDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: block;
+  pointer-events: none;
+  transition: transform 0.12s ease;
+}
+
+.allCalDotWrap:hover .allCalDot {
+  transform: scale(1.6);
 }

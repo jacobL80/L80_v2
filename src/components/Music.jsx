@@ -396,6 +396,7 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const Music = () => {
+  useEffect(() => { document.title = 'Music | My Tracking'; }, []);
   const [artists,       setArtists] = useState([]);
   const [loading,       setLoading] = useState(true);
   const [fetchError,    setFetchErr] = useState(false);

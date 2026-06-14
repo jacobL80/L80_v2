@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Edit-Token');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -24,10 +24,16 @@ try {
 
 try {
     $pdo->exec('CREATE TABLE IF NOT EXISTS running_logs (
-        id       INT AUTO_INCREMENT PRIMARY KEY,
-        run_date DATE          NOT NULL,
-        miles    DECIMAL(5, 2) NOT NULL DEFAULT 0
+        id           INT AUTO_INCREMENT PRIMARY KEY,
+        run_date     DATE          NOT NULL,
+        miles        DECIMAL(5, 2) NOT NULL DEFAULT 0,
+        pace_seconds INT           NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+} catch (PDOException $e) {}
+
+// Migration: add pace_seconds to existing tables
+try {
+    $pdo->exec('ALTER TABLE running_logs ADD COLUMN pace_seconds INT NULL');
 } catch (PDOException $e) {}
 
 function verify_auth() {
@@ -45,7 +51,7 @@ $id     = isset($_GET['id']) ? (int) $_GET['id'] : null;
 if ($method === 'GET') {
     $yearFilter = isset($_GET['year']) && $_GET['year'] !== 'all' ? (int) $_GET['year'] : null;
 
-    $rows = $pdo->query('SELECT id, run_date, miles FROM running_logs ORDER BY run_date ASC')
+    $rows = $pdo->query('SELECT id, run_date, miles, pace_seconds FROM running_logs ORDER BY run_date ASC')
                 ->fetchAll(PDO::FETCH_ASSOC);
 
     // Aggregate into weeks. Week year = year of its Monday.
@@ -74,9 +80,10 @@ if ($method === 'GET') {
         $weeks[$weekKey]['total']     += $miles;
         $weeks[$weekKey][$dayName]    += $miles;
         $weeks[$weekKey]['entries'][]  = [
-            'id'    => (int) $row['id'],
-            'date'  => $row['run_date'],
-            'miles' => $miles,
+            'id'          => (int) $row['id'],
+            'date'        => $row['run_date'],
+            'miles'       => $miles,
+            'paceSeconds' => isset($row['pace_seconds']) && $row['pace_seconds'] !== null ? (int) $row['pace_seconds'] : null,
         ];
     }
 
@@ -97,18 +104,69 @@ if ($method === 'GET') {
     $date  = trim($body['date'] ?? date('Y-m-d'));
     $miles = round((float) ($body['miles'] ?? 0), 2);
 
+    // Parse optional pace in MM:SS format → seconds
+    $pace = null;
+    if (!empty($body['pace'])) {
+        $parts = explode(':', trim($body['pace']));
+        if (count($parts) === 2) {
+            $paceVal = (int)$parts[0] * 60 + (int)$parts[1];
+            if ($paceVal > 0) $pace = $paceVal;
+        }
+    }
+
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid date — use YYYY-MM-DD']);
         exit;
     }
 
-    $stmt = $pdo->prepare('INSERT INTO running_logs (run_date, miles) VALUES (:date, :miles)');
-    $stmt->execute(['date' => $date, 'miles' => $miles]);
+    $stmt = $pdo->prepare('INSERT INTO running_logs (run_date, miles, pace_seconds) VALUES (:date, :miles, :pace)');
+    $stmt->execute(['date' => $date, 'miles' => $miles, 'pace' => $pace]);
     $newId = (int) $pdo->lastInsertId();
     $row   = $pdo->query("SELECT * FROM running_logs WHERE id = $newId")->fetch(PDO::FETCH_ASSOC);
     http_response_code(201);
-    echo json_encode(['id' => (int)$row['id'], 'date' => $row['run_date'], 'miles' => (float)$row['miles']]);
+    echo json_encode([
+        'id'          => (int)$row['id'],
+        'date'        => $row['run_date'],
+        'miles'       => (float)$row['miles'],
+        'paceSeconds' => $row['pace_seconds'] !== null ? (int)$row['pace_seconds'] : null,
+    ]);
+
+} elseif ($method === 'PUT' && $id) {
+    verify_auth();
+    $body  = json_decode(file_get_contents('php://input'), true);
+    $date  = trim($body['date'] ?? '');
+    $miles = round((float) ($body['miles'] ?? 0), 2);
+
+    $pace = null;
+    if (isset($body['pace']) && $body['pace'] !== '' && $body['pace'] !== null) {
+        $parts = explode(':', trim((string)$body['pace']));
+        if (count($parts) === 2) {
+            $paceVal = (int)$parts[0] * 60 + (int)$parts[1];
+            if ($paceVal > 0) $pace = $paceVal;
+        }
+    }
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid date — use YYYY-MM-DD']);
+        exit;
+    }
+    if ($miles <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Miles must be greater than 0']);
+        exit;
+    }
+
+    $stmt = $pdo->prepare('UPDATE running_logs SET run_date = :date, miles = :miles, pace_seconds = :pace WHERE id = :id');
+    $stmt->execute(['date' => $date, 'miles' => $miles, 'pace' => $pace, 'id' => $id]);
+    $row = $pdo->query("SELECT * FROM running_logs WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
+    echo json_encode([
+        'id'          => (int)$row['id'],
+        'date'        => $row['run_date'],
+        'miles'       => (float)$row['miles'],
+        'paceSeconds' => $row['pace_seconds'] !== null ? (int)$row['pace_seconds'] : null,
+    ]);
 
 } elseif ($method === 'DELETE' && $id) {
     verify_auth();

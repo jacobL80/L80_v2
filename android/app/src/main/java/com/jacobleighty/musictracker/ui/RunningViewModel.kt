@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
+import com.jacobleighty.musictracker.data.RunningDayEntry
 import com.jacobleighty.musictracker.data.RunningWeek
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,10 +15,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+enum class RunningTab { LOG, STATS }
+
 data class RunningUiState(
     val loading: Boolean = true,
     val fetchError: Boolean = false,
-    val allWeeks: List<RunningWeek> = emptyList(),   // all years, for chart
+    val allWeeks: List<RunningWeek> = emptyList(),   // all years, for chart + stats
     val filteredWeeks: List<RunningWeek> = emptyList(),
     val selectedYear: Int? = null,
     val availableYears: List<Int> = emptyList(),
@@ -28,6 +31,10 @@ data class RunningUiState(
     val showAddModal: Boolean = false,
     val pendingAdd: Boolean = false,
     val expandedWeekStart: String? = null,
+    val activeTab: RunningTab = RunningTab.LOG,
+    val showEditModal: Boolean = false,
+    val editingEntry: RunningDayEntry? = null,
+    val editError: String? = null,
 )
 
 class RunningViewModel(app: Application) : AndroidViewModel(app) {
@@ -77,6 +84,8 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun setTab(tab: RunningTab) = _uiState.update { it.copy(activeTab = tab) }
+
     fun handleAddNew() {
         if (_uiState.value.isEditing) _uiState.update { it.copy(showAddModal = true) }
         else _uiState.update { it.copy(pendingAdd = true, showPasswordDialog = true) }
@@ -100,12 +109,17 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         it.copy(expandedWeekStart = if (it.expandedWeekStart == weekStart) null else weekStart)
     }
 
-    fun addEntry(miles: Float, date: LocalDate) {
+    fun addEntry(miles: Float, date: LocalDate, paceSeconds: Int? = null) {
         val token = _uiState.value.editToken ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
             runCatching {
-                val res = api.createRunEntry(token, mapOf("miles" to miles.toString(), "date" to date.toString()))
+                val body = buildMap<String, String> {
+                    put("miles", miles.toString())
+                    put("date", date.toString())
+                    if (paceSeconds != null) put("pace", formatPaceSeconds(paceSeconds))
+                }
+                val res = api.createRunEntry(token, body)
                 if (res.code() == 401) error("UNAUTHORIZED")
                 res.body() ?: error("Empty response")
             }.onSuccess {
@@ -122,10 +136,49 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun startEditEntry(entry: RunningDayEntry) =
+        _uiState.update { it.copy(showEditModal = true, editingEntry = entry, editError = null) }
+
+    fun closeEditModal() =
+        _uiState.update { it.copy(showEditModal = false, editingEntry = null, editError = null) }
+
+    fun updateEntry(id: Int, miles: Float, date: LocalDate, paceSeconds: Int?) {
+        val token = _uiState.value.editToken ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(editError = null) }
+            runCatching {
+                val body = buildMap<String, String> {
+                    put("miles", miles.toString())
+                    put("date", date.toString())
+                    put("pace", if (paceSeconds != null) formatPaceSeconds(paceSeconds) else "")
+                }
+                val res = api.updateRunEntry(id, token, body)
+                if (res.code() == 401) error("UNAUTHORIZED")
+                res.body() ?: error("Empty response")
+            }.onSuccess {
+                _uiState.update { it.copy(showEditModal = false, editingEntry = null) }
+                loadAll()
+            }.onFailure { err ->
+                if (err.message == "UNAUTHORIZED") {
+                    prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
+                    _uiState.update { it.copy(editToken = null, isEditing = false, editError = "Incorrect password.") }
+                } else {
+                    _uiState.update { it.copy(editError = "Update failed — please try again.") }
+                }
+            }
+        }
+    }
+
     fun deleteEntry(id: Int) {
         val token = _uiState.value.editToken ?: return
         viewModelScope.launch {
             runCatching { api.deleteRunEntry(id, token) }.onSuccess { loadAll() }
         }
+    }
+
+    private fun formatPaceSeconds(secs: Int): String {
+        val m = secs / 60
+        val s = secs % 60
+        return "$m:${s.toString().padStart(2, '0')}"
     }
 }

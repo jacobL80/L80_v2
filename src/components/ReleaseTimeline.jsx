@@ -5,26 +5,24 @@ import '../css/ReleaseTimeline.css';
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function artistColor(name) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return `hsl(${((h % 360) + 360) % 360}, 65%, 52%)`;
-}
+const ACCENT = '#ec6f00';
+
+function expandYear(y) { return y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y; }
 
 function parseRDate(s) {
   if (!s) return null;
   const p = s.split('/').map(Number);
-  if (p.length === 3) return new Date(p[2], p[0] - 1, p[1]);
-  if (p.length === 2) return new Date(p[1], p[0] - 1, 15);
-  return new Date(p[0], 6, 1);
+  if (p.length === 3) return new Date(expandYear(p[2]), p[0] - 1, p[1]);
+  if (p.length === 2) return new Date(expandYear(p[1]), p[0] - 1, 15);
+  return new Date(expandYear(p[0]), 6, 1);
 }
 
 function fmtDate(s) {
   if (!s) return '';
   const p = s.split('/').map(Number);
-  if (p.length === 3) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}, ${p[2]}`;
-  if (p.length === 2) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}`;
-  return String(p[0]);
+  if (p.length === 3) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}, ${expandYear(p[2])}`;
+  if (p.length === 2) return `${MONTHS_SHORT[p[0]-1]} ${expandYear(p[1])}`;
+  return String(expandYear(p[0]));
 }
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
@@ -41,7 +39,8 @@ const PAD_R        = 48;
 const ReleaseTimeline = ({ history }) => {
   const [tooltip, setTooltip] = useState(null); // { dot, x, y }
   const [pinned,  setPinned]  = useState(null); // pinned dot entry
-  const wrapRef  = useRef(null);
+  const wrapRef   = useRef(null);
+  const scrollRef = useRef(null);
   const [wrapWidth, setWrapWidth] = useState(0);
 
   useEffect(() => {
@@ -50,6 +49,13 @@ const ReleaseTimeline = ({ history }) => {
     obs.observe(wrapRef.current);
     return () => obs.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!scrollRef.current || !entries.length) return;
+    const now = new Date();
+    const x = PAD_L + (now.getFullYear() - minYear) * 12 * PX_PER_MONTH;
+    scrollRef.current.scrollLeft = Math.max(0, x - 6 * PX_PER_MONTH);
+  }, [minYear, entries.length]);
 
   // Enriched + sorted entries
   const entries = useMemo(() =>
@@ -71,7 +77,7 @@ const ReleaseTimeline = ({ history }) => {
   }, [entries]);
 
   const mToX = (year, month) => PAD_L + ((year - minYear) * 12 + month) * PX_PER_MONTH + PX_PER_MONTH / 2;
-  const totalMonths = (maxYear - minYear + 2) * 12;
+  const totalMonths = (maxYear - minYear + 1) * 12;
   const svgWidth = Math.max(PAD_L + totalMonths * PX_PER_MONTH + PAD_R, wrapWidth);
 
   // Dot positions — stack same-month dots vertically
@@ -228,7 +234,7 @@ const ReleaseTimeline = ({ history }) => {
       )}
 
       {/* SVG dot timeline */}
-      <div className="tlScrollWrap">
+      <div className="tlScrollWrap" ref={scrollRef}>
         <svg width={svgWidth} height={SVG_HEIGHT} className="tlSvg">
 
           {/* Alternating year bands */}
@@ -281,7 +287,7 @@ const ReleaseTimeline = ({ history }) => {
               <circle
                 className="tlDot"
                 cx={0} cy={0} r={DOT_R}
-                fill={artistColor(dot.artist_name)}
+                fill={ACCENT}
                 stroke={activeDot?.id === dot.id ? '#1a1a1a' : '#fff'}
                 strokeWidth={activeDot?.id === dot.id ? 2.5 : 2}
               />
@@ -297,7 +303,7 @@ const ReleaseTimeline = ({ history }) => {
           style={{ ...tipPos, position: 'fixed' }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="tlTipArtist" style={{ color: artistColor(tooltip.dot.artist_name) }}>
+          <div className="tlTipArtist" style={{ color: ACCENT }}>
             {tooltip.dot.artist_name}
           </div>
           {tooltip.dot.album_title && (

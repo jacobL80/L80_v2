@@ -43,6 +43,11 @@ interface ApiService {
         @Body entry: Map<String, String>,
     ): Response<HistoryEntry>
 
+    // ── All ───────────────────────────────────────────────────────────────────
+
+    @GET("api/all.php")
+    suspend fun getAllItems(): List<AllItem>
+
     // ── Concerts ──────────────────────────────────────────────────────────────
 
     @GET("api/concerts.php")

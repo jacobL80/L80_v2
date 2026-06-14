@@ -43,7 +43,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.Artist
 import com.jacobleighty.musictracker.data.HistoryEntry
 import java.util.Calendar
-import kotlin.math.abs
 
 // ── Colors matching the web ───────────────────────────────────────────────────
 
@@ -73,7 +72,7 @@ fun MusicScreen(vm: MusicViewModel = viewModel(), onOpenDrawer: () -> Unit = {})
 
     Box(modifier = Modifier.fillMaxSize().background(PageBg)) {
         when {
-            state.loading    -> CenteredText("Loading…")
+            state.loading    -> MusicLoadingSpinner()
             state.fetchError -> CenteredText("Could not load data.")
             else             -> MainContent(state, vm, onOpenDrawer)
         }
@@ -546,28 +545,6 @@ private val MONTH_SHORT = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
 
-private fun artistColor(name: String): Color {
-    var h = 0
-    for (c in name) h = c.code + ((h shl 5) - h)
-    val hue = ((h % 360) + 360) % 360
-    return hslColor(hue.toFloat(), 0.65f, 0.52f)
-}
-
-private fun hslColor(h: Float, s: Float, l: Float): Color {
-    val c = (1f - abs(2f * l - 1f)) * s
-    val x = c * (1f - abs(h / 60f % 2f - 1f))
-    val m = l - c / 2f
-    val (r, g, b) = when {
-        h < 60f  -> Triple(c, x, 0f)
-        h < 120f -> Triple(x, c, 0f)
-        h < 180f -> Triple(0f, c, x)
-        h < 240f -> Triple(0f, x, c)
-        h < 300f -> Triple(x, 0f, c)
-        else     -> Triple(c, 0f, x)
-    }
-    return Color(r + m, g + m, b + m)
-}
-
 private fun parseRDate(s: String): Calendar? {
     if (s.isEmpty()) return null
     val p = s.split("/").mapNotNull { it.toIntOrNull() }
@@ -731,13 +708,13 @@ private fun HistorySection(history: List<HistoryEntry>) {
                     .padding(end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(artistColor(dot.e.artistName)))
+                Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(Accent))
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
-                    Text(dot.e.artistName, color = artistColor(dot.e.artistName),
+                    Text(dot.e.artistName, color = Accent,
                         fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                     if (dot.e.albumTitle.isNotEmpty()) {
                         Text(dot.e.albumTitle, color = TextSecondary, fontSize = 13.sp,
@@ -837,7 +814,13 @@ private fun HistoryTimeline(
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+    val scrollState = rememberScrollState()
+    LaunchedEffect(minYear) {
+        val targetX = (padL + (nowCal.get(Calendar.YEAR) - minYear) * 12 * pxPerMonth - pxPerMonth * 6).toInt().coerceAtLeast(0)
+        scrollState.scrollTo(targetX)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState)) {
         Canvas(
             modifier = Modifier
                 .width(with(density) { canvasW.toDp() })
@@ -891,7 +874,7 @@ private fun HistoryTimeline(
             // Release dots
             dots.forEach { dot ->
                 val isSelected = selected?.e?.id == dot.e.id
-                drawCircle(artistColor(dot.e.artistName), dotR, Offset(dot.x, dot.y))
+                drawCircle(Accent, dotR, Offset(dot.x, dot.y))
                 drawCircle(
                     color  = if (isSelected) Color(0xFF1A1A1A) else Color.White,
                     radius = dotR,
@@ -920,6 +903,16 @@ private fun defaultNavColors() = NavigationBarItemDefaults.colors(
 )
 
 // ── Misc ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun MusicLoadingSpinner() {
+    Box(modifier = Modifier.fillMaxSize().padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Accent, strokeWidth = 3.dp, modifier = Modifier.size(64.dp))
+            Icon(Icons.Filled.MusicNote, contentDescription = null, tint = Accent, modifier = Modifier.size(28.dp))
+        }
+    }
+}
 
 @Composable
 private fun CenteredText(text: String) {

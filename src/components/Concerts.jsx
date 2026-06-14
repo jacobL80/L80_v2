@@ -5,6 +5,8 @@ import '../css/Music.css';
 import '../css/Concerts.css';
 import HamburgerMenu from './HamburgerMenu';
 import ConcertTimeline from './ConcertTimeline';
+import LoadingSpinner from './LoadingSpinner';
+import TruncText from './TruncText';
 
 const API_URL     = '/api/concerts.php';
 const ARTISTS_URL = '/api/artists.php';
@@ -16,22 +18,23 @@ const getCookie   = () => { const m = document.cookie.match(new RegExp('(?:^|; )
 const setCookie   = (v) => { document.cookie = `${COOKIE}=${encodeURIComponent(v)}; max-age=${14 * 86400}; path=/; SameSite=Strict`; };
 const delCookie   = ()  => { document.cookie = `${COOKIE}=; max-age=0; path=/; SameSite=Strict`; };
 
+const expandYear  = (y) => y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y;
 const hasFullDate = (s) => s.split('/').length === 3;
 const parseDate   = (s) => {
   const p = s.split('/').map(Number);
-  if (p.length === 3) return new Date(p[2], p[0] - 1, p[1]);
-  if (p.length === 2) return new Date(p[1], p[0] - 1, 1);
-  return new Date(p[0], 0, 1);
+  if (p.length === 3) return new Date(expandYear(p[2]), p[0] - 1, p[1]);
+  if (p.length === 2) return new Date(expandYear(p[1]), p[0] - 1, 1);
+  return new Date(expandYear(p[0]), 0, 1);
 };
 const parseParts  = (s) => {
   const p = s.split('/').map(Number);
-  if (p.length === 3) return { month: MONTHS[p[0] - 1], day: p[1], year: p[2] };
-  if (p.length === 2) return { month: MONTHS[p[0] - 1], day: null, year: p[1] };
-  return { month: null, day: null, year: p[0] || null };
+  if (p.length === 3) return { month: MONTHS[p[0] - 1], day: p[1], year: expandYear(p[2]) };
+  if (p.length === 2) return { month: MONTHS[p[0] - 1], day: null, year: expandYear(p[1]) };
+  return { month: null, day: null, year: p[0] ? expandYear(p[0]) : null };
 };
-const getYear = (s) => s.split('/').slice(-1)[0];
+const getYear = (s) => String(expandYear(Number(s.split('/').slice(-1)[0])));
 
-const EMPTY = { band: '', tourName: '', venue: '', date: '', notes: '', attended: false, attendees: '' };
+const EMPTY = { band: '', tourName: '', venue: '', date: '', notes: '', attended: false, attendees: '', additionalArtists: '' };
 
 const parseAttendees = (s) => s ? s.split(',').map(n => n.trim()).filter(Boolean) : [];
 const joinAttendees  = (arr) => arr.join(', ');
@@ -78,6 +81,8 @@ const ConcertForm = ({ concert, onSave, onDelete, onCancel, artistNames, venueNa
   const [bandActiveIdx, setBandActiveIdx] = useState(-1);
   const [venueSuggestions, setVenueSug] = useState([]);
   const [venueActiveIdx, setVenueActiveIdx] = useState(-1);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState(null);
   const isNew = !form.id;
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -119,10 +124,24 @@ const ConcertForm = ({ concert, onSave, onDelete, onCancel, artistNames, venueNa
     else if (e.key === 'Escape') { setVenueSug([]); setVenueActiveIdx(-1); }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.band.trim()) return;
+    setSaving(true); setResult(null);
+    try {
+      await onSave(form);
+      setResult({ ok: true });
+      setTimeout(onCancel, 1500);
+    } catch (err) {
+      setSaving(false);
+      setResult({ ok: false, message: err.message || 'Something went wrong.' });
+    }
+  };
+
   return (
-    <div className="modalOverlay" onClick={onCancel}>
-      <form className="modalBox" onClick={e => e.stopPropagation()}
-        onSubmit={e => { e.preventDefault(); if (form.band.trim()) onSave(form); }}>
+    <div className="modalOverlay" onClick={saving ? undefined : onCancel}>
+      <form className="modalBox" style={{ position: 'relative' }} onClick={e => e.stopPropagation()}
+        onSubmit={handleSubmit}>
         <h3 className="modalTitle">{isNew ? 'Add Concert' : 'Edit Concert'}</h3>
 
         <label className="modalLabel">Band / Artist</label>
@@ -143,6 +162,13 @@ const ConcertForm = ({ concert, onSave, onDelete, onCancel, artistNames, venueNa
             </div>
           )}
         </div>
+
+        <label className="modalLabel">Additional Artists</label>
+        <AttendeesInput
+          value={form.additionalArtists}
+          onChange={v => set('additionalArtists', v)}
+          allNames={artistNames}
+        />
 
         <label className="modalLabel">Tour Name</label>
         <input className="modalInput" value={form.tourName}
@@ -200,10 +226,24 @@ const ConcertForm = ({ concert, onSave, onDelete, onCancel, artistNames, venueNa
             </span>
           )}
           <div className="modalActionsRight">
-            <button type="button" className="modalCancelBtn" onClick={onCancel}>Cancel</button>
-            <button type="submit" className="modalSaveBtn" disabled={!form.band.trim()}>Save</button>
+            <button type="button" className="modalCancelBtn" onClick={onCancel} disabled={saving}>Cancel</button>
+            <button type="submit" className="modalSaveBtn" disabled={saving || !form.band.trim()}>
+              {saving ? <><span className="btnSpinner" />Saving…</> : 'Save'}
+            </button>
           </div>
         </div>
+        {result && (
+          <div className={`modalResultOverlay${result.ok ? ' modalResultOverlay--ok' : ' modalResultOverlay--err'}`}>
+            <div className="modalResultIcon">{result.ok ? '✓' : '✗'}</div>
+            <p className="modalResultMsg">{result.ok ? 'Saved!' : result.message}</p>
+            {!result.ok && (
+              <div className="modalResultBtns">
+                <button type="button" className="modalCancelBtn" onClick={() => setResult(null)}>Try Again</button>
+                <button type="button" className="modalCancelBtn" onClick={onCancel}>Close</button>
+              </div>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );
@@ -221,12 +261,11 @@ const ConcertCard = ({ concert, onEdit, onAttend, editing }) => {
   const past      = daysUntil !== null && daysUntil < 0;
 
   return (
-    <div className={`upcomingCard${imminent ? ' upcomingCard--imminent' : ''}${past ? ' upcomingCard--released' : ''}`}
-      style={{ borderLeftColor: '#1696b6' }}>
+    <div className={`upcomingCard${imminent ? ' upcomingCard--imminent' : ''}${past ? ' upcomingCard--released' : ''}`}>
       {hasDate && (
         <>
           <div className="upcomingCardDate">
-            {month && <div className="upcomingCardMonth" style={{ color: '#1696b6' }}>{month}</div>}
+            {month && <div className="upcomingCardMonth">{month}</div>}
             {day   && <div className="upcomingCardDay">{day}</div>}
             {year  && <div className="upcomingCardYear">{year}</div>}
           </div>
@@ -234,11 +273,21 @@ const ConcertCard = ({ concert, onEdit, onAttend, editing }) => {
         </>
       )}
       <div className="upcomingCardInfo">
-        <div className="upcomingCardArtist">{concert.band}</div>
-        {concert.tourName && <div className="upcomingCardAlbum">{concert.tourName}</div>}
+        <div className="upcomingCardArtist" style={concert.additionalArtists ? { marginBottom: 0 } : undefined}>{concert.band}</div>
+        {concert.additionalArtists && (
+          <TruncText className="upcomingCardAlbum" style={{ opacity: 0.75, marginBottom: 5 }}
+            tipId="concerts-tip" content={`w/ ${concert.additionalArtists}`}>
+            w/ {concert.additionalArtists}
+          </TruncText>
+        )}
+        {concert.tourName && (
+          <TruncText className="upcomingCardAlbum" tipId="concerts-tip" content={concert.tourName}>
+            {concert.tourName}
+          </TruncText>
+        )}
         {concert.venue    && <div className="cardLastRelease">{concert.venue}</div>}
         {imminent && (
-          <div className="upcomingCardImminent" style={{ color: '#1696b6' }}>
+          <div className="upcomingCardImminent">
             {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days away`}
           </div>
         )}
@@ -261,12 +310,14 @@ const AttendeesInput = ({ value, onChange, allNames }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [activeIdx, setActiveIdx] = useState(-1);
   const inputRef = useRef(null);
+  const inputValRef = useRef('');
 
   const addName = (name) => {
     const trimmed = name.trim();
     if (!trimmed || chips.some(c => c.toLowerCase() === trimmed.toLowerCase())) return;
     onChange(joinAttendees([...chips, trimmed]));
     setInputVal('');
+    inputValRef.current = '';
     setSuggestions([]);
     setActiveIdx(-1);
   };
@@ -300,6 +351,7 @@ const AttendeesInput = ({ value, onChange, allNames }) => {
   const handleChange = (e) => {
     const v = e.target.value.replace(/,/g, '');
     setInputVal(v);
+    inputValRef.current = v;
     setActiveIdx(-1);
     if (v.trim()) {
       const q = v.toLowerCase();
@@ -329,7 +381,7 @@ const AttendeesInput = ({ value, onChange, allNames }) => {
           value={inputVal}
           onChange={handleChange}
           onKeyDown={handleKey}
-          onBlur={() => setTimeout(() => { if (inputVal.trim()) addName(inputVal); setSuggestions([]); }, 150)}
+          onBlur={() => setTimeout(() => { if (inputValRef.current.trim()) addName(inputValRef.current); setSuggestions([]); }, 150)}
           placeholder={chips.length === 0 ? 'Add names…' : ''}
         />
       </div>
@@ -419,21 +471,30 @@ const Concerts = () => {
   const exitEdit = () => { setToken(null); delCookie(); };
 
   const saveConcert = async (form) => {
-    setSaveErr('');
     const isNew = !form.id;
     const url   = isNew ? API_URL : `${API_URL}?id=${form.id}`;
-    if (!isNew) { setConcerts(prev => prev.map(c => c.id === form.id ? { ...c, ...form } : c)); setEditing(null); }
+    const snapshot = concerts;
+    if (!isNew) setConcerts(prev => prev.map(c => c.id === form.id ? { ...c, ...form } : c));
+
+    let res;
     try {
-      const res = await fetch(url, {
+      res = await fetch(url, {
         method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Edit-Token': editToken },
         body: JSON.stringify(form),
       });
-      if (res.status === 401) { setSaveErr('Incorrect password.'); setToken(null); delCookie(); return; }
-      const saved = await res.json();
-      setConcerts(prev => isNew ? [...prev, saved] : prev.map(c => c.id === saved.id ? saved : c));
-      if (isNew) setEditing(null);
-    } catch { setSaveErr('Network error — please try again.'); }
+    } catch {
+      if (!isNew) setConcerts(snapshot);
+      throw new Error('Network error — please try again.');
+    }
+
+    if (res.status === 401) {
+      setToken(null); delCookie();
+      if (!isNew) setConcerts(snapshot);
+      throw new Error('Incorrect password.');
+    }
+    const saved = await res.json();
+    setConcerts(prev => isNew ? [...prev, saved] : prev.map(c => c.id === saved.id ? saved : c));
   };
 
   const deleteConcert = async (id) => {
@@ -446,16 +507,16 @@ const Concerts = () => {
   };
 
   const attendConcert = async (concert) => {
-    await saveConcert({ ...concert, attended: true });
+    await saveConcert({ ...concert, attended: true }).catch(e => setSaveErr(e.message));
   };
 
   const isEditing = !!editToken;
 
-  if (loading)    return <div className="musicOuter musicLoading">Loading…</div>;
+  if (loading)    return <LoadingSpinner type="concert" />;
   if (fetchError) return <div className="musicOuter musicLoading">Could not load data.</div>;
 
   return (
-    <div className={`musicOuter${isEditing ? ' musicOuter--editing' : ''}`}>
+    <div className={`musicOuter concertsOuter${isEditing ? ' musicOuter--editing' : ''}`}>
       {isEditing && (
         <div className="editBanner">
           <span className="editBannerLabel">EDIT MODE</span>
@@ -464,14 +525,14 @@ const Concerts = () => {
       )}
 
       <div className="musicScrollArea">
-        <div className="musicHeader" style={{ background: 'linear-gradient(135deg, rgba(22,150,182,0.06) 0%, transparent 55%)' }}>
+        <div className="musicHeader">
           <div className="musicHeaderInner">
             <div className="musicHeaderRow">
               <HamburgerMenu />
-              <p className="musicEyebrow" style={{ color: '#1696b6' }}>Concerts</p>
+              <p className="musicEyebrow">Concerts</p>
             </div>
             <h1 className="musicTitle">{view === 'history' ? 'Concert History' : 'Concert Schedule'}</h1>
-            <div className="musicHeaderRule" style={{ background: '#1696b6' }} />
+            <div className="musicHeaderRule" />
           </div>
         </div>
 
@@ -484,7 +545,7 @@ const Concerts = () => {
             <>
               {upcoming.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle" style={{ color: '#1696b6' }}>Upcoming</h2>
+                  <h2 className="musicSectionTitle">Upcoming</h2>
                   <div className="upcomingGrid">
                     {upcoming.map(c => (
                       <ConcertCard key={c.id} concert={c} onEdit={setEditing}
@@ -498,7 +559,7 @@ const Concerts = () => {
               )}
               {past.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle" style={{ color: '#1696b6' }}>Past</h2>
+                  <h2 className="musicSectionTitle">Past</h2>
                   <div className="upcomingGrid">
                     {past.map(c => (
                       <ConcertCard key={c.id} concert={c} onEdit={setEditing}
@@ -514,14 +575,13 @@ const Concerts = () => {
 
       <nav className="bottomNav">
         <button className={`bottomNavBtn bottomNavBtn--add${isEditing ? ' bottomNavBtn--active' : ''}`}
-          style={{ color: '#1696b6' }} onClick={handleAddNew}>
+          onClick={handleAddNew}>
           <PlusIcon />
           <span>Add New</span>
         </button>
         <div className="bottomNavDivider" />
         <button
           className={`bottomNavBtn${view === 'schedule' ? ' bottomNavBtn--active' : ''}`}
-          style={view === 'schedule' ? { color: '#1696b6' } : {}}
           onClick={() => setView('schedule')}
         >
           <CalendarIcon />
@@ -529,13 +589,14 @@ const Concerts = () => {
         </button>
         <button
           className={`bottomNavBtn${view === 'history' ? ' bottomNavBtn--active' : ''}`}
-          style={view === 'history' ? { color: '#1696b6' } : {}}
           onClick={() => setView('history')}
         >
           <BarChartIcon />
           <span>History</span>
         </button>
       </nav>
+
+      <Tooltip id="concerts-tip" />
 
       {showPass && (
         <PasswordModal onSubmit={enterEdit} onCancel={() => { setShowPass(false); setPendingAdd(false); }} />

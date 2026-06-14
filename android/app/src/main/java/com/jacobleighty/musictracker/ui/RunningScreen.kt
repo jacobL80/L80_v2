@@ -35,8 +35,8 @@ import kotlin.math.roundToInt
 
 private val RPageBg      = Color(0xFFFAF9F7)
 private val RCardBg      = Color(0xFFFFFFFF)
-private val RAccent      = Color(0xFF4A6FA5)   // Monday blue as primary accent
-private val RAccentLight = Color(0xFFEBF0F8)
+private val RAccent      = Color(0xFF47A025)
+private val RAccentLight = Color(0xFFEDF7E8)
 private val RTextPrimary = Color(0xFF1A1A1A)
 private val RTextSec     = Color(0xFF888888)
 private val RTextDim     = Color(0xFFBBBBBB)
@@ -60,7 +60,7 @@ fun RunningScreen(vm: RunningViewModel = viewModel(), onOpenDrawer: () -> Unit =
 
     Box(modifier = Modifier.fillMaxSize().background(RPageBg)) {
         when {
-            state.loading    -> RCenteredText("Loading…")
+            state.loading    -> RLoadingSpinner()
             state.fetchError -> RCenteredText("Could not load data.")
             else             -> RMainContent(state, vm, onOpenDrawer)
         }
@@ -401,6 +401,16 @@ private fun YearChip(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 // ── Misc ──────────────────────────────────────────────────────────────────────
+
+@Composable private fun RLoadingSpinner() {
+    val runningGreen = Color(0xFF47A025)
+    Box(modifier = Modifier.fillMaxSize().padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = runningGreen, strokeWidth = 3.dp, modifier = Modifier.size(64.dp))
+            Icon(Icons.Filled.DirectionsRun, contentDescription = null, tint = runningGreen, modifier = Modifier.size(28.dp))
+        }
+    }
+}
 
 @Composable private fun RCenteredText(text: String) {
     Box(modifier = Modifier.fillMaxSize().padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {

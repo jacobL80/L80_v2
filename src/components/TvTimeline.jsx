@@ -4,26 +4,22 @@ import '../css/ReleaseTimeline.css';
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ACCENT = '#7c3aed';
 
-function showColor(name) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return `hsl(${((h % 360) + 360) % 360}, 60%, 48%)`;
-}
+function expandYear(y) { return y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y; }
 
 function parseDate(s) {
   if (!s) return null;
   const p = s.split('/').map(Number);
-  if (p.length === 3) return new Date(p[2], p[0] - 1, p[1]);
-  if (p.length === 2) return new Date(p[1], p[0] - 1, 15);
-  return new Date(p[0], 6, 1);
+  if (p.length === 3) return new Date(expandYear(p[2]), p[0] - 1, p[1]);
+  if (p.length === 2) return new Date(expandYear(p[1]), p[0] - 1, 15);
+  return new Date(expandYear(p[0]), 6, 1);
 }
 
 function fmtDate(s) {
   if (!s) return '';
   const p = s.split('/').map(Number);
-  if (p.length === 3) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}, ${p[2]}`;
-  if (p.length === 2) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}`;
-  return String(p[0]);
+  if (p.length === 3) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}, ${expandYear(p[2])}`;
+  if (p.length === 2) return `${MONTHS_SHORT[p[0]-1]} ${expandYear(p[1])}`;
+  return String(expandYear(p[0]));
 }
 
 const PX_PER_MONTH = 32;
@@ -36,7 +32,8 @@ const PAD_R        = 48;
 const TvTimeline = ({ history }) => {
   const [tooltip, setTooltip] = useState(null);
   const [pinned,  setPinned]  = useState(null);
-  const wrapRef  = useRef(null);
+  const wrapRef   = useRef(null);
+  const scrollRef = useRef(null);
   const [wrapWidth, setWrapWidth] = useState(0);
 
   useEffect(() => {
@@ -60,8 +57,15 @@ const TvTimeline = ({ history }) => {
     return { minYear: Math.min(...ys), maxYear: Math.max(Math.max(...ys), new Date().getFullYear()) };
   }, [entries]);
 
+  useEffect(() => {
+    if (!scrollRef.current || !entries.length) return;
+    const now = new Date();
+    const x = PAD_L + (now.getFullYear() - minYear) * 12 * PX_PER_MONTH;
+    scrollRef.current.scrollLeft = Math.max(0, x - 6 * PX_PER_MONTH);
+  }, [minYear, entries.length]);
+
   const mToX = (year, month) => PAD_L + ((year - minYear) * 12 + month) * PX_PER_MONTH + PX_PER_MONTH / 2;
-  const svgWidth = Math.max(PAD_L + (maxYear - minYear + 2) * 12 * PX_PER_MONTH + PAD_R, wrapWidth);
+  const svgWidth = Math.max(PAD_L + (maxYear - minYear + 1) * 12 * PX_PER_MONTH + PAD_R, wrapWidth);
 
   const dots = useMemo(() => {
     const byKey = {};
@@ -139,7 +143,7 @@ const TvTimeline = ({ history }) => {
         </div>
       )}
 
-      <div className="tlScrollWrap">
+      <div className="tlScrollWrap" ref={scrollRef}>
         <svg width={svgWidth} height={SVG_HEIGHT} className="tlSvg">
           {yearTicks.map(({ year, x }, i) => i % 2 === 0 ? null : (
             <rect key={year} x={x} y={0} width={12 * PX_PER_MONTH} height={SVG_HEIGHT - 20} fill="#f3f0ff" opacity="0.6" />
@@ -157,7 +161,7 @@ const TvTimeline = ({ history }) => {
               onMouseLeave={() => { if (!pinned) setTooltip(null); }}
               onClick={(e) => { e.stopPropagation(); if (pinned?.id === dot.id) clearAll(); else { setPinned(dot); setTooltip({ dot, x: e.clientX, y: e.clientY }); } }}>
               <circle className="tlDot" cx={0} cy={0} r={DOT_R}
-                fill={showColor(dot.programName)}
+                fill={ACCENT}
                 stroke={activeDot?.id === dot.id ? '#1a1a1a' : '#fff'}
                 strokeWidth={activeDot?.id === dot.id ? 2.5 : 2} />
             </g>
@@ -168,7 +172,7 @@ const TvTimeline = ({ history }) => {
       {tooltip && tipPos && (
         <div className={`tlTooltip${pinned ? ' tlTooltip--pinned' : ''}`}
           style={{ ...tipPos, position: 'fixed' }} onClick={(e) => e.stopPropagation()}>
-          <div className="tlTipArtist" style={{ color: showColor(tooltip.dot.programName) }}>{tooltip.dot.programName}</div>
+          <div className="tlTipArtist" style={{ color: ACCENT }}>{tooltip.dot.programName}</div>
           {tooltip.dot.service && <div className="tlTipAlbum">{tooltip.dot.service}</div>}
           {tooltip.dot.date && <div className="tlTipDate">{fmtDate(tooltip.dot.date)}</div>}
           {pinned && <button className="tlTipClose" onClick={clearAll}>×</button>}

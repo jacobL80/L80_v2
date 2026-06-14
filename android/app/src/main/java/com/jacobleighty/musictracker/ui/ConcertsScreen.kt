@@ -59,7 +59,7 @@ fun ConcertsScreen(vm: ConcertsViewModel = viewModel(), onOpenDrawer: () -> Unit
 
     Box(modifier = Modifier.fillMaxSize().background(CPageBg)) {
         when {
-            state.loading    -> CCenteredText("Loading…")
+            state.loading    -> ConcertLoadingSpinner()
             state.fetchError -> CCenteredText("Could not load data.")
             else             -> CMainContent(state, vm, onOpenDrawer)
         }
@@ -358,7 +358,7 @@ private fun ConcertHistorySection(attended: List<Concert>) {
         }
         if (topAttendees.isNotEmpty()) {
             HorizontalDivider(color = CBorder, modifier = Modifier.padding(horizontal = 14.dp))
-            CHBarChart("Most With", topAttendees, Color(0xFF47A025))
+            CHBarChart("Most With", topAttendees, CAccent)
         }
         HorizontalDivider(color = CBorder, modifier = Modifier.padding(horizontal = 14.dp))
         Spacer(Modifier.height(8.dp))
@@ -728,6 +728,16 @@ private fun CStatChip(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, color = CTextPrimary, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1)
         Text(label, color = CTextSec, fontSize = 10.sp, letterSpacing = 0.3.sp, maxLines = 1)
+    }
+}
+
+@Composable
+private fun ConcertLoadingSpinner() {
+    Box(modifier = Modifier.fillMaxSize().padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = CAccent, strokeWidth = 3.dp, modifier = Modifier.size(64.dp))
+            Icon(Icons.Filled.Stadium, contentDescription = null, tint = CAccent, modifier = Modifier.size(28.dp))
+        }
     }
 }
 

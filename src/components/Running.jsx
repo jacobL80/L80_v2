@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import '../css/Music.css';
 import '../css/Running.css';
 import HamburgerMenu from './HamburgerMenu';
+import LoadingSpinner from './LoadingSpinner';
 
 const API_URL  = '/api/running.php';
 const ACCENT   = '#47A025';
@@ -151,13 +152,29 @@ const PasswordModal = ({ onSubmit, onCancel }) => {
 // ─── Add run modal ────────────────────────────────────────────────────────────
 
 const AddRunModal = ({ onSave, onCancel }) => {
-  const [miles, setMiles] = useState('');
-  const [date,  setDate]  = useState(todayStr());
+  const [miles, setMiles]   = useState('');
+  const [date,  setDate]    = useState(todayStr());
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!miles || parseFloat(miles) <= 0) return;
+    setSaving(true); setResult(null);
+    try {
+      await onSave({ miles: parseFloat(miles), date });
+      setResult({ ok: true });
+      setTimeout(onCancel, 1500);
+    } catch (err) {
+      setSaving(false);
+      setResult({ ok: false, message: err.message || 'Something went wrong.' });
+    }
+  };
 
   return (
-    <div className="modalOverlay" onClick={onCancel}>
-      <form className="modalBox modalBox--narrow" onClick={e => e.stopPropagation()}
-        onSubmit={e => { e.preventDefault(); if (miles && parseFloat(miles) > 0) onSave({ miles: parseFloat(miles), date }); }}>
+    <div className="modalOverlay" onClick={saving ? undefined : onCancel}>
+      <form className="modalBox modalBox--narrow" style={{ position: 'relative' }}
+        onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
         <h3 className="modalTitle">Log Run</h3>
         <label className="modalLabel">Miles</label>
         <input className="modalInput" type="number" step="0.01" min="0" value={miles}
@@ -167,10 +184,24 @@ const AddRunModal = ({ onSave, onCancel }) => {
           onChange={e => setDate(e.target.value)} />
         <div className="modalActions">
           <div className="modalActionsRight">
-            <button type="button" className="modalCancelBtn" onClick={onCancel}>Cancel</button>
-            <button type="submit" className="modalSaveBtn" disabled={!miles || parseFloat(miles) <= 0}>Save</button>
+            <button type="button" className="modalCancelBtn" onClick={onCancel} disabled={saving}>Cancel</button>
+            <button type="submit" className="modalSaveBtn" disabled={saving || !miles || parseFloat(miles) <= 0}>
+              {saving ? <><span className="btnSpinner" />Saving…</> : 'Save'}
+            </button>
           </div>
         </div>
+        {result && (
+          <div className={`modalResultOverlay${result.ok ? ' modalResultOverlay--ok' : ' modalResultOverlay--err'}`}>
+            <div className="modalResultIcon">{result.ok ? '✓' : '✗'}</div>
+            <p className="modalResultMsg">{result.ok ? 'Logged!' : result.message}</p>
+            {!result.ok && (
+              <div className="modalResultBtns">
+                <button type="button" className="modalCancelBtn" onClick={() => setResult(null)}>Try Again</button>
+                <button type="button" className="modalCancelBtn" onClick={onCancel}>Close</button>
+              </div>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );
@@ -265,19 +296,18 @@ const Running = () => {
   const exitEdit = () => { setToken(null); delCookie(); };
 
   const saveRun = async ({ miles, date }) => {
-    setSaveErr('');
+    let res;
     try {
-      const res = await fetch(API_URL, {
+      res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Edit-Token': editToken },
         body: JSON.stringify({ miles, date }),
       });
-      if (res.status === 401) { setSaveErr('Incorrect password.'); setToken(null); delCookie(); return; }
-      setShowAdd(false);
-      loadWeeks(yearFilter);
-      // Refresh all weeks too
-      fetch(API_URL).then(r => r.ok ? r.json() : []).then(setAllWeeks).catch(() => {});
-    } catch { setSaveErr('Network error.'); }
+    } catch { throw new Error('Network error — please try again.'); }
+    if (res.status === 401) { setToken(null); delCookie(); throw new Error('Incorrect password.'); }
+    if (!res.ok) throw new Error('Save failed — please try again.');
+    loadWeeks(yearFilter);
+    fetch(API_URL).then(r => r.ok ? r.json() : []).then(setAllWeeks).catch(() => {});
   };
 
   const deleteEntry = async (id) => {
@@ -293,7 +323,7 @@ const Running = () => {
   // Compute year total for display
   const yearTotal = useMemo(() => weeks.reduce((s, w) => s + w.total, 0), [weeks]);
 
-  if (loading)    return <div className="musicOuter musicLoading">Loading…</div>;
+  if (loading)    return <LoadingSpinner type="running" />;
   if (fetchError) return <div className="musicOuter musicLoading">Could not load data.</div>;
 
   // Chart shows all weeks (not year-filtered) for context
@@ -315,10 +345,10 @@ const Running = () => {
         <div className="musicHeaderInner" style={{ paddingTop: 28, paddingBottom: 12 }}>
           <div className="musicHeaderRow">
             <HamburgerMenu />
-            <p className="musicEyebrow" style={{ color: ACCENT }}>Running</p>
+            <p className="musicEyebrow">Running</p>
           </div>
           <h1 className="musicTitle" style={{ fontSize: 36 }}>Mileage Log</h1>
-          <div className="musicHeaderRule" style={{ background: ACCENT, marginBottom: 12 }} />
+          <div className="musicHeaderRule" style={{ marginBottom: 12 }} />
         </div>
         {chartWeeksDesc.length > 0 && <RunningChart weeks={chartWeeksDesc} />}
       </div>
@@ -372,7 +402,7 @@ const Running = () => {
 
       <nav className="bottomNav">
         <button className={`bottomNavBtn bottomNavBtn--add${isEditing ? ' bottomNavBtn--active' : ''}`}
-          style={{ color: ACCENT }} onClick={handleAddNew}>
+          onClick={handleAddNew}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>

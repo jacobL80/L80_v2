@@ -18,6 +18,7 @@ enum class TvViewType { SCHEDULE, HISTORY }
 data class TvMoviesUiState(
     val loading: Boolean = true,
     val fetchError: Boolean = false,
+    val toWatch: List<TvShow> = emptyList(),
     val upcoming: List<TvShow> = emptyList(),
     val expected: List<TvShow> = emptyList(),
     val watchlist: List<TvShow> = emptyList(),
@@ -29,6 +30,7 @@ data class TvMoviesUiState(
     val showPasswordDialog: Boolean = false,
     val editingShow: TvShow? = null,
     val pendingAdd: Boolean = false,
+    val pendingWatch: TvShow? = null,
 )
 
 class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
@@ -57,13 +59,18 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun updateSections(shows: List<TvShow>) {
-        val upcoming  = shows.filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
+        val today     = java.time.LocalDate.now()
+        val toWatch   = shows.filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date)
+            && !DateUtils.parseDate(it.date).isAfter(today) }
+            .sortedBy { DateUtils.parseDate(it.date) }
+        val upcoming  = shows.filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date)
+            && DateUtils.parseDate(it.date).isAfter(today) }
             .sortedBy { DateUtils.parseDate(it.date) }
         val expected  = shows.filter { !it.watched && it.date.isNotEmpty() && !DateUtils.hasFullDate(it.date) }
             .sortedBy { DateUtils.getYear(it.date).toIntOrNull() ?: 9999 }
         val watchlist = shows.filter { !it.watched && it.date.isEmpty() }
         val watched   = shows.filter { it.watched }
-        _uiState.update { it.copy(upcoming = upcoming, expected = expected, watchlist = watchlist, watched = watched) }
+        _uiState.update { it.copy(toWatch = toWatch, upcoming = upcoming, expected = expected, watchlist = watchlist, watched = watched) }
     }
 
     fun handleAddNew() {
@@ -73,9 +80,12 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun enterEditMode(password: String) {
         prefs.edit().putString(Constants.PREF_EDIT_TOKEN, password).apply()
-        val pending = _uiState.value.pendingAdd
-        _uiState.update { it.copy(editToken = password, isEditing = true, showPasswordDialog = false, pendingAdd = false,
+        val pending      = _uiState.value.pendingAdd
+        val pendingWatch = _uiState.value.pendingWatch
+        _uiState.update { it.copy(editToken = password, isEditing = true, showPasswordDialog = false,
+            pendingAdd = false, pendingWatch = null,
             editingShow = if (pending) TvShow() else null) }
+        if (pendingWatch != null) markWatched(pendingWatch)
     }
 
     fun exitEditMode() {
@@ -85,7 +95,12 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun openEdit(show: TvShow) = _uiState.update { it.copy(editingShow = show) }
     fun closeEdit() = _uiState.update { it.copy(editingShow = null, saveError = null) }
-    fun dismissPasswordDialog() = _uiState.update { it.copy(showPasswordDialog = false, pendingAdd = false) }
+    fun dismissPasswordDialog() = _uiState.update { it.copy(showPasswordDialog = false, pendingAdd = false, pendingWatch = null) }
+
+    fun handleMarkWatched(show: TvShow) {
+        if (_uiState.value.isEditing) markWatched(show)
+        else _uiState.update { it.copy(pendingWatch = show, showPasswordDialog = true) }
+    }
     fun setView(v: TvViewType) = _uiState.update { it.copy(view = v) }
 
     fun saveShow(show: TvShow) {
@@ -134,5 +149,5 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun markWatched(show: TvShow) = saveShow(show.copy(watched = true))
 
-    private fun allShows() = with(_uiState.value) { upcoming + expected + watchlist + watched }
+    private fun allShows() = with(_uiState.value) { toWatch + upcoming + expected + watchlist + watched }
 }

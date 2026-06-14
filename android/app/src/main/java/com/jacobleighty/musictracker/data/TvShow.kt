@@ -8,5 +8,6 @@ data class TvShow(
     val service: String = "",
     val date: String = "",
     val notes: String = "",
+    val type: String = "",
     val watched: Boolean = false,
 )

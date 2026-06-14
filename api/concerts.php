@@ -24,20 +24,24 @@ try {
 
 try {
     $pdo->exec('CREATE TABLE IF NOT EXISTS concerts (
-        id        INT AUTO_INCREMENT PRIMARY KEY,
-        band      VARCHAR(255) NOT NULL DEFAULT \'\',
-        tour_name VARCHAR(255) NOT NULL DEFAULT \'\',
-        venue     VARCHAR(255) NOT NULL DEFAULT \'\',
-        date      VARCHAR(20)  NOT NULL DEFAULT \'\',
-        notes     VARCHAR(500) NOT NULL DEFAULT \'\',
-        attended  TINYINT(1)   NOT NULL DEFAULT 0,
-        attendees VARCHAR(500) NOT NULL DEFAULT \'\'
+        id                 INT AUTO_INCREMENT PRIMARY KEY,
+        band               VARCHAR(255) NOT NULL DEFAULT \'\',
+        tour_name          VARCHAR(255) NOT NULL DEFAULT \'\',
+        venue              VARCHAR(255) NOT NULL DEFAULT \'\',
+        date               VARCHAR(20)  NOT NULL DEFAULT \'\',
+        notes              VARCHAR(500) NOT NULL DEFAULT \'\',
+        attended           TINYINT(1)   NOT NULL DEFAULT 0,
+        attendees          VARCHAR(500) NOT NULL DEFAULT \'\',
+        additional_artists VARCHAR(500) NOT NULL DEFAULT \'\'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
 } catch (PDOException $e) {}
 
-// Add attendees column to existing tables that predate this field
+// Add columns to existing tables that predate these fields
 try {
     $pdo->exec("ALTER TABLE concerts ADD COLUMN attendees VARCHAR(500) NOT NULL DEFAULT ''");
+} catch (PDOException $e) {}
+try {
+    $pdo->exec("ALTER TABLE concerts ADD COLUMN additional_artists VARCHAR(500) NOT NULL DEFAULT ''");
 } catch (PDOException $e) {}
 
 function verify_auth() {
@@ -51,14 +55,15 @@ function verify_auth() {
 
 function row_to_concert(array $row): array {
     return [
-        'id'        => (int) $row['id'],
-        'band'      => $row['band'],
-        'tourName'  => $row['tour_name'],
-        'venue'     => $row['venue'],
-        'date'      => $row['date'],
-        'notes'     => $row['notes'],
-        'attended'  => (bool) $row['attended'],
-        'attendees' => $row['attendees'],
+        'id'                => (int) $row['id'],
+        'band'              => $row['band'],
+        'tourName'          => $row['tour_name'],
+        'venue'             => $row['venue'],
+        'date'              => $row['date'],
+        'notes'             => $row['notes'],
+        'attended'          => (bool) $row['attended'],
+        'attendees'         => $row['attendees'],
+        'additionalArtists' => $row['additional_artists'] ?? '',
     ];
 }
 
@@ -73,17 +78,18 @@ if ($method === 'GET') {
     verify_auth();
     $body = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare(
-        'INSERT INTO concerts (band, tour_name, venue, date, notes, attended, attendees)
-         VALUES (:band, :tour, :venue, :date, :notes, :attended, :attendees)'
+        'INSERT INTO concerts (band, tour_name, venue, date, notes, attended, attendees, additional_artists)
+         VALUES (:band, :tour, :venue, :date, :notes, :attended, :attendees, :additional_artists)'
     );
     $stmt->execute([
-        'band'      => trim($body['band'] ?? ''),
-        'tour'      => trim($body['tourName'] ?? ''),
-        'venue'     => trim($body['venue'] ?? ''),
-        'date'      => trim($body['date'] ?? ''),
-        'notes'     => trim($body['notes'] ?? ''),
-        'attended'  => empty($body['attended']) ? 0 : 1,
-        'attendees' => trim($body['attendees'] ?? ''),
+        'band'               => trim($body['band'] ?? ''),
+        'tour'               => trim($body['tourName'] ?? ''),
+        'venue'              => trim($body['venue'] ?? ''),
+        'date'               => trim($body['date'] ?? ''),
+        'notes'              => trim($body['notes'] ?? ''),
+        'attended'           => empty($body['attended']) ? 0 : 1,
+        'attendees'          => trim($body['attendees'] ?? ''),
+        'additional_artists' => trim($body['additionalArtists'] ?? ''),
     ]);
     $newId = (int) $pdo->lastInsertId();
     $row = $pdo->query("SELECT * FROM concerts WHERE id = $newId")->fetch(PDO::FETCH_ASSOC);
@@ -95,17 +101,19 @@ if ($method === 'GET') {
     $body = json_decode(file_get_contents('php://input'), true);
     $stmt = $pdo->prepare(
         'UPDATE concerts SET band=:band, tour_name=:tour, venue=:venue, date=:date,
-         notes=:notes, attended=:attended, attendees=:attendees WHERE id=:id'
+         notes=:notes, attended=:attended, attendees=:attendees,
+         additional_artists=:additional_artists WHERE id=:id'
     );
     $stmt->execute([
-        'band'      => trim($body['band'] ?? ''),
-        'tour'      => trim($body['tourName'] ?? ''),
-        'venue'     => trim($body['venue'] ?? ''),
-        'date'      => trim($body['date'] ?? ''),
-        'notes'     => trim($body['notes'] ?? ''),
-        'attended'  => empty($body['attended']) ? 0 : 1,
-        'attendees' => trim($body['attendees'] ?? ''),
-        'id'        => $id,
+        'band'               => trim($body['band'] ?? ''),
+        'tour'               => trim($body['tourName'] ?? ''),
+        'venue'              => trim($body['venue'] ?? ''),
+        'date'               => trim($body['date'] ?? ''),
+        'notes'              => trim($body['notes'] ?? ''),
+        'attended'           => empty($body['attended']) ? 0 : 1,
+        'attendees'          => trim($body['attendees'] ?? ''),
+        'additional_artists' => trim($body['additionalArtists'] ?? ''),
+        'id'                 => $id,
     ]);
     $row = $pdo->query("SELECT * FROM concerts WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
     echo json_encode(row_to_concert($row));

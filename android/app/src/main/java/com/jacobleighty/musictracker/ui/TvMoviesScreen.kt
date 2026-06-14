@@ -55,19 +55,24 @@ fun TvMoviesScreen(vm: TvMoviesViewModel = viewModel(), onOpenDrawer: () -> Unit
 
     Box(modifier = Modifier.fillMaxSize().background(TPageBg)) {
         when {
-            state.loading    -> TCenteredText("Loading…")
+            state.loading    -> TvLoadingSpinner()
             state.fetchError -> TCenteredText("Could not load data.")
             else             -> TMainContent(state, vm, onOpenDrawer)
         }
         if (state.showPasswordDialog) {
             PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
         }
+        val serviceNames = remember(state) {
+            (state.upcoming + state.expected + state.watchlist + state.watched)
+                .map { it.service }.filter { it.isNotEmpty() }.distinct().sorted()
+        }
         state.editingShow?.let { show ->
             EditShowDialog(
-                show      = show,
-                onSave    = vm::saveShow,
-                onDelete  = { vm.deleteShow(show.id) },
-                onDismiss = vm::closeEdit,
+                show         = show,
+                serviceNames = serviceNames,
+                onSave       = vm::saveShow,
+                onDelete     = { vm.deleteShow(show.id) },
+                onDismiss    = vm::closeEdit,
             )
         }
     }
@@ -149,6 +154,10 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
             if (state.view == TvViewType.HISTORY) {
                 item { TvHistorySection(state.watched) }
             } else {
+                if (state.toWatch.isNotEmpty()) {
+                    item { TSectionHeader("To Watch", Color(0xFF16A34A)) }
+                    items(state.toWatch) { show -> TvCard(show, state.isEditing, vm::openEdit, vm::handleMarkWatched, watchable = true) }
+                }
                 if (state.upcoming.isNotEmpty()) {
                     item { TSectionHeader("Upcoming", TAccent) }
                     items(state.upcoming) { show -> TvCard(show, state.isEditing, vm::openEdit, vm::markWatched) }
@@ -161,7 +170,7 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
                     item { TSectionHeader("Watchlist", TTextDim) }
                     items(state.watchlist) { show -> TvRow(show, "—", state.isEditing, vm::openEdit) }
                 }
-                if (state.upcoming.isEmpty() && state.expected.isEmpty() && state.watchlist.isEmpty()) {
+                if (state.toWatch.isEmpty() && state.upcoming.isEmpty() && state.expected.isEmpty() && state.watchlist.isEmpty()) {
                     item { TCenteredText("No shows yet. Tap Add to get started.") }
                 }
             }
@@ -170,30 +179,32 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
 }
 
 @Composable
-private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, onWatch: (TvShow) -> Unit) {
+private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, onWatch: (TvShow) -> Unit, watchable: Boolean = false) {
     val (month, day, year) = DateUtils.parseParts(show.date)
     val daysUntil = DateUtils.daysUntil(show.date)
-    val imminent  = daysUntil in 0..6
+    val imminent  = !watchable && daysUntil in 0..6
     val past      = daysUntil < 0
-    val cardBg    = if (imminent) TAccentLight else TCardBg
-    val borderCol = if (imminent) TAccent else TBorder
+    val toWatchGreen = Color(0xFF16A34A)
+    val cardBg    = when { watchable -> Color(0xFFF0FDF4); imminent -> TAccentLight; else -> TCardBg }
+    val borderCol = when { watchable -> Color(0xFFBBF7D0); imminent -> TAccent; else -> TBorder }
+    val accentBar = if (watchable) toWatchGreen else TAccent
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp)
             .height(IntrinsicSize.Min).clip(tCardShape).background(cardBg)
             .border(BorderStroke(1.5.dp, borderCol), tCardShape),
     ) {
-        Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(TAccent))
+        Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(accentBar))
         Box(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                    .then(if (isEditing) Modifier.padding(end = 34.dp) else Modifier),
+                    .then(if (isEditing || watchable) Modifier.padding(end = 34.dp) else Modifier),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.widthIn(min = 40.dp)) {
-                    if (month != null) Text(month, color = TAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp, lineHeight = 12.sp)
-                    if (day   != null) Text(day.toString(), color = TTextPrimary, fontSize = 38.sp, fontWeight = FontWeight.Bold, lineHeight = 38.sp)
+                    if (month != null) Text(month, color = accentBar, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp, lineHeight = 12.sp)
+                    if (day   != null) Text(day.toString(), color = if (watchable) toWatchGreen else TTextPrimary, fontSize = 38.sp, fontWeight = FontWeight.Bold, lineHeight = 38.sp)
                     if (year  != null) Text(year.toString(), color = TTextDim, fontSize = 11.sp, letterSpacing = 1.sp, lineHeight = 13.sp)
                 }
                 Box(modifier = Modifier.width(1.5.dp).height(48.dp).background(TBorder))
@@ -201,6 +212,11 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
                     Text(show.programName, color = TTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     if (show.service.isNotEmpty()) Text(show.service, color = TTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
+                    if (show.type.isNotEmpty()) {
+                        val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
+                        Text(show.type, color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
+                    }
                     if (imminent) {
                         val label = when (daysUntil.toInt()) { 0 -> "TODAY"; 1 -> "TOMORROW"; else -> "${daysUntil} DAYS AWAY" }
                         Text(label, color = TAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
@@ -208,18 +224,21 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
                     }
                 }
             }
-            if (isEditing) {
+            if (watchable || isEditing) {
                 Row(modifier = Modifier.align(Alignment.TopEnd).padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (past || imminent) {
+                    if (watchable || past || imminent) {
+                        val watchColor = if (watchable) toWatchGreen else Color(0xFF5A9A5A)
                         OutlinedButton(
                             onClick = { onWatch(show) }, modifier = Modifier.height(26.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-                            border = BorderStroke(1.5.dp, Color(0xFF5A9A5A)),
-                        ) { Text("✓", color = Color(0xFF5A9A5A), fontSize = 12.sp, fontWeight = FontWeight.Bold) }
-                        Spacer(Modifier.width(4.dp))
+                            border = BorderStroke(1.5.dp, watchColor),
+                        ) { Text("✓", color = watchColor, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                        if (isEditing) Spacer(Modifier.width(4.dp))
                     }
-                    IconButton(onClick = { onEdit(show) }, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Default.Edit, null, tint = TTextDimmer, modifier = Modifier.size(15.dp))
+                    if (isEditing) {
+                        IconButton(onClick = { onEdit(show) }, modifier = Modifier.size(28.dp)) {
+                            Icon(Icons.Default.Edit, null, tint = TTextDimmer, modifier = Modifier.size(15.dp))
+                        }
                     }
                 }
             }
@@ -253,6 +272,11 @@ private fun TvRow(show: TvShow, dateDisplay: String, isEditing: Boolean, onEdit:
                     Text(show.service, color = TTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
                 }
+                if (show.type.isNotEmpty()) {
+                    val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
+                    Text(show.type, color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
+                }
             }
         }
         if (isEditing) {
@@ -273,16 +297,33 @@ private data class TvDot(val show: TvShow, val x: Float, val y: Float)
 private fun TvHistorySection(watched: List<TvShow>) {
     if (watched.isEmpty()) { TCenteredText("No watch history yet."); return }
 
-    var selected by remember { mutableStateOf<TvDot?>(null) }
+    var selected     by remember { mutableStateOf<TvDot?>(null) }
+    var selectedYear by remember { mutableStateOf<Int?>(null) }
+
     val byYear = remember(watched) {
         watched.filter { DateUtils.hasFullDate(it.date) }
             .groupBy { DateUtils.parseDate(it.date).year }
             .entries.sortedByDescending { it.key }
     }
+    val years = remember(watched) {
+        watched.filter { it.date.isNotEmpty() }
+            .mapNotNull { DateUtils.getYear(it.date).toIntOrNull() }
+            .distinct().sortedDescending()
+    }
     val topServicePair = remember(watched) {
         watched.filter { it.service.isNotEmpty() }
             .groupBy { it.service }.maxByOrNull { it.value.size }?.let { it.key to it.value.size }
     }
+    val subset = remember(watched, selectedYear) {
+        if (selectedYear == null) watched
+        else watched.filter { it.date.isNotEmpty() && DateUtils.getYear(it.date).toIntOrNull() == selectedYear }
+    }
+    val typeCounts = remember(subset) {
+        mapOf("TV" to subset.count { it.type == "TV" },
+              "Movie" to subset.count { it.type == "Movie" },
+              "Anime" to subset.count { it.type == "Anime" })
+    }
+    val typeColors = mapOf("TV" to TAccent, "Movie" to Color(0xFF0EA5E9), "Anime" to Color(0xFFF59E0B))
 
     Column {
         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -303,6 +344,53 @@ private fun TvHistorySection(watched: List<TvShow>) {
                     Box(modifier = Modifier.padding(top = 2.dp, bottom = 4.dp).width(28.dp).height(barH)
                         .background(TAccent, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
                     Text("$yr", color = TTextDim, fontSize = 9.sp)
+                }
+            }
+        }
+
+        HorizontalDivider(color = TBorder, modifier = Modifier.padding(horizontal = 14.dp))
+
+        // Type breakdown with year filter
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
+            Text("BY TYPE", color = TTextDimmer, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp, modifier = Modifier.padding(bottom = 8.dp))
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                FilterChip(
+                    selected = selectedYear == null,
+                    onClick  = { selectedYear = null },
+                    label    = { Text("All", fontSize = 11.sp) },
+                    colors   = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = TAccentLight, selectedLabelColor = TAccent),
+                )
+                years.forEach { yr ->
+                    FilterChip(
+                        selected = selectedYear == yr,
+                        onClick  = { selectedYear = if (selectedYear == yr) null else yr },
+                        label    = { Text("$yr", fontSize = 11.sp) },
+                        colors   = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = TAccentLight, selectedLabelColor = TAccent),
+                    )
+                }
+            }
+            val subTotal = subset.size
+            listOf("TV", "Movie", "Anime").forEach { t ->
+                val count = typeCounts[t] ?: 0
+                val frac  = if (subTotal > 0) count.toFloat() / subTotal else 0f
+                val color = typeColors[t] ?: TAccent
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+                    Text(t, color = TTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                        modifier = Modifier.width(56.dp))
+                    Box(modifier = Modifier.weight(1f).height(9.dp)
+                        .background(Color(0xFFF0EEEB), RoundedCornerShape(2.dp))) {
+                        if (frac > 0f) Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(frac)
+                            .background(color, RoundedCornerShape(2.dp)))
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Text("${(frac * 100).toInt()}% ($count)", color = TTextSec, fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold, modifier = Modifier.width(72.dp))
                 }
             }
         }
@@ -373,7 +461,13 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+    val scrollState = rememberScrollState()
+    LaunchedEffect(minYear) {
+        val targetX = (padL + (nowCal.get(Calendar.YEAR) - minYear) * 12 * pxPerMonth - pxPerMonth * 6).toInt().coerceAtLeast(0)
+        scrollState.scrollTo(targetX)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState)) {
         Canvas(
             modifier = Modifier.width(with(density) { canvasW.toDp() }).height(with(density) { canvasH.toDp() })
                 .pointerInput(dots, selected) {
@@ -414,13 +508,16 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
 // ── Edit dialog ───────────────────────────────────────────────────────────────
 
 @Composable
-private fun EditShowDialog(show: TvShow, onSave: (TvShow) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
+private fun EditShowDialog(show: TvShow, serviceNames: List<String> = emptyList(), onSave: (TvShow) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
     var programName   by remember { mutableStateOf(show.programName) }
     var service       by remember { mutableStateOf(show.service) }
+    var serviceSug    by remember { mutableStateOf<List<String>>(emptyList()) }
     var date          by remember { mutableStateOf(show.date) }
     var notes         by remember { mutableStateOf(show.notes) }
+    var showType      by remember { mutableStateOf(show.type) }
     var watched       by remember { mutableStateOf(show.watched) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var typeExpanded  by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -429,10 +526,54 @@ private fun EditShowDialog(show: TvShow, onSave: (TvShow) -> Unit, onDelete: () 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(programName, { programName = it }, label = { Text("Program name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
-                OutlinedTextField(service, { service = it }, label = { Text("Streaming service") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
+                OutlinedTextField(
+                    value = service,
+                    onValueChange = {
+                        service = it
+                        serviceSug = if (it.isBlank()) emptyList()
+                            else serviceNames.filter { n -> n.contains(it, ignoreCase = true) && !n.equals(it, ignoreCase = true) }.take(5)
+                    },
+                    label = { Text("Where to watch") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                )
+                if (serviceSug.isNotEmpty()) {
+                    Column(modifier = Modifier.fillMaxWidth()
+                        .border(BorderStroke(1.dp, TBorder), RoundedCornerShape(4.dp))) {
+                        serviceSug.forEach { sug ->
+                            TextButton(
+                                onClick = { service = sug; serviceSug = emptyList() },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            ) { Text(sug, color = TAccent, modifier = Modifier.fillMaxWidth()) }
+                        }
+                    }
+                }
                 OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YYYY or M/YYYY or YYYY)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
+                ExposedDropdownMenuBox(
+                    expanded = typeExpanded,
+                    onExpandedChange = { typeExpanded = !typeExpanded },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    OutlinedTextField(
+                        value = showType.ifEmpty { "— Select type —" },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Type") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    )
+                    ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                        listOf("", "TV", "Movie", "Anime").forEach { opt ->
+                            DropdownMenuItem(
+                                text = { Text(if (opt.isEmpty()) "— None —" else opt) },
+                                onClick = { showType = opt; typeExpanded = false },
+                            )
+                        }
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(watched, { watched = it })
                     Text("Watched")
@@ -450,7 +591,7 @@ private fun EditShowDialog(show: TvShow, onSave: (TvShow) -> Unit, onDelete: () 
         },
         confirmButton = {
             Button(
-                onClick = { onSave(show.copy(programName = programName.trim(), service = service.trim(), date = date.trim(), notes = notes.trim(), watched = watched)) },
+                onClick = { onSave(show.copy(programName = programName.trim(), service = service.trim(), date = date.trim(), notes = notes.trim(), type = showType.trim(), watched = watched)) },
                 enabled = programName.isNotBlank(),
                 colors  = ButtonDefaults.buttonColors(containerColor = TAccent),
             ) { Text("Save") }
@@ -472,6 +613,15 @@ private fun EditShowDialog(show: TvShow, onSave: (TvShow) -> Unit, onDelete: () 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, color = TTextPrimary, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1)
         Text(label, color = TTextSec, fontSize = 10.sp, letterSpacing = 0.3.sp, maxLines = 1)
+    }
+}
+
+@Composable private fun TvLoadingSpinner() {
+    Box(modifier = Modifier.fillMaxSize().padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = TAccent, strokeWidth = 3.dp, modifier = Modifier.size(64.dp))
+            Icon(Icons.Filled.Tv, contentDescription = null, tint = TAccent, modifier = Modifier.size(28.dp))
+        }
     }
 }
 

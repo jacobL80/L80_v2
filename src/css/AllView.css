@@ -4,7 +4,7 @@
   align-items: center;
   padding: 22px 20px;
   border: 1.5px solid #e8e8e8;
-  border-left: 3px solid #ec6f00;
+  border-left: 3px solid #e8e8e8;
   border-radius: 4px;
   background: #fff;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -17,7 +17,7 @@
 }
 
 .allCard--imminent {
-  background: #fff4e6;
+  background: #fafafa;
 }
 
 .allCard--released {
@@ -61,6 +61,14 @@
   background: #e8e8e8;
   align-self: stretch;
   flex-shrink: 0;
+}
+
+.allCardIconWrap {
+  width: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .allCardInfo {

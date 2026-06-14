@@ -1,22 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
+import TruncText from './TruncText';
 import '../css/Music.css';
 import '../css/AllView.css';
 import HamburgerMenu from './HamburgerMenu';
+import LoadingSpinner from './LoadingSpinner';
 
 const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
+const expandYear = (y) => y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y;
 const parseParts = (s) => {
   const p = s.split('/').map(Number);
-  return { month: MONTHS[p[0] - 1], day: p[1], year: p[2] };
+  return { month: MONTHS[p[0] - 1], day: p[1], year: expandYear(p[2]) };
 };
 
 const parseDate = (s) => {
   const p = s.split('/').map(Number);
-  return new Date(p[2], p[0] - 1, p[1]);
+  return new Date(expandYear(p[2]), p[0] - 1, p[1]);
 };
 
-const TYPE_LABELS = { music: 'Music', concert: 'Concert', tv: 'TV / Movie' };
-const TYPE_COLORS = { music: '#ec6f00', concert: '#1696b6', tv: '#7c3aed' };
+const TYPE_LABELS      = { music: 'Music', concert: 'Concert', tv: 'TV / Movie' };
+const TYPE_COLORS      = { music: '#ec6f00', concert: '#1696b6', tv: '#7c3aed' };
+const TYPE_IMMINENT_BG = { music: '#fff4e6', concert: '#e8f7fb', tv: '#f5f0ff' };
+
+const TYPE_ICONS = {
+  music: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+      <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+    </svg>
+  ),
+  concert: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+      <path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.46c-1.19.69-2 1.99-2 3.46s.81 2.77 2 3.46V18H4v-2.54c1.19-.69 2-1.99 2-3.46 0-1.48-.8-2.77-2-3.46V6h16v2.54z"/>
+    </svg>
+  ),
+  tv: (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+      <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
+    </svg>
+  ),
+};
 
 const AllCard = ({ item }) => {
   const { month, day, year } = parseParts(item.date);
@@ -30,14 +54,17 @@ const AllCard = ({ item }) => {
   return (
     <div
       className={`allCard${imminent ? ' allCard--imminent' : ''}${released ? ' allCard--released' : ''}`}
-      style={{ borderLeftColor: color }}
+      style={{ borderLeftColor: color, ...(imminent ? { background: TYPE_IMMINENT_BG[item.type] } : {}) }}
     >
       <div className="allCardDate">
         <div className="allCardMonth" style={{ color }}>{month}</div>
-        <div className={`allCardDay${imminent ? ' allCardDay--imminent' : ''}`}>{day}</div>
+        <div className={`allCardDay${imminent ? ' allCardDay--imminent' : ''}`} style={imminent ? { color } : undefined}>{day}</div>
         <div className="allCardYear">{year}</div>
       </div>
       <div className="allCardDivider" />
+      <div className="allCardIconWrap" style={{ color }}>
+        {TYPE_ICONS[item.type]}
+      </div>
       <div className="allCardInfo">
         <div className="allCardType" style={{ color }}>{TYPE_LABELS[item.type]}</div>
         <div className="allCardTitle">
@@ -47,7 +74,11 @@ const AllCard = ({ item }) => {
             </a>
           ) : item.title}
         </div>
-        {item.subtitle && <div className="allCardSub">{item.subtitle}</div>}
+        {item.subtitle && (
+          <TruncText className="allCardSub" tipId="allview-tip" content={item.subtitle}>
+            {item.subtitle}
+          </TruncText>
+        )}
         {imminent && (
           <div className="allCardImminent" style={{ color }}>
             {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days away`}
@@ -83,7 +114,7 @@ const AllView = () => {
   }, {});
   const upCounts = countByType(upcoming);
 
-  if (loading) return <div className="musicOuter musicLoading">Loading…</div>;
+  if (loading) return <LoadingSpinner type="all" />;
   if (error)   return <div className="musicOuter musicLoading">Could not load data.</div>;
 
   return (
@@ -110,6 +141,7 @@ const AllView = () => {
         </div>
 
         <div className="musicPage">
+          <Tooltip id="allview-tip" />
           {upcoming.length === 0 && past.length === 0 && (
             <p className="allEmpty">No upcoming dates yet — add some via Music, Concerts, or TV / Movies.</p>
           )}

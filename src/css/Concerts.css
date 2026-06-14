@@ -1,4 +1,11 @@
 /* Concert-specific overrides — the rest is shared via Music.css */
+
+.musicOuter.concertsOuter {
+  --accent:       #1696b6;
+  --accent-light: #e8f7fb;
+  --accent-hover: #0f7a96;
+  --accent-rgb:   22, 150, 182;
+}
 .musicSection--concerts .musicSectionTitle { color: #1696b6; }
 
 /* Attendee chip input */

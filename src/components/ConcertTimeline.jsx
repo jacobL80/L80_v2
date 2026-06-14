@@ -1,28 +1,29 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
+import TruncText from './TruncText';
 import '../css/ReleaseTimeline.css';
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function bandColor(name) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return `hsl(${((h % 360) + 360) % 360}, 65%, 48%)`;
-}
+const ACCENT = '#1696b6';
+
+function expandYear(y) { return y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y; }
 
 function parseDate(s) {
   if (!s) return null;
   const p = s.split('/').map(Number);
-  if (p.length === 3) return new Date(p[2], p[0] - 1, p[1]);
-  if (p.length === 2) return new Date(p[1], p[0] - 1, 15);
-  return new Date(p[0], 6, 1);
+  if (p.length === 3) return new Date(expandYear(p[2]), p[0] - 1, p[1]);
+  if (p.length === 2) return new Date(expandYear(p[1]), p[0] - 1, 15);
+  return new Date(expandYear(p[0]), 6, 1);
 }
 
 function fmtDate(s) {
   if (!s) return '';
   const p = s.split('/').map(Number);
-  if (p.length === 3) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}, ${p[2]}`;
-  if (p.length === 2) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}`;
-  return String(p[0]);
+  if (p.length === 3) return `${MONTHS_SHORT[p[0]-1]} ${p[1]}, ${expandYear(p[2])}`;
+  if (p.length === 2) return `${MONTHS_SHORT[p[0]-1]} ${expandYear(p[1])}`;
+  return String(expandYear(p[0]));
 }
 
 const PX_PER_MONTH = 32;
@@ -35,8 +36,12 @@ const PAD_R        = 48;
 const ConcertTimeline = ({ history }) => {
   const [tooltip, setTooltip] = useState(null);
   const [pinned,  setPinned]  = useState(null);
-  const wrapRef  = useRef(null);
+  const wrapRef   = useRef(null);
+  const scrollRef = useRef(null);
   const [wrapWidth, setWrapWidth] = useState(0);
+  const [showAllArtists,  setShowAllArtists]  = useState(false);
+  const [showAllVenues,   setShowAllVenues]   = useState(false);
+  const [showAllWiths,    setShowAllWiths]    = useState(false);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -59,8 +64,15 @@ const ConcertTimeline = ({ history }) => {
     return { minYear: Math.min(...ys), maxYear: Math.max(Math.max(...ys), new Date().getFullYear()) };
   }, [entries]);
 
+  useEffect(() => {
+    if (!scrollRef.current || !entries.length) return;
+    const now = new Date();
+    const x = PAD_L + (now.getFullYear() - minYear) * 12 * PX_PER_MONTH;
+    scrollRef.current.scrollLeft = Math.max(0, x - 6 * PX_PER_MONTH);
+  }, [minYear, entries.length]);
+
   const mToX = (year, month) => PAD_L + ((year - minYear) * 12 + month) * PX_PER_MONTH + PX_PER_MONTH / 2;
-  const totalMonths = (maxYear - minYear + 2) * 12;
+  const totalMonths = (maxYear - minYear + 1) * 12;
   const svgWidth = Math.max(PAD_L + totalMonths * PX_PER_MONTH + PAD_R, wrapWidth);
 
   const dots = useMemo(() => {
@@ -87,6 +99,8 @@ const ConcertTimeline = ({ history }) => {
       const y = c._date.getFullYear();
       byYear[y] = (byYear[y] || 0) + 1;
       byBand[c.band] = (byBand[c.band] || 0) + 1;
+      (c.additionalArtists ? c.additionalArtists.split(',').map(n => n.trim()).filter(Boolean) : [])
+        .forEach(a => { byBand[a] = (byBand[a] || 0) + 1; });
       if (c.venue) byVenue[c.venue] = (byVenue[c.venue] || 0) + 1;
       (c.attendees ? c.attendees.split(',').map(n => n.trim()).filter(Boolean) : [])
         .forEach(a => { byAttendee[a] = (byAttendee[a] || 0) + 1; });
@@ -102,9 +116,9 @@ const ConcertTimeline = ({ history }) => {
       topVenue:      topVenuesSorted[0],
       topArtist:     topArtists[0],
       topAttendee:   topAttendees[0],
-      topArtists:    topArtists.slice(0, 6),
-      topVenues:     topVenuesSorted.slice(0, 6),
-      topAttendees:  topAttendees.slice(0, 6),
+      topArtists,
+      topVenues:     topVenuesSorted,
+      topAttendees,
     };
   }, [entries]);
 
@@ -185,11 +199,12 @@ const ConcertTimeline = ({ history }) => {
       )}
 
       {stats && (() => {
+        const PREVIEW = 6;
         const hbars = (items, color) => {
           const max = items[0][1];
           return items.map(([name, count]) => (
             <div key={name} className="tlHBarItem">
-              <div className="tlHBarLabel">{name}</div>
+              <TruncText className="tlHBarLabel" tipId="ct-hbar-tip" content={name}>{name}</TruncText>
               <div className="tlHBarTrack">
                 <div className="tlHBar" style={{ width: `${Math.round((count / max) * 100)}%`, background: color }} />
               </div>
@@ -197,31 +212,39 @@ const ConcertTimeline = ({ history }) => {
             </div>
           ));
         };
+        const toggleBtn = (showAll, setShowAll, total) => total > PREVIEW && (
+          <button className="tlShowMoreBtn" onClick={() => setShowAll(v => !v)}>
+            {showAll ? 'Show less' : `Show all ${total}`}
+          </button>
+        );
         return (
           <>
             {stats.topArtists.length > 0 && (
               <div className="tlHBarSection">
                 <div className="tlHBarTitle">By Artist</div>
-                {hbars(stats.topArtists, '#1696b6')}
+                {hbars(showAllArtists ? stats.topArtists : stats.topArtists.slice(0, PREVIEW), '#1696b6')}
+                {toggleBtn(showAllArtists, setShowAllArtists, stats.topArtists.length)}
               </div>
             )}
             {stats.topVenues.length > 0 && (
               <div className="tlHBarSection">
                 <div className="tlHBarTitle">By Venue</div>
-                {hbars(stats.topVenues, '#1696b6')}
+                {hbars(showAllVenues ? stats.topVenues : stats.topVenues.slice(0, PREVIEW), '#1696b6')}
+                {toggleBtn(showAllVenues, setShowAllVenues, stats.topVenues.length)}
               </div>
             )}
             {stats.topAttendees.length > 0 && (
               <div className="tlHBarSection">
                 <div className="tlHBarTitle">Most With</div>
-                {hbars(stats.topAttendees, '#47a025')}
+                {hbars(showAllWiths ? stats.topAttendees : stats.topAttendees.slice(0, PREVIEW), ACCENT)}
+                {toggleBtn(showAllWiths, setShowAllWiths, stats.topAttendees.length)}
               </div>
             )}
           </>
         );
       })()}
 
-      <div className="tlScrollWrap">
+      <div className="tlScrollWrap" ref={scrollRef}>
         <svg width={svgWidth} height={SVG_HEIGHT} className="tlSvg">
           {yearTicks.map(({ year, x }, i) => i % 2 === 0 ? null : (
             <rect key={year} x={x} y={0} width={12 * PX_PER_MONTH} height={SVG_HEIGHT - 20} fill="#f0f8fb" opacity="0.6" />
@@ -251,7 +274,7 @@ const ConcertTimeline = ({ history }) => {
               onMouseLeave={handleLeave}
               onClick={(e) => handleClick(e, dot)}>
               <circle className="tlDot" cx={0} cy={0} r={DOT_R}
-                fill={bandColor(dot.band)}
+                fill={ACCENT}
                 stroke={activeDot?.id === dot.id ? '#1a1a1a' : '#fff'}
                 strokeWidth={activeDot?.id === dot.id ? 2.5 : 2} />
             </g>
@@ -259,11 +282,14 @@ const ConcertTimeline = ({ history }) => {
         </svg>
       </div>
 
+      <Tooltip id="ct-hbar-tip" />
+
       {tooltip && tipPos && (
         <div className={`tlTooltip${pinned ? ' tlTooltip--pinned' : ''}`}
           style={{ ...tipPos, position: 'fixed' }}
           onClick={(e) => e.stopPropagation()}>
-          <div className="tlTipArtist" style={{ color: bandColor(tooltip.dot.band) }}>{tooltip.dot.band}</div>
+          <div className="tlTipArtist" style={{ color: ACCENT }}>{tooltip.dot.band}</div>
+          {tooltip.dot.additionalArtists && <div className="tlTipAlbum" style={{ opacity: 0.75 }}>w/ {tooltip.dot.additionalArtists}</div>}
           {tooltip.dot.tourName && <div className="tlTipAlbum">{tooltip.dot.tourName}</div>}
           {tooltip.dot.venue && <div className="tlTipAlbum">{tooltip.dot.venue}</div>}
           {tooltip.dot.date && <div className="tlTipDate">{fmtDate(tooltip.dot.date)}</div>}

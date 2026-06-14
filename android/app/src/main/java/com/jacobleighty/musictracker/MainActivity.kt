@@ -24,7 +24,7 @@ import com.jacobleighty.musictracker.ui.*
 import kotlinx.coroutines.launch
 
 enum class Screen {
-    MUSIC, CONCERTS, RUNNING, TV_MOVIES
+    ALL, MUSIC, CONCERTS, RUNNING, TV_MOVIES
 }
 
 class MainActivity : ComponentActivity() {
@@ -59,9 +59,10 @@ class MainActivity : ComponentActivity() {
                 "concerts"  -> Screen.CONCERTS
                 "running"   -> Screen.RUNNING
                 "tv"        -> Screen.TV_MOVIES
+                "all"       -> Screen.ALL
                 else        -> Screen.MUSIC
             }
-            else -> Screen.MUSIC
+            else -> Screen.ALL
         }
     }
 }
@@ -86,6 +87,7 @@ fun MainApp(initialScreen: Screen = Screen.MUSIC) {
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             when (currentScreen) {
+                Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.MUSIC      -> MusicScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.CONCERTS   -> ConcertsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.RUNNING    -> RunningScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
@@ -100,9 +102,10 @@ fun MainApp(initialScreen: Screen = Screen.MUSIC) {
 private data class NavItem(val screen: Screen, val label: String, val icon: ImageVector, val color: Color)
 
 private val NAV_ITEMS = listOf(
+    NavItem(Screen.ALL,       "All",       Icons.Default.Apps,       Color(0xFFEC6F00)),
     NavItem(Screen.MUSIC,     "Music",     Icons.Default.MusicNote,  Color(0xFFEC6F00)),
     NavItem(Screen.CONCERTS,  "Concerts",  Icons.Default.Stadium,    Color(0xFF1696B6)),
-    NavItem(Screen.RUNNING,   "Running",   Icons.Default.DirectionsRun, Color(0xFF4A6FA5)),
+    NavItem(Screen.RUNNING,   "Running",   Icons.Default.DirectionsRun, Color(0xFF47A025)),
     NavItem(Screen.TV_MOVIES, "TV / Movies", Icons.Default.Tv,       Color(0xFF7C3AED)),
 )
 

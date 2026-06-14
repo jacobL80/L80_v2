@@ -1,5 +1,12 @@
 /* ─── Running layout ─────────────────────────────────────────────────────────── */
 
+.musicOuter.runningOuter {
+  --accent:       #47A025;
+  --accent-light: #edf7e8;
+  --accent-hover: #3a8020;
+  --accent-rgb:   71, 160, 37;
+}
+
 .runningOuter {
   display: flex;
   flex-direction: column;

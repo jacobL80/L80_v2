@@ -4,11 +4,11 @@ import '../css/HamburgerMenu.css';
 // musicHeaderRow styles are also in HamburgerMenu.css (shared)
 
 const SECTIONS = [
-  { label: 'All',       path: '/' },
-  { label: 'Music',     path: '/music' },
-  { label: 'Concerts',  path: '/concerts' },
-  { label: 'Running',   path: '/running' },
+  { label: 'All',         path: '/' },
+  { label: 'Music',       path: '/music' },
+  { label: 'Concerts',    path: '/concerts' },
   { label: 'TV / Movies', path: '/tv' },
+  { label: 'Running',     path: '/running', divider: true },
 ];
 
 const HamburgerMenu = () => {
@@ -48,13 +48,15 @@ const HamburgerMenu = () => {
       {open && (
         <div className="hmMenu">
           {SECTIONS.map(s => (
-            <button
-              key={s.path}
-              className={`hmItem${isActive(s.path) ? ' hmItem--active' : ''}`}
-              onClick={() => handleSelect(s.path)}
-            >
-              {s.label}
-            </button>
+            <React.Fragment key={s.path}>
+              {s.divider && <div className="hmDivider" />}
+              <button
+                className={`hmItem${isActive(s.path) ? ' hmItem--active' : ''}`}
+                onClick={() => handleSelect(s.path)}
+              >
+                {s.label}
+              </button>
+            </React.Fragment>
           ))}
         </div>
       )}

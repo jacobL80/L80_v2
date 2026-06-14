@@ -86,6 +86,12 @@
   background: #fff4e6;
 }
 
+.hmDivider {
+  height: 1px;
+  background: #e8e8e8;
+  margin: 4px 0;
+}
+
 /* Header row layout with hamburger */
 .musicHeaderRow {
   display: flex;

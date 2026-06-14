@@ -12,9 +12,11 @@ const getCookie = () => { const m = document.cookie.match(new RegExp('(?:^|; )' 
 const setCookie = (v) => { document.cookie = `${COOKIE}=${encodeURIComponent(v)}; max-age=${14 * 86400}; path=/; SameSite=Strict`; };
 const delCookie = ()  => { document.cookie = `${COOKIE}=; max-age=0; path=/; SameSite=Strict`; };
 
+const CURRENT_YEAR = String(new Date().getFullYear());
+
 const DAY_COLORS = {
-  mon: '#4A6FA5', tue: '#47A025', wed: '#8A3ABA',
-  thu: '#EC6F00', fri: '#D63030', sat: '#1696B6', sun: '#B8A000',
+  mon: '#4C78A8', tue: '#54A24B', wed: '#B279A2',
+  thu: '#F58518', fri: '#E45756', sat: '#72B7B2', sun: '#EECA3B',
 };
 const DAY_LABELS = { mon: 'M', tue: 'T', wed: 'W', thu: 'T', fri: 'F', sat: 'S', sun: 'S' };
 const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
@@ -39,29 +41,61 @@ function fmtWeekFull(weekStart) {
 
 // ─── Running chart ────────────────────────────────────────────────────────────
 
-const RunningChart = ({ weeks }) => {
-  const chartRef  = useRef(null);
-  const [tip, setTip]   = useState(null); // { week, x, y }
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Chart shows all weeks chronologically (oldest left, newest right)
-  const chronoWeeks = useMemo(() => [...weeks].reverse(), [weeks]);
+const RunningChart = ({ weeks, yearFilter }) => {
+  const wrapRef   = useRef(null);
+  const scrollRef = useRef(null);
+  const [tip, setTip]          = useState(null);
+  const [containerW, setContW] = useState(0);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setContW(entry.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const chronoWeeks = useMemo(() => [...weeks], [weeks]);
   const maxTotal    = useMemo(() => Math.max(...chronoWeeks.map(w => w.total), 1), [chronoWeeks]);
 
-  const BAR_H    = 80;
-  const BAR_W    = 22;
-  const BAR_GAP  = 8;
-  const PAD_L    = 12;
-  const ITEM_W   = BAR_W + BAR_GAP;
-  const SVG_H    = BAR_H + 36; // bars + label
-  const svgW     = PAD_L + chronoWeeks.length * ITEM_W + 12;
+  const BAR_H      = 96;
+  const PAD_L      = 16;
+  const PAD_R      = 16;
+  const MIN_ITEM_W = 24;
+  const isYear     = yearFilter !== 'all';
 
-  // Scroll to newest (rightmost) on mount
+  let BAR_W, BAR_GAP, ITEM_W;
+  if (isYear && containerW > 0 && chronoWeeks.length > 0) {
+    const stretch = (containerW - PAD_L - PAD_R) / chronoWeeks.length;
+    if (stretch >= MIN_ITEM_W) {
+      ITEM_W  = stretch;
+      BAR_GAP = Math.max(3, Math.round(ITEM_W * 0.22));
+      BAR_W   = ITEM_W - BAR_GAP;
+    } else {
+      ITEM_W  = MIN_ITEM_W;
+      BAR_GAP = 4;
+      BAR_W   = MIN_ITEM_W - BAR_GAP;
+    }
+  } else {
+    BAR_W   = 22;
+    BAR_GAP = 8;
+    ITEM_W  = BAR_W + BAR_GAP;
+  }
+
+  // When bars are narrow, show month names at boundaries instead of every week date
+  const useMonthLabels = ITEM_W < 30;
+  const SVG_H          = BAR_H + 38;
+  const computedSvgW   = PAD_L + chronoWeeks.length * ITEM_W + PAD_R;
+  const svgW           = isYear && containerW > 0 && computedSvgW <= containerW ? containerW : computedSvgW;
+
   useEffect(() => {
-    if (chartRef.current) chartRef.current.scrollLeft = chartRef.current.scrollWidth;
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
   }, [weeks.length]);
 
   return (
-    <div className="runChartWrap">
+    <div className="runChartWrap" ref={wrapRef}>
       <div className="runChartLegend">
         {DAYS.map(d => (
           <span key={d} className="runChartLegendItem">
@@ -70,7 +104,7 @@ const RunningChart = ({ weeks }) => {
           </span>
         ))}
       </div>
-      <div className="runChartScroll" ref={chartRef}>
+      <div className="runChartScroll" ref={scrollRef}>
         <svg width={svgW} height={SVG_H} className="runChartSvg">
           {chronoWeeks.map((week, i) => {
             const x = PAD_L + i * ITEM_W;
@@ -81,24 +115,54 @@ const RunningChart = ({ weeks }) => {
               return { day, h, y: yOff };
             }).filter(s => s.h > 0);
 
+            // Month-boundary label vs per-week label
+            let label = null;
+            if (useMonthLabels) {
+              const m  = new Date(week.weekStart + 'T00:00:00').getMonth();
+              const pm = i > 0 ? new Date(chronoWeeks[i - 1].weekStart + 'T00:00:00').getMonth() : -1;
+              if (m !== pm) label = MONTHS[m];
+            } else {
+              label = fmtWeekLabel(week.weekStart);
+            }
+
+            const showValue = week.total > 0 && BAR_W >= 18;
+
             return (
               <g key={week.weekStart}
                 onMouseEnter={(e) => setTip({ week, x: e.clientX, y: e.clientY })}
                 onMouseLeave={() => setTip(null)}
                 style={{ cursor: 'default' }}>
-                {/* background */}
-                <rect x={x} y={0} width={BAR_W} height={BAR_H} fill="#f5f3f0" rx="1" />
-                {segments.map(({ day, h, y }) => (
-                  <rect key={day} x={x} y={y} width={BAR_W} height={h}
-                    fill={DAY_COLORS[day]} rx="1" />
-                ))}
-                <text x={x + BAR_W / 2} y={BAR_H + 14} textAnchor="middle"
-                  fontSize="8" fill="#bbb" fontFamily="Calibri, sans-serif">
-                  {fmtWeekLabel(week.weekStart)}
-                </text>
-                {week.total > 0 && (
-                  <text x={x + BAR_W / 2} y={Math.max((1 - week.total / maxTotal) * BAR_H - 3, 4)}
-                    textAnchor="middle" fontSize="7.5" fill="#999" fontFamily="Calibri, sans-serif">
+                <rect x={x} y={0} width={BAR_W} height={BAR_H} fill="#eeece9" rx="2" />
+                {segments.map(({ day, h, y }, si) => {
+                  const isTop = si === segments.length - 1;
+                  const isBot = si === 0;
+                  const R = 2;
+                  const tl = isTop ? R : 0, tr = isTop ? R : 0;
+                  const bl = isBot ? R : 0, br = isBot ? R : 0;
+                  const d = [
+                    `M ${x+tl},${y}`, `L ${x+BAR_W-tr},${y}`,
+                    tr ? `Q ${x+BAR_W},${y} ${x+BAR_W},${y+tr}` : '',
+                    `L ${x+BAR_W},${y+h-br}`,
+                    br ? `Q ${x+BAR_W},${y+h} ${x+BAR_W-br},${y+h}` : '',
+                    `L ${x+bl},${y+h}`,
+                    bl ? `Q ${x},${y+h} ${x},${y+h-bl}` : '',
+                    `L ${x},${y+tl}`,
+                    tl ? `Q ${x},${y} ${x+tl},${y}` : '',
+                    'Z',
+                  ].join(' ');
+                  return <path key={day} d={d} fill={DAY_COLORS[day]} />;
+                })}
+                {label && (
+                  <text x={x + BAR_W / 2} y={BAR_H + 17} textAnchor="middle"
+                    fontSize="9.5" fill="#999" fontWeight={useMonthLabels ? '600' : '400'}
+                    fontFamily="Calibri, sans-serif">
+                    {label}
+                  </text>
+                )}
+                {showValue && (
+                  <text x={x + BAR_W / 2} y={Math.max((1 - week.total / maxTotal) * BAR_H - 4, 10)}
+                    textAnchor="middle" fontSize="8.5" fill="#222"
+                    fontFamily="Calibri, sans-serif">
                     {week.total.toFixed(1)}
                   </text>
                 )}
@@ -223,14 +287,14 @@ const WeekRow = ({ week, isEditing, onDeleteEntry }) => {
         {DAYS.map(d => (
           <td key={d} className="runCell runCell--day"
             style={{ color: week[d] > 0 ? DAY_COLORS[d] : undefined }}>
-            {week[d] > 0 ? week[d].toFixed(1) : <span className="runDash">—</span>}
+            {week[d] > 0 ? week[d].toFixed(2) : <span className="runDash">—</span>}
           </td>
         ))}
-        <td className="runCell runCell--total">{week.total.toFixed(1)}</td>
+        <td className="runCell runCell--total">{week.total.toFixed(2)}</td>
       </tr>
       {expanded && week.entries.map(entry => (
         <tr key={entry.id} className="runRowEntry">
-          <td className="runCell runCell--entryDate" colSpan={8}>{entry.date}: {entry.miles} mi</td>
+          <td className="runCell runCell--entryDate" colSpan={8}>{entry.date}: {parseFloat(entry.miles).toFixed(2)} mi</td>
           <td className="runCell">
             <button className="runDeleteBtn" onClick={() => onDeleteEntry(entry.id)}>×</button>
           </td>
@@ -251,7 +315,7 @@ const Running = () => {
   const [showAdd,    setShowAdd]  = useState(false);
   const [pendingAdd, setPending]  = useState(false);
   const [saveError,  setSaveErr]  = useState('');
-  const [yearFilter, setYearFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState(CURRENT_YEAR);
 
   useEffect(() => { const t = getCookie(); if (t) setToken(t); }, []);
 
@@ -263,7 +327,7 @@ const Running = () => {
       .catch(() => { setFetchErr(true); setLoading(false); });
   };
 
-  useEffect(() => { loadWeeks(); }, []);
+  useEffect(() => { loadWeeks(CURRENT_YEAR); }, []);
 
   // Derive available years from all-time data
   const [allWeeks, setAllWeeks] = useState([]);
@@ -350,7 +414,11 @@ const Running = () => {
           <h1 className="musicTitle" style={{ fontSize: 36 }}>Mileage Log</h1>
           <div className="musicHeaderRule" style={{ marginBottom: 12 }} />
         </div>
-        {chartWeeksDesc.length > 0 && <RunningChart weeks={chartWeeksDesc} />}
+        {chartWeeksDesc.length > 0 && (
+          <div className="runChartOuter">
+            <RunningChart weeks={chartWeeksDesc} yearFilter={yearFilter} />
+          </div>
+        )}
       </div>
 
       {/* Scrollable content */}
@@ -366,7 +434,7 @@ const Running = () => {
             </select>
             {weeks.length > 0 && (
               <span className="runYearTotal">
-                {yearFilter === 'all' ? 'Total' : yearFilter}: <strong>{yearTotal.toFixed(1)} mi</strong>
+                {yearFilter === 'all' ? 'Total' : yearFilter}: <strong>{yearTotal.toFixed(2)} mi</strong>
                 <span className="runYearWeeks"> · {weeks.length} weeks</span>
               </span>
             )}

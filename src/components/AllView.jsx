@@ -97,7 +97,11 @@ const AllView = () => {
   useEffect(() => {
     fetch('/api/all.php')
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(data => { setItems(data); setLoading(false); })
+      .then(data => {
+        const sorted = [...data].sort((a, b) => parseDate(a.date) - parseDate(b.date));
+        setItems(sorted);
+        setLoading(false);
+      })
       .catch(() => { setError(true); setLoading(false); });
   }, []);
 
@@ -141,7 +145,7 @@ const AllView = () => {
         </div>
 
         <div className="musicPage">
-          <Tooltip id="allview-tip" />
+          <Tooltip id="allview-tip" positionStrategy="fixed" style={{ zIndex: 9999 }} />
           {upcoming.length === 0 && past.length === 0 && (
             <p className="allEmpty">No upcoming dates yet — add some via Music, Concerts, or TV / Movies.</p>
           )}

@@ -31,16 +31,24 @@
 
 /* ─── Chart ──────────────────────────────────────────────────────────────────── */
 
+.runChartOuter {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+}
+
 .runChartWrap {
-  padding: 0 0 0 0;
   position: relative;
+  width: 100%;
+  overflow: hidden;
 }
 
 .runChartLegend {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 8px 40px 4px;
+  padding: 8px 0 4px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -63,9 +71,11 @@
 }
 
 .runChartScroll {
+  width: 100%;
+  box-sizing: border-box;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 8px 16px 8px;
+  padding: 8px 0 8px;
   scrollbar-width: thin;
   scrollbar-color: #ddd transparent;
 }
@@ -276,14 +286,18 @@
     padding-top: 0;
   }
 
+  .runChartOuter {
+    padding: 0 14px;
+  }
+
   .runChartLegend {
-    padding: 6px 14px 2px;
+    padding: 6px 0 2px;
     font-size: 9px;
     gap: 8px;
   }
 
   .runChartScroll {
-    padding: 6px 8px;
+    padding: 6px 0;
   }
 
   .runTh--week,

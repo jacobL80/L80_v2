@@ -99,14 +99,14 @@ fun MainApp(initialScreen: Screen = Screen.MUSIC) {
 
 // ── Navigation drawer ─────────────────────────────────────────────────────────
 
-private data class NavItem(val screen: Screen, val label: String, val icon: ImageVector, val color: Color)
+private data class NavItem(val screen: Screen, val label: String, val icon: ImageVector, val color: Color, val divider: Boolean = false)
 
 private val NAV_ITEMS = listOf(
-    NavItem(Screen.ALL,       "All",       Icons.Default.Apps,       Color(0xFFEC6F00)),
-    NavItem(Screen.MUSIC,     "Music",     Icons.Default.MusicNote,  Color(0xFFEC6F00)),
-    NavItem(Screen.CONCERTS,  "Concerts",  Icons.Default.Stadium,    Color(0xFF1696B6)),
-    NavItem(Screen.RUNNING,   "Running",   Icons.Default.DirectionsRun, Color(0xFF47A025)),
-    NavItem(Screen.TV_MOVIES, "TV / Movies", Icons.Default.Tv,       Color(0xFF7C3AED)),
+    NavItem(Screen.ALL,       "All",         Icons.Default.Apps,          Color(0xFFEC6F00)),
+    NavItem(Screen.MUSIC,     "Music",       Icons.Default.MusicNote,     Color(0xFFEC6F00)),
+    NavItem(Screen.CONCERTS,  "Concerts",    Icons.Default.Stadium,       Color(0xFF1696B6)),
+    NavItem(Screen.TV_MOVIES, "TV / Movies", Icons.Default.Tv,            Color(0xFF7C3AED)),
+    NavItem(Screen.RUNNING,   "Running",     Icons.Default.DirectionsRun, Color(0xFF47A025), divider = true),
 )
 
 @Composable
@@ -124,6 +124,7 @@ private fun NavDrawerContent(currentScreen: Screen, onNavigate: (Screen) -> Unit
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = Color(0xFFE8E8E8))
 
         NAV_ITEMS.forEach { item ->
+            if (item.divider) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = Color(0xFFE8E8E8))
             val selected = currentScreen == item.screen
             Row(
                 modifier = Modifier

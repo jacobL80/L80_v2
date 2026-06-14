@@ -3,6 +3,7 @@ import '../css/ReleaseTimeline.css';
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ACCENT = '#7c3aed';
+const TYPE_COLORS = { TV: '#7c3aed', Movie: '#0ea5e9', Anime: '#f59e0b' };
 
 function expandYear(y) { return y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y; }
 
@@ -172,7 +173,14 @@ const TvTimeline = ({ history }) => {
       {tooltip && tipPos && (
         <div className={`tlTooltip${pinned ? ' tlTooltip--pinned' : ''}`}
           style={{ ...tipPos, position: 'fixed' }} onClick={(e) => e.stopPropagation()}>
-          <div className="tlTipArtist" style={{ color: ACCENT }}>{tooltip.dot.programName}</div>
+          <div className="tlTipTitleRow">
+            <div className="tlTipArtist" style={{ color: ACCENT }}>{tooltip.dot.programName}</div>
+            {tooltip.dot.type && (
+              <span className="tlTipTypeBadge" style={{ color: TYPE_COLORS[tooltip.dot.type], borderColor: TYPE_COLORS[tooltip.dot.type] }}>
+                {tooltip.dot.type}
+              </span>
+            )}
+          </div>
           {tooltip.dot.service && <div className="tlTipAlbum">{tooltip.dot.service}</div>}
           {tooltip.dot.date && <div className="tlTipDate">{fmtDate(tooltip.dot.date)}</div>}
           {pinned && <button className="tlTipClose" onClick={clearAll}>×</button>}

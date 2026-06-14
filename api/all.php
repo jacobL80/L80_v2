@@ -30,6 +30,7 @@ function toSortTs(string $s): int {
     $p = explode('/', $s);
     if (count($p) === 3) {
         $d = DateTime::createFromFormat('m/d/Y', $s);
+        if (!$d) $d = DateTime::createFromFormat('m/d/y', $s);
         return $d ? $d->getTimestamp() : PHP_INT_MAX;
     }
     return PHP_INT_MAX;

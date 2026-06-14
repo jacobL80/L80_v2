@@ -1,6 +1,7 @@
 package com.jacobleighty.musictracker.widget
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.jacobleighty.musictracker.MainActivity
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.Artist
@@ -40,7 +43,7 @@ class UpcomingWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val upcoming = fetchUpcoming()
+        val upcoming = fetchUpcoming(context)
         provideContent {
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
@@ -50,11 +53,24 @@ class UpcomingWidget : GlanceAppWidget() {
         }
     }
 
-    private suspend fun fetchUpcoming(): List<Artist> = withContext(Dispatchers.IO) {
+    private suspend fun fetchUpcoming(context: Context): List<Artist> = withContext(Dispatchers.IO) {
+        val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
         try {
-            ApiService.create().getArtists()
+            val artists = ApiService.create().getArtists()
                 .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
                 .sortedBy { DateUtils.parseDate(it.nextRelease) }
+            prefs.edit().putString("artists_json", Gson().toJson(artists)).apply()
+            artists
+        } catch (_: Exception) {
+            loadCachedArtists(prefs)
+        }
+    }
+
+    private fun loadCachedArtists(prefs: SharedPreferences): List<Artist> {
+        val json = prefs.getString("artists_json", null) ?: return emptyList()
+        return try {
+            val type = object : TypeToken<List<Artist>>() {}.type
+            Gson().fromJson(json, type)
         } catch (_: Exception) { emptyList() }
     }
 }

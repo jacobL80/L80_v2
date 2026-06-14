@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from "react-router-dom";
 import '../css/About.css';
 import selfie from '../assets/me2.jpg';
@@ -17,6 +17,7 @@ const PhoneIcon    = () => <S><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 
 const LinkedInIcon = () => <S><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></S>;
 
 function About() {
+	useEffect(() => { document.title = 'About Jacob Leighty'; }, []);
 	return (
 	<div className="app app--about">
 
@@ -57,7 +58,7 @@ function About() {
 
 		{/* Mobile-only bottom nav: Home | contacts */}
 		<div className="aboutTabBar">
-			<Link to="/" className="aboutTabContact">
+			<Link to="/portfolio" className="aboutTabContact">
 				<L80Icon /><span>Home</span>
 			</Link>
 			<div className="aboutTabDivider" />

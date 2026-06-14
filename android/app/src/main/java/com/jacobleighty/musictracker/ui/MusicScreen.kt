@@ -36,14 +36,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.Artist
 import com.jacobleighty.musictracker.data.HistoryEntry
 import java.util.Calendar
-import kotlin.math.abs
 
 // ── Colors matching the web ───────────────────────────────────────────────────
 
@@ -68,14 +66,14 @@ private enum class Section { UPCOMING, EXPECTED, WATCHING, HIATUS }
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 @Composable
-fun MusicScreen(vm: MusicViewModel = viewModel()) {
+fun MusicScreen(vm: MusicViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
     val state by vm.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(PageBg)) {
         when {
-            state.loading    -> CenteredText("Loading…")
+            state.loading    -> MusicLoadingSpinner()
             state.fetchError -> CenteredText("Could not load data.")
-            else             -> MainContent(state, vm)
+            else             -> MainContent(state, vm, onOpenDrawer)
         }
         if (state.showPasswordDialog) {
             PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
@@ -93,7 +91,7 @@ fun MusicScreen(vm: MusicViewModel = viewModel()) {
 }
 
 @Composable
-private fun MainContent(state: MusicUiState, vm: MusicViewModel) {
+private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: () -> Unit = {}) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -209,7 +207,7 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel) {
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
-            item { PageHeader(state.view) }
+            item { PageHeader(state.view, onOpenDrawer) }
             if (state.view == ViewType.HISTORY) {
                 item { HistorySection(state.history) }
             } else {
@@ -249,12 +247,18 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel) {
 // ── Page header ───────────────────────────────────────────────────────────────
 
 @Composable
-private fun PageHeader(view: ViewType) {
+private fun PageHeader(view: ViewType, onOpenDrawer: () -> Unit = {}) {
     Column(
         modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(horizontal = 20.dp, vertical = 32.dp),
     ) {
-        Text("MUSIC", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
+                Icon(Icons.Default.Menu, "Menu", tint = Accent, modifier = Modifier.size(20.dp))
+            }
+            Text("MUSIC", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp,
+                modifier = Modifier.padding(start = 4.dp))
+        }
         Text(
             text = if (view == ViewType.HISTORY) "Release History" else "Release Schedule",
             color = TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold,
@@ -386,9 +390,8 @@ fun UpcomingCard(
                         if (artist.incompleteCollection) Text(" ●", color = Accent, fontSize = 9.sp)
                     }
                     if (artist.albumTitle.isNotEmpty()) {
-                        Text(artist.albumTitle, color = TextSecondary, fontSize = 14.sp,
-                            fontStyle = FontStyle.Italic, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                        TruncatedText(artist.albumTitle, color = TextSecondary, fontSize = 14.sp,
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(top = 1.dp))
                     }
                     if (artist.lastRelease.isNotEmpty()) {
@@ -512,8 +515,7 @@ private fun ArtistRowItem(
                     if (artist.notes.isNotEmpty()) append(if (isNotEmpty()) " (${artist.notes})" else artist.notes)
                 }
                 if (sub.isNotEmpty()) {
-                    Text(sub, color = TextSecondary, fontSize = 13.sp, fontStyle = FontStyle.Italic,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    TruncatedText(sub, color = TextSecondary, fontSize = 13.sp, fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 3.dp))
                 }
                 if (showDate && artist.lastRelease.isNotEmpty()) {
@@ -539,28 +541,6 @@ private fun ArtistRowItem(
 private val MONTH_SHORT = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
-
-private fun artistColor(name: String): Color {
-    var h = 0
-    for (c in name) h = c.code + ((h shl 5) - h)
-    val hue = ((h % 360) + 360) % 360
-    return hslColor(hue.toFloat(), 0.65f, 0.52f)
-}
-
-private fun hslColor(h: Float, s: Float, l: Float): Color {
-    val c = (1f - abs(2f * l - 1f)) * s
-    val x = c * (1f - abs(h / 60f % 2f - 1f))
-    val m = l - c / 2f
-    val (r, g, b) = when {
-        h < 60f  -> Triple(c, x, 0f)
-        h < 120f -> Triple(x, c, 0f)
-        h < 180f -> Triple(0f, c, x)
-        h < 240f -> Triple(0f, x, c)
-        h < 300f -> Triple(x, 0f, c)
-        else     -> Triple(c, 0f, x)
-    }
-    return Color(r + m, g + m, b + m)
-}
 
 private fun parseRDate(s: String): Calendar? {
     if (s.isEmpty()) return null
@@ -725,13 +705,13 @@ private fun HistorySection(history: List<HistoryEntry>) {
                     .padding(end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(artistColor(dot.e.artistName)))
+                Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(Accent))
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
-                    Text(dot.e.artistName, color = artistColor(dot.e.artistName),
+                    Text(dot.e.artistName, color = Accent,
                         fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                     if (dot.e.albumTitle.isNotEmpty()) {
                         Text(dot.e.albumTitle, color = TextSecondary, fontSize = 13.sp,
@@ -831,7 +811,13 @@ private fun HistoryTimeline(
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+    val scrollState = rememberScrollState()
+    LaunchedEffect(minYear) {
+        val targetX = (padL + (nowCal.get(Calendar.YEAR) - minYear) * 12 * pxPerMonth - pxPerMonth * 6).toInt().coerceAtLeast(0)
+        scrollState.scrollTo(targetX)
+    }
+
+    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(scrollState)) {
         Canvas(
             modifier = Modifier
                 .width(with(density) { canvasW.toDp() })
@@ -885,7 +871,7 @@ private fun HistoryTimeline(
             // Release dots
             dots.forEach { dot ->
                 val isSelected = selected?.e?.id == dot.e.id
-                drawCircle(artistColor(dot.e.artistName), dotR, Offset(dot.x, dot.y))
+                drawCircle(Accent, dotR, Offset(dot.x, dot.y))
                 drawCircle(
                     color  = if (isSelected) Color(0xFF1A1A1A) else Color.White,
                     radius = dotR,
@@ -914,6 +900,16 @@ private fun defaultNavColors() = NavigationBarItemDefaults.colors(
 )
 
 // ── Misc ──────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun MusicLoadingSpinner() {
+    Box(modifier = Modifier.fillMaxSize().padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Accent, strokeWidth = 3.dp, modifier = Modifier.size(64.dp))
+            Icon(Icons.Filled.MusicNote, contentDescription = null, tint = Accent, modifier = Modifier.size(28.dp))
+        }
+    }
+}
 
 @Composable
 private fun CenteredText(text: String) {

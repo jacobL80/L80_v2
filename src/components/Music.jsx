@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import TruncText from './TruncText';
 import '../css/Music.css';
 import ReleaseTimeline from './ReleaseTimeline';
+import HamburgerMenu from './HamburgerMenu';
+import LoadingSpinner from './LoadingSpinner';
 
 const PlusIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -54,20 +57,21 @@ const setCookie  = (v) => { document.cookie = `${COOKIE}=${encodeURIComponent(v)
 const delCookie  = ()  => { document.cookie = `${COOKIE}=; max-age=0; path=/; SameSite=Strict`; };
 
 const sortKey     = (name) => name.replace(/^(The|A)\s+/i, '');
-const hasFullDate = (s) => s.split('/').length === 3;
-const parseDate   = (s) => {
+const expandYear    = (y) => y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y;
+const hasFullDate   = (s) => s.split('/').length === 3;
+const parseDate     = (s) => {
   const p = s.split('/').map(Number);
-  if (p.length === 3) return new Date(p[2], p[0] - 1, p[1]);
-  if (p.length === 2) return new Date(p[1], p[0] - 1, 1);
-  return new Date(p[0], 0, 1);
+  if (p.length === 3) return new Date(expandYear(p[2]), p[0] - 1, p[1]);
+  if (p.length === 2) return new Date(expandYear(p[1]), p[0] - 1, 1);
+  return new Date(expandYear(p[0]), 0, 1);
 };
-const parseParts  = (s) => {
+const parseParts    = (s) => {
   const p = s.split('/').map(Number);
-  if (p.length === 3) return { month: MONTHS[p[0] - 1], day: p[1], year: p[2] };
-  if (p.length === 2) return { month: MONTHS[p[0] - 1], day: null, year: p[1] };
-  return { month: null, day: null, year: p[0] || null };
+  if (p.length === 3) return { month: MONTHS[p[0] - 1], day: p[1], year: expandYear(p[2]) };
+  if (p.length === 2) return { month: MONTHS[p[0] - 1], day: null, year: expandYear(p[1]) };
+  return { month: null, day: null, year: p[0] ? expandYear(p[0]) : null };
 };
-const getYear       = (s) => s.split('/').slice(-1)[0];
+const getYear       = (s) => String(expandYear(Number(s.split('/').slice(-1)[0])));
 const hasDateDetail = (s) => !!s && s.split('/').length > 1;
 const formatLastDate = (s) => {
   const { month, day, year } = parseParts(s);
@@ -112,13 +116,14 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
   const [form, setForm]           = useState({ ...EMPTY_ARTIST, ...artist });
   const [confirmDel, setDel]      = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [sugIdx, setSugIdx] = useState(-1);
   const wasNewOnOpen = !artist.id;
   const isNew = !form.id;
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleNameChange = (value) => {
+    setSugIdx(-1);
     if (wasNewOnOpen && form.id) {
-      // User is typing over a previously-selected suggestion — start fresh
       setForm({ ...EMPTY_ARTIST, name: value });
       const q = value.toLowerCase();
       setSuggestions(value.trim() ? allArtists.filter(a => a.name.toLowerCase().includes(q)).slice(0, 6) : []);
@@ -136,28 +141,50 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
   const selectSuggestion = (a) => {
     setForm({ ...EMPTY_ARTIST, ...a });
     setSuggestions([]);
+    setSugIdx(-1);
   };
 
-  const handleSubmit = (e) => {
+  const handleNameKeyDown = (e) => {
+    if (!suggestions.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSugIdx(i => Math.min(i + 1, suggestions.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setSugIdx(i => Math.max(i - 1, -1)); }
+    else if (e.key === 'Enter' && sugIdx >= 0) { e.preventDefault(); selectSuggestion(suggestions[sugIdx]); }
+    else if (e.key === 'Escape') { setSuggestions([]); setSugIdx(-1); }
+  };
+
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.name.trim()) onSave(form);
+    if (!form.name.trim()) return;
+    setSaving(true); setResult(null);
+    try {
+      await onSave(form);
+      setResult({ ok: true });
+      setTimeout(onCancel, 1500);
+    } catch (err) {
+      setSaving(false);
+      setResult({ ok: false, message: err.message || 'Something went wrong.' });
+    }
   };
 
   return (
-    <div className="modalOverlay" onClick={onCancel}>
-      <form className="modalBox" onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
+    <div className="modalOverlay" onClick={saving ? undefined : onCancel}>
+      <form className="modalBox" style={{ position: 'relative' }} onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
         <h3 className="modalTitle">{isNew ? 'Add Artist' : 'Edit Artist'}</h3>
 
         <label className="modalLabel">Name</label>
         <div className="autocompleteWrap">
           <input className="modalInput" value={form.name}
             onChange={e => handleNameChange(e.target.value)}
-            onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+            onKeyDown={handleNameKeyDown}
+            onBlur={() => setTimeout(() => { setSuggestions([]); setSugIdx(-1); }, 150)}
             autoFocus />
           {suggestions.length > 0 && (
             <div className="autocompleteDrop">
-              {suggestions.map(a => (
-                <button key={a.id} className="autocompleteItem" onClick={() => selectSuggestion(a)}>
+              {suggestions.map((a, i) => (
+                <button key={a.id} className={`autocompleteItem${i === sugIdx ? ' autocompleteItem--active' : ''}`} onClick={() => selectSuggestion(a)}>
                   {a.name}
                 </button>
               ))}
@@ -216,11 +243,24 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
             </span>
           )}
           <div className="modalActionsRight">
-            <button type="button" className="modalCancelBtn" onClick={onCancel}>Cancel</button>
-            <button type="submit" className="modalSaveBtn"
-              disabled={!form.name.trim()}>Save</button>
+            <button type="button" className="modalCancelBtn" onClick={onCancel} disabled={saving}>Cancel</button>
+            <button type="submit" className="modalSaveBtn" disabled={saving || !form.name.trim()}>
+              {saving ? <><span className="btnSpinner" />Saving…</> : 'Save'}
+            </button>
           </div>
         </div>
+        {result && (
+          <div className={`modalResultOverlay${result.ok ? ' modalResultOverlay--ok' : ' modalResultOverlay--err'}`}>
+            <div className="modalResultIcon">{result.ok ? '✓' : '✗'}</div>
+            <p className="modalResultMsg">{result.ok ? 'Saved!' : result.message}</p>
+            {!result.ok && (
+              <div className="modalResultBtns">
+                <button type="button" className="modalCancelBtn" onClick={() => setResult(null)}>Try Again</button>
+                <button type="button" className="modalCancelBtn" onClick={onCancel}>Close</button>
+              </div>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );
@@ -256,7 +296,11 @@ const UpcomingCard = ({ artist, onEdit, onAcquire, editing }) => {
             <span className="incompleteDot" title="Incomplete collection"> ●</span>
           )}
         </div>
-        {artist.albumTitle && <div className="upcomingCardAlbum">{artist.albumTitle}</div>}
+        {artist.albumTitle && (
+          <TruncText className="upcomingCardAlbum" tipId="music-tip" content={artist.albumTitle}>
+            {artist.albumTitle}
+          </TruncText>
+        )}
         {artist.lastRelease && (
           <div className="cardLastRelease"
             {...(hasDateDetail(artist.lastRelease) && { 'data-tooltip-id': 'last-date-tip', 'data-tooltip-content': formatLastDate(artist.lastRelease) })}>
@@ -329,10 +373,11 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
           )}
         </div>
         {!albumEmpty && (
-          <div className="rowCardAlbum">
+          <TruncText className="rowCardAlbum" tipId="music-tip"
+            content={`${artist.albumTitle}${artist.notes ? ` (${artist.notes})` : ''}`}>
             {artist.albumTitle}
             {artist.notes && <span className="musicNotes"> ({artist.notes})</span>}
-          </div>
+          </TruncText>
         )}
         {!dateEmpty && artist.lastRelease && (
           <div className="cardLastRelease"
@@ -351,6 +396,7 @@ const ArtistRow = ({ artist, dateDisplay, onEdit, editing }) => {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const Music = () => {
+  useEffect(() => { document.title = 'Music | My Tracking'; }, []);
   const [artists,       setArtists] = useState([]);
   const [loading,       setLoading] = useState(true);
   const [fetchError,    setFetchErr] = useState(false);
@@ -413,41 +459,36 @@ const Music = () => {
   }, []);
 
   const saveArtist = async (form) => {
-    setSaveErr('');
     const isNew = !form.id;
     const url   = isNew ? API_URL : `${API_URL}?id=${form.id}`;
     const snapshot = artists;
 
-    if (!isNew) {
-      setArtists(prev => prev.map(a => a.id === form.id ? { ...a, ...form } : a));
-      setEditing(null);
-    }
+    if (!isNew) setArtists(prev => prev.map(a => a.id === form.id ? { ...a, ...form } : a));
 
+    let res;
     try {
-      const res = await fetch(url, {
+      res = await fetch(url, {
         method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Edit-Token': editToken },
         body: JSON.stringify({ ...form, confirmed: hasFullDate(form.nextRelease || '') }),
       });
-      if (res.status === 401) {
-        setSaveErr('Incorrect password — click Add New to re-authenticate.');
-        setToken(null);
-        delCookie();
-        if (!isNew) setArtists(snapshot);
-        return;
-      }
-      if (!res.ok) {
-        setSaveErr('Save failed — please try again.');
-        if (!isNew) setArtists(snapshot);
-        return;
-      }
-      const saved = await res.json();
-      setArtists(prev => isNew ? [...prev, saved] : prev.map(a => a.id === saved.id ? saved : a));
-      if (isNew) setEditing(null);
     } catch {
-      setSaveErr('Network error — please try again.');
       if (!isNew) setArtists(snapshot);
+      throw new Error('Network error — please try again.');
     }
+
+    if (res.status === 401) {
+      setToken(null); delCookie();
+      if (!isNew) setArtists(snapshot);
+      throw new Error('Incorrect password.');
+    }
+    if (!res.ok) {
+      if (!isNew) setArtists(snapshot);
+      throw new Error('Save failed — please try again.');
+    }
+
+    const saved = await res.json();
+    setArtists(prev => isNew ? [...prev, saved] : prev.map(a => a.id === saved.id ? saved : a));
   };
 
   const deleteArtist = async (id) => {
@@ -500,10 +541,10 @@ const Music = () => {
       nextRelease: '',
       albumTitle: '',
       lastRelease: artist.nextRelease,
-    });
+    }).catch(() => {});
   };
 
-  const markHiatus = (artist) => saveArtist({ ...artist, hiatus: true });
+  const markHiatus = (artist) => saveArtist({ ...artist, hiatus: true }).catch(() => {});
 
   const exitEditMode = () => {
     setToken(null);
@@ -560,7 +601,7 @@ const Music = () => {
     }
   };
 
-  if (loading)    return <div className="musicOuter musicLoading">Loading…</div>;
+  if (loading)    return <LoadingSpinner type="music" />;
   if (fetchError) return <div className="musicOuter musicLoading">Could not load data.</div>;
 
   return (
@@ -576,7 +617,10 @@ const Music = () => {
       <div className="musicScrollArea">
       <div className="musicHeader">
         <div className="musicHeaderInner">
-          <p className="musicEyebrow">Music</p>
+          <div className="musicHeaderRow">
+            <HamburgerMenu />
+            <p className="musicEyebrow">Music</p>
+          </div>
           <h1 className="musicTitle">
             {view === 'timeline' ? 'Release History' : 'Release Schedule'}
           </h1>
@@ -677,6 +721,7 @@ const Music = () => {
       </nav>
 
       <Tooltip id="last-date-tip" />
+      <Tooltip id="music-tip" />
 
       {showPassModal && (
         <PasswordModal onSubmit={enterEditMode} onCancel={() => { setPassModal(false); setPendingAdd(false); }} />

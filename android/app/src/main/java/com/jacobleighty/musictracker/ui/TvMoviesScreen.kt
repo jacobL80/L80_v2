@@ -338,23 +338,24 @@ private fun TvHistorySection(watched: List<TvShow>) {
         }
         HorizontalDivider(color = TBorder, modifier = Modifier.padding(horizontal = 14.dp))
 
-        val maxInYear = byYear.maxOfOrNull { it.value.size } ?: 1
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom,
-        ) {
-            byYear.asReversed().forEach { (yr, shows) ->
-                val barH = maxOf((shows.size.toFloat() / maxInYear * 52).toInt(), 4).dp
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${shows.size}", color = TTextSec, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                    Box(modifier = Modifier.padding(top = 2.dp, bottom = 4.dp).width(28.dp).height(barH)
-                        .background(TAccent, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
-                    Text("$yr", color = TTextDim, fontSize = 9.sp)
+        if (byYear.isNotEmpty()) {
+            val maxInYear = byYear.maxOf { it.value.size }
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom,
+            ) {
+                byYear.asReversed().forEach { (yr, shows) ->
+                    val barH = maxOf((shows.size.toFloat() / maxInYear * 52).toInt(), 4).dp
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${shows.size}", color = TTextSec, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                        Box(modifier = Modifier.padding(top = 2.dp, bottom = 4.dp).width(28.dp).height(barH)
+                            .background(TAccent, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
+                        Text("$yr", color = TTextDim, fontSize = 9.sp)
+                    }
                 }
             }
+            HorizontalDivider(color = TBorder, modifier = Modifier.padding(horizontal = 14.dp))
         }
-
-        HorizontalDivider(color = TBorder, modifier = Modifier.padding(horizontal = 14.dp))
 
         // Type breakdown with year filter
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
@@ -426,6 +427,7 @@ private fun TvHistorySection(watched: List<TvShow>) {
 
 @Composable
 private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) -> Unit) {
+    if (shows.isEmpty()) return
     val density    = LocalDensity.current
     val pxPerMonth = with(density) { 40.dp.toPx() }
     val dotR       = with(density) { 8.dp.toPx() }

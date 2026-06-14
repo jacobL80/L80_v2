@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,8 +24,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -250,6 +249,16 @@ private fun RMainContent(state: RunningUiState, vm: RunningViewModel, onOpenDraw
                     }
                 }
 
+                if (tableWeeks.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(top = 48.dp),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
+                            Text("No runs logged yet.", color = RTextSec, fontSize = 16.sp)
+                        }
+                    }
+                }
                 items(tableWeeks) { week ->
                     WeekRow(
                         week      = week,
@@ -269,6 +278,12 @@ private fun RMainContent(state: RunningUiState, vm: RunningViewModel, onOpenDraw
 
 @Composable
 private fun RStatsContent(weeks: List<RunningWeek>, modifier: Modifier = Modifier) {
+    if (weeks.isEmpty()) {
+        Box(modifier = modifier.padding(top = 80.dp), contentAlignment = Alignment.TopCenter) {
+            Text("No data yet.", color = RTextSec, fontSize = 18.sp)
+        }
+        return
+    }
     val allEntries   = remember(weeks) { weeks.flatMap { it.entries } }
     val totalMiles   = remember(weeks) { weeks.sumOf { it.total.toDouble() }.toFloat() }
     val totalRuns    = allEntries.size
@@ -533,11 +548,11 @@ private fun RunningBarChart(weeks: List<RunningWeek>) {
     val density    = LocalDensity.current
     val barW       = with(density) { 20.dp.toPx() }
     val barGap     = with(density) { 4.dp.toPx() }
-    val maxBarH    = with(density) { 120.dp.toPx() }
+    val maxBarH    = with(density) { 110.dp.toPx() }
     val padL       = with(density) { 4.dp.toPx() }
     val padR       = with(density) { 24.dp.toPx() }
-    val chartH     = with(density) { 140.dp.toPx() }
-    val labelAreaH = with(density) { 24.dp.toPx() }
+    val chartH     = with(density) { 130.dp.toPx() }
+    val labelAreaH = with(density) { 38.dp.toPx() }
     val yAxisW     = with(density) { 32.dp.toPx() }
     val totalH     = chartH + labelAreaH
 
@@ -556,12 +571,12 @@ private fun RunningBarChart(weeks: List<RunningWeek>) {
 
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(weeks.size) {
-        if (weeks.isNotEmpty()) scrollState.scrollTo(scrollState.maxValue)
+    LaunchedEffect(weeks) {
+        if (weeks.isNotEmpty()) {
+            snapshotFlow { scrollState.maxValue }.first { it > 0 }
+            scrollState.scrollTo(scrollState.maxValue)
+        }
     }
-
-    var hovered by remember { mutableStateOf<Int?>(null) }
-    val hoveredWeek = hovered?.let { weeks.getOrNull(it) }
 
     val yearLabelPaint = remember(density) {
         android.graphics.Paint().apply {
@@ -574,8 +589,16 @@ private fun RunningBarChart(weeks: List<RunningWeek>) {
     }
     val milesLabelPaint = remember(density) {
         android.graphics.Paint().apply {
-            textSize    = with(density) { 8.dp.toPx() }
+            textSize    = with(density) { 7.dp.toPx() }
             color       = android.graphics.Color.parseColor("#888888")
+            textAlign   = android.graphics.Paint.Align.CENTER
+            isAntiAlias = true
+        }
+    }
+    val dateLabelPaint = remember(density) {
+        android.graphics.Paint().apply {
+            textSize    = with(density) { 7.dp.toPx() }
+            color       = android.graphics.Color.parseColor("#BFBAB4")
             textAlign   = android.graphics.Paint.Align.CENTER
             isAntiAlias = true
         }
@@ -589,91 +612,74 @@ private fun RunningBarChart(weeks: List<RunningWeek>) {
         }
     }
 
-    Column {
-        hoveredWeek?.let { week ->
-            Row(
-                modifier = Modifier.fillMaxWidth().background(RAccentLight)
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(week.weekStart, color = RAccent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("%.2f mi".format(week.total), color = RTextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(week.mon, week.tue, week.wed, week.thu, week.fri, week.sat, week.sun)
-                        .zip(DAY_LABELS).zip(DAY_COLORS).forEach { (pair, color) ->
-                            val (miles, label) = pair
-                            if (miles > 0f) Text("${label[0]}:${"%.2f".format(miles)}", color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                }
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Canvas(
+            modifier = Modifier
+                .width(with(density) { yAxisW.toDp() })
+                .height(with(density) { totalH.toDp() })
+        ) {
+            ticks.forEach { tickVal ->
+                val y = chartH - (tickVal / maxTotal) * maxBarH
+                drawContext.canvas.nativeCanvas.drawText(
+                    "${tickVal.toInt()}",
+                    yAxisW - with(density) { 3.dp.toPx() },
+                    y + with(density) { 3.dp.toPx() },
+                    yAxisPaint,
+                )
             }
         }
 
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.weight(1f).horizontalScroll(scrollState)) {
             Canvas(
                 modifier = Modifier
-                    .width(with(density) { yAxisW.toDp() })
+                    .width(with(density) { canvasW.toDp() })
                     .height(with(density) { totalH.toDp() })
             ) {
                 ticks.forEach { tickVal ->
                     val y = chartH - (tickVal / maxTotal) * maxBarH
-                    drawContext.canvas.nativeCanvas.drawText(
-                        "${tickVal.toInt()}",
-                        yAxisW - with(density) { 3.dp.toPx() },
-                        y + with(density) { 3.dp.toPx() },
-                        yAxisPaint,
+                    drawLine(
+                        color       = Color(0xFFEEEEEE),
+                        start       = Offset(0f, y),
+                        end         = Offset(canvasW, y),
+                        strokeWidth = 1f,
+                        pathEffect  = PathEffect.dashPathEffect(floatArrayOf(6f, 4f)),
                     )
                 }
-            }
 
-            Box(modifier = Modifier.weight(1f).horizontalScroll(scrollState)) {
-                Canvas(
-                    modifier = Modifier
-                        .width(with(density) { canvasW.toDp() })
-                        .height(with(density) { totalH.toDp() })
-                        .pointerInput(weeks) {
-                            detectTapGestures { offset ->
-                                val idx = ((offset.x - padL) / (barW + barGap)).toInt()
-                                hovered = if (idx in weeks.indices && hovered == idx) null else idx.takeIf { it in weeks.indices }
-                            }
+                weeks.forEachIndexed { i, week ->
+                    val x    = padL + i * (barW + barGap)
+                    val days = listOf(week.mon, week.tue, week.wed, week.thu, week.fri, week.sat, week.sun)
+                    var stackY = chartH
+
+                    days.zip(DAY_COLORS).forEach { (miles, color) ->
+                        if (miles > 0f) {
+                            val h = (miles / maxTotal) * maxBarH
+                            stackY -= h
+                            drawRect(color.copy(alpha = 0.85f), Offset(x, stackY), Size(barW, h))
                         }
-                ) {
-                    ticks.forEach { tickVal ->
-                        val y = chartH - (tickVal / maxTotal) * maxBarH
-                        drawLine(
-                            color       = Color(0xFFEEEEEE),
-                            start       = Offset(0f, y),
-                            end         = Offset(canvasW, y),
-                            strokeWidth = 1f,
-                            pathEffect  = PathEffect.dashPathEffect(floatArrayOf(6f, 4f)),
+                    }
+
+                    if (week.total > 0f) {
+                        val topY = chartH - (week.total / maxTotal) * maxBarH
+                        drawContext.canvas.nativeCanvas.drawText(
+                            "%.1f".format(week.total), x + barW / 2f,
+                            topY - with(density) { 3.dp.toPx() }, milesLabelPaint,
                         )
                     }
 
-                    weeks.forEachIndexed { i, week ->
-                        val x    = padL + i * (barW + barGap)
-                        val days = listOf(week.mon, week.tue, week.wed, week.thu, week.fri, week.sat, week.sun)
-                        var stackY = chartH
+                    val ws    = week.weekStart
+                    val month = ws.substring(5, 7).trimStart('0')
+                    val day   = ws.substring(8, 10).trimStart('0')
+                    drawContext.canvas.nativeCanvas.drawText(
+                        "$month/$day", x + barW / 2f,
+                        chartH + with(density) { 15.dp.toPx() }, dateLabelPaint,
+                    )
 
-                        days.zip(DAY_COLORS).forEach { (miles, color) ->
-                            if (miles > 0f) {
-                                val h = (miles / maxTotal) * maxBarH
-                                stackY -= h
-                                drawRect(color.copy(alpha = if (hovered == i) 1f else 0.75f), Offset(x, stackY), Size(barW, h))
-                            }
-                        }
-
-                        if (i == 0 || week.weekStart.substring(0, 4) != weeks[i - 1].weekStart.substring(0, 4)) {
-                            drawContext.canvas.nativeCanvas.drawText(
-                                week.weekStart.substring(0, 4),
-                                x + barW / 2f, totalH - with(density) { 4.dp.toPx() }, yearLabelPaint,
-                            )
-                        }
-                        if (hovered == i && week.total > 0f) {
-                            val topY = chartH - (week.total / maxTotal) * maxBarH
-                            drawContext.canvas.nativeCanvas.drawText(
-                                "%.2f".format(week.total), x + barW / 2f,
-                                topY - with(density) { 4.dp.toPx() }, milesLabelPaint,
-                            )
-                        }
+                    if (i == 0 || week.weekStart.substring(0, 4) != weeks[i - 1].weekStart.substring(0, 4)) {
+                        drawContext.canvas.nativeCanvas.drawText(
+                            week.weekStart.substring(0, 4),
+                            x + barW / 2f, totalH - with(density) { 4.dp.toPx() }, yearLabelPaint,
+                        )
                     }
                 }
             }
@@ -743,11 +749,13 @@ private fun WeekRow(
                             }
                         }
                     }
-                    IconButton(onClick = { onEdit(entry) }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Edit, null, tint = RAccent, modifier = Modifier.size(16.dp))
-                    }
-                    IconButton(onClick = { onDelete(entry.id) }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Delete, null, tint = Color(0xFFCC4444), modifier = Modifier.size(16.dp))
+                    Row {
+                        IconButton(onClick = { onEdit(entry) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Edit, null, tint = RAccent, modifier = Modifier.size(16.dp))
+                        }
+                        IconButton(onClick = { onDelete(entry.id) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Delete, null, tint = Color(0xFFCC4444), modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
             }

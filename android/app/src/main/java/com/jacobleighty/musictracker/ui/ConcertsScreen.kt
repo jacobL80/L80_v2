@@ -404,6 +404,7 @@ private fun ConcertTimeline(
         concerts.filter { DateUtils.hasFullDate(it.date) }
             .sortedBy { DateUtils.parseDate(it.date) }
     }
+    if (validConcerts.isEmpty()) return
 
     val minYear = remember(validConcerts) {
         validConcerts.minOfOrNull { DateUtils.parseDate(it.date).year } ?: (nowCal.get(Calendar.YEAR) - 1)

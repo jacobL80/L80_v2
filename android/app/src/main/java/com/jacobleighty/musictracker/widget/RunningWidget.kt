@@ -43,8 +43,7 @@ class RunningWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val (weeks, yearTotal, weekTotal) = fetchData(context)
         val last10 = weeks.takeLast(10)
-        val chartBmp = buildBarChart(last10)
-        provideContent { RunningWidgetContent(weekTotal, yearTotal, chartBmp) }
+        provideContent { RunningWidgetContent(weekTotal, yearTotal, last10) }
     }
 
     private suspend fun fetchData(context: Context): Triple<List<RunningWeek>, Float, Float> =
@@ -81,9 +80,7 @@ class OpenRunningAction : ActionCallback {
     }
 }
 
-private fun buildBarChart(weeks: List<RunningWeek>): Bitmap {
-    val bmpW = 400
-    val bmpH = 100
+private fun buildBarChart(weeks: List<RunningWeek>, bmpW: Int, bmpH: Int, density: Float): Bitmap {
     val bmp = Bitmap.createBitmap(bmpW, bmpH, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bmp)
 
@@ -93,9 +90,9 @@ private fun buildBarChart(weeks: List<RunningWeek>): Bitmap {
     val thisMonday = today.with(DayOfWeek.MONDAY).toString()
     val maxTotal = weeks.maxOf { it.total }.coerceAtLeast(1f)
     val count = weeks.size
-    val gap = 4f
+    val gap = 4f * density
     val barW = (bmpW - gap * (count - 1)) / count
-    val labelH = 14f
+    val labelH = 14f * density
     val maxBarH = bmpH - labelH
 
     val pastPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -106,13 +103,13 @@ private fun buildBarChart(weeks: List<RunningWeek>): Bitmap {
     }
     val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.parseColor("#666666")
-        textSize = 10f
+        textSize = 10f * density
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT
     }
     val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.parseColor("#aaaaaa")
-        textSize = 10f
+        textSize = 10f * density
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT_BOLD
     }
@@ -146,7 +143,13 @@ private fun buildBarChart(weeks: List<RunningWeek>): Bitmap {
 }
 
 @Composable
-private fun RunningWidgetContent(weekTotal: Float, yearTotal: Float, chartBmp: Bitmap) {
+private fun RunningWidgetContent(weekTotal: Float, yearTotal: Float, weeks: List<RunningWeek>) {
+    val size = LocalSize.current
+    val density = LocalContext.current.resources.displayMetrics.density
+    val bmpW = (size.width.value * density).toInt().coerceAtLeast(200)
+    val bmpH = (bmpW * 0.32f).toInt().coerceAtLeast(60)
+    val chartBmp = buildBarChart(weeks, bmpW, bmpH, density)
+
     val bgColor = ColorProvider(Color(0xFF0f0f0f))
     val accent  = ColorProvider(RW_ACCENT)
     val textPri = ColorProvider(Color(0xFFE8E8E8))

@@ -1,11 +1,17 @@
 package com.jacobleighty.musictracker
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.jacobleighty.musictracker.notification.WorkerScheduler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,9 +34,24 @@ enum class Screen {
 }
 
 class MainActivity : ComponentActivity() {
+
+    private val requestNotificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* proceed regardless — worker fires only if permission granted */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        WorkerScheduler.schedule(this)
+
         val initialScreen = screenFromIntent(intent)
         setContent {
             MaterialTheme(
@@ -85,7 +106,7 @@ fun MainApp(initialScreen: Screen = Screen.MUSIC) {
             )
         },
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
             when (currentScreen) {
                 Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.MUSIC      -> MusicScreen(onOpenDrawer = { scope.launch { drawerState.open() } })

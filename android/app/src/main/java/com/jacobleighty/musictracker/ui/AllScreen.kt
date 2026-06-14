@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -102,7 +101,7 @@ private fun AMainContent(state: AllUiState, onOpenDrawer: () -> Unit) {
 private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
     val counts = upcoming.groupBy { it.type }.mapValues { it.value.size }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
                 Icon(Icons.Default.Menu, "Menu", tint = AAccent, modifier = Modifier.size(20.dp))
@@ -206,29 +205,23 @@ private fun AllItemCard(item: AllItem, dimmed: Boolean = false) {
 
             // Info
             Column(modifier = Modifier.weight(1f)) {
-                Text(TYPE_LABELS[item.type] ?: item.type,
-                    color = color, fontSize = 9.sp, fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 2.dp))
-
                 if (item.url.isNotEmpty()) {
-                    Text(
+                    TruncatedText(
                         text = "${item.title} ↗",
                         color = ATextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
-                        lineHeight = 20.sp, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        lineHeight = 20.sp, maxLines = 2,
                         modifier = Modifier.clickable {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item.url)))
                         },
                     )
                 } else {
-                    Text(item.title, color = ATextPrimary, fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold, lineHeight = 20.sp,
-                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    TruncatedText(item.title, color = ATextPrimary, fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold, lineHeight = 20.sp, maxLines = 2)
                 }
 
                 if (item.subtitle.isNotEmpty()) {
-                    Text(item.subtitle, color = ATextSec, fontSize = 13.sp,
-                        fontStyle = FontStyle.Italic, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+                    TruncatedText(item.subtitle, color = ATextSec, fontSize = 13.sp,
+                        fontStyle = FontStyle.Italic, modifier = Modifier.padding(top = 2.dp))
                 }
 
                 if (imminent) {

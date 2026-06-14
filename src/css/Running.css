@@ -275,6 +275,44 @@
   color: #c0392b;
 }
 
+.runDeleteConfirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.runConfirmYes,
+.runConfirmNo {
+  background: none;
+  border: 1px solid;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 1px 6px;
+  line-height: 1.4;
+  transition: background 0.15s, color 0.15s;
+}
+
+.runConfirmYes {
+  color: #c0392b;
+  border-color: #c0392b;
+}
+
+.runConfirmYes:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+.runConfirmNo {
+  color: #999;
+  border-color: #ccc;
+}
+
+.runConfirmNo:hover {
+  background: #f0f0f0;
+}
+
 /* On running view the bottom nav is static (inside flex column) */
 .runningOuter .bottomNav {
   position: static;

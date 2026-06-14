@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -134,7 +133,7 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(bottom = 16.dp)) {
             item {
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
                             Icon(Icons.Default.Menu, "Menu", tint = TAccent, modifier = Modifier.size(20.dp))
@@ -210,8 +209,8 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
                 Box(modifier = Modifier.width(1.5.dp).height(48.dp).background(TBorder))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(show.programName, color = TTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    if (show.service.isNotEmpty()) Text(show.service, color = TTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
+                    if (show.service.isNotEmpty()) TruncatedText(show.service, color = TTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
+                        modifier = Modifier.padding(top = 1.dp))
                     if (show.type.isNotEmpty()) {
                         val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
                         Text(show.type, color = tc, fontSize = 10.sp, fontWeight = FontWeight.Bold,
@@ -269,8 +268,8 @@ private fun TvRow(show: TvShow, dateDisplay: String, isEditing: Boolean, onEdit:
             Column(modifier = Modifier.weight(1f)) {
                 Text(show.programName, color = TTextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
                 if (show.service.isNotEmpty()) {
-                    Text(show.service, color = TTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
+                    TruncatedText(show.service, color = TTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic,
+                        modifier = Modifier.padding(top = 3.dp))
                 }
                 if (show.type.isNotEmpty()) {
                     val tc = when (show.type) { "Movie" -> Color(0xFF0EA5E9); "Anime" -> Color(0xFFF59E0B); else -> TAccent }
@@ -507,6 +506,7 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
 
 // ── Edit dialog ───────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditShowDialog(show: TvShow, serviceNames: List<String> = emptyList(), onSave: (TvShow) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
     var programName   by remember { mutableStateOf(show.programName) }

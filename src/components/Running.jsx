@@ -275,6 +275,7 @@ const AddRunModal = ({ onSave, onCancel }) => {
 
 const WeekRow = ({ week, isEditing, onDeleteEntry }) => {
   const [expanded, setExpanded] = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
   const hasEntries = week.entries && week.entries.length > 0;
 
   return (
@@ -296,7 +297,14 @@ const WeekRow = ({ week, isEditing, onDeleteEntry }) => {
         <tr key={entry.id} className="runRowEntry">
           <td className="runCell runCell--entryDate" colSpan={8}>{entry.date}: {parseFloat(entry.miles).toFixed(2)} mi</td>
           <td className="runCell">
-            <button className="runDeleteBtn" onClick={() => onDeleteEntry(entry.id)}>×</button>
+            {confirmId === entry.id ? (
+              <span className="runDeleteConfirm">
+                <button className="runConfirmYes" onClick={() => { setConfirmId(null); onDeleteEntry(entry.id); }}>Yes</button>
+                <button className="runConfirmNo" onClick={() => setConfirmId(null)}>No</button>
+              </span>
+            ) : (
+              <button className="runDeleteBtn" onClick={() => setConfirmId(entry.id)}>×</button>
+            )}
           </td>
         </tr>
       ))}

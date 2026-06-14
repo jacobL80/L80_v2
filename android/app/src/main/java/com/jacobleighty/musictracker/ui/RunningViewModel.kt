@@ -48,7 +48,17 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
             _uiState.update { it.copy(loading = true, fetchError = false) }
             runCatching { api.getRunningWeeks() }.onSuccess { weeks ->
                 val years = weeks.map { it.year }.distinct().sortedDescending()
-                _uiState.update { it.copy(loading = false, allWeeks = weeks, filteredWeeks = weeks, availableYears = years) }
+                val currentYear = LocalDate.now().year
+                val prior = _uiState.value.selectedYear
+                val selectedYear = prior ?: if (years.contains(currentYear)) currentYear else years.firstOrNull()
+                val filtered = if (selectedYear != null) weeks.filter { it.year == selectedYear } else weeks
+                _uiState.update { it.copy(
+                    loading = false,
+                    allWeeks = weeks,
+                    filteredWeeks = filtered,
+                    availableYears = years,
+                    selectedYear = selectedYear,
+                )}
             }.onFailure {
                 _uiState.update { it.copy(loading = false, fetchError = true) }
             }

@@ -34,6 +34,21 @@ const SVG_HEIGHT   = 215;
 const PAD_L        = 24;
 const PAD_R        = 48;
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const TOOLTIP_H = 160;
+
+function getScrollParent(el) {
+  while (el && el !== document.body) {
+    const style = window.getComputedStyle(el);
+    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
 // ─── ReleaseTimeline ──────────────────────────────────────────────────────────
 
 const ReleaseTimeline = ({ history }) => {
@@ -160,8 +175,19 @@ const ReleaseTimeline = ({ history }) => {
   const handleLeave = ()       => { if (!pinned) setTooltip(null); };
   const handleClick = (e, dot) => {
     e.stopPropagation();
-    if (pinned?.id === dot.id) { setPinned(null); setTooltip(null); }
-    else { setPinned(dot); setTooltip({ dot, x: e.clientX, y: e.clientY }); }
+    if (pinned?.id === dot.id) { setPinned(null); setTooltip(null); return; }
+    const cx = e.clientX, cy = e.clientY;
+    const tipTop = Math.max(8, cy - 90);
+    const overflow = Math.max(0, tipTop + TOOLTIP_H + 8 - window.innerHeight);
+    let adjustedY = cy;
+    if (overflow > 0) {
+      const scrollEl = getScrollParent(wrapRef.current);
+      if (scrollEl) { scrollEl.scrollTop += overflow; }
+      else { window.scrollBy(0, overflow); }
+      adjustedY = cy - overflow;
+    }
+    setPinned(dot);
+    setTooltip({ dot, x: cx, y: adjustedY });
   };
   const clearAll = () => { setPinned(null); setTooltip(null); };
 

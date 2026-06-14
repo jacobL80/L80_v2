@@ -36,7 +36,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -251,7 +250,7 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: (
 private fun PageHeader(view: ViewType, onOpenDrawer: () -> Unit = {}) {
     Column(
         modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(horizontal = 20.dp, vertical = 32.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
@@ -391,9 +390,8 @@ fun UpcomingCard(
                         if (artist.incompleteCollection) Text(" ●", color = Accent, fontSize = 9.sp)
                     }
                     if (artist.albumTitle.isNotEmpty()) {
-                        Text(artist.albumTitle, color = TextSecondary, fontSize = 14.sp,
-                            fontStyle = FontStyle.Italic, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                        TruncatedText(artist.albumTitle, color = TextSecondary, fontSize = 14.sp,
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(top = 1.dp))
                     }
                     if (artist.lastRelease.isNotEmpty()) {
@@ -517,8 +515,7 @@ private fun ArtistRowItem(
                     if (artist.notes.isNotEmpty()) append(if (isNotEmpty()) " (${artist.notes})" else artist.notes)
                 }
                 if (sub.isNotEmpty()) {
-                    Text(sub, color = TextSecondary, fontSize = 13.sp, fontStyle = FontStyle.Italic,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    TruncatedText(sub, color = TextSecondary, fontSize = 13.sp, fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 3.dp))
                 }
                 if (showDate && artist.lastRelease.isNotEmpty()) {

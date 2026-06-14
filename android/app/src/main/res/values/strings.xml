@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Music Tracker</string>
+    <string name="app_name">My Tracking</string>
     <string name="widget_description">Shows upcoming music releases</string>
     <string name="concerts_widget_description">Shows upcoming concerts</string>
     <string name="tvmovies_widget_description">Shows upcoming TV shows and movies</string>
     <string name="running_widget_description">Shows this week\'s running mileage</string>
+    <string name="all_widget_description">Shows all upcoming music, concerts, and TV/movies</string>
 </resources>

@@ -34,7 +34,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -148,7 +147,7 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
             item {
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
                             Icon(Icons.Default.Menu, "Menu", tint = CAccent, modifier = Modifier.size(20.dp))
@@ -228,12 +227,12 @@ private fun ConcertCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(concert.band, color = CTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     if (concert.tourName.isNotEmpty()) {
-                        Text(concert.tourName, color = CTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 1.dp))
+                        TruncatedText(concert.tourName, color = CTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
+                            modifier = Modifier.padding(top = 1.dp))
                     }
                     if (concert.venue.isNotEmpty()) {
-                        Text(concert.venue, color = CTextDim, fontSize = 12.sp, maxLines = 1,
-                            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+                        TruncatedText(concert.venue, color = CTextDim, fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 2.dp))
                     }
                     if (imminent) {
                         val label = when (daysUntil.toInt()) { 0 -> "TODAY"; 1 -> "TOMORROW"; else -> "${daysUntil} DAYS AWAY" }
@@ -297,21 +296,18 @@ private fun ConcertHistorySection(attended: List<Concert>) {
         attended.groupBy { it.band }
             .map { it.key to it.value.size }
             .sortedByDescending { it.second }
-            .take(6)
     }
     val topVenues = remember(attended) {
         attended.filter { it.venue.isNotEmpty() }
             .groupBy { it.venue }
             .map { it.key to it.value.size }
             .sortedByDescending { it.second }
-            .take(6)
     }
     val topAttendees = remember(attended) {
         attended.flatMap { parseAttendeesKt(it.attendees) }
             .groupBy { it }
             .map { it.key to it.value.size }
             .sortedByDescending { it.second }
-            .take(6)
     }
 
     Column {
@@ -692,20 +688,24 @@ private fun CSectionHeader(title: String, color: Color) {
     }
 }
 
+private const val CHART_DEFAULT_ROWS = 6
+
 @Composable
 private fun CHBarChart(title: String, items: List<Pair<String, Int>>, color: Color) {
     if (items.isEmpty()) return
+    var showAll by remember { mutableStateOf(false) }
+    val displayed = if (showAll || items.size <= CHART_DEFAULT_ROWS) items else items.take(CHART_DEFAULT_ROWS)
     val max = items.maxOf { it.second }
     Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
         Text(title.uppercase(), color = CTextDim, fontSize = 9.sp, fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp, modifier = Modifier.padding(bottom = 8.dp))
-        items.forEach { (name, count) ->
+        displayed.forEach { (name, count) ->
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(name, color = CTextPrimary, fontSize = 12.sp,
-                    modifier = Modifier.width(110.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                TruncatedText(name, color = CTextPrimary, fontSize = 12.sp,
+                    modifier = Modifier.width(110.dp))
                 Box(
                     modifier = Modifier.weight(1f).height(8.dp)
                         .background(Color(0xFFF0EEEB), RoundedCornerShape(2.dp))
@@ -718,6 +718,18 @@ private fun CHBarChart(title: String, items: List<Pair<String, Int>>, color: Col
                 }
                 Text(count.toString(), color = CTextDim, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.End, modifier = Modifier.width(24.dp).padding(start = 6.dp))
+            }
+        }
+        if (items.size > CHART_DEFAULT_ROWS) {
+            TextButton(
+                onClick = { showAll = !showAll },
+                modifier = Modifier.padding(top = 2.dp),
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    if (showAll) "Show less" else "Show all (${items.size})",
+                    color = CAccent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }

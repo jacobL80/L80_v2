@@ -2,6 +2,19 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import '../css/ReleaseTimeline.css';
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const TOOLTIP_H = 160;
+
+function getScrollParent(el) {
+  while (el && el !== document.body) {
+    const style = window.getComputedStyle(el);
+    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
 const ACCENT = '#7c3aed';
 const TYPE_COLORS = { TV: '#7c3aed', Movie: '#0ea5e9', Anime: '#f59e0b' };
 
@@ -113,6 +126,22 @@ const TvTimeline = ({ history }) => {
 
   const activeDot = pinned || tooltip?.dot;
   const clearAll = () => { setPinned(null); setTooltip(null); };
+  const handleClick = (e, dot) => {
+    e.stopPropagation();
+    if (pinned?.id === dot.id) { clearAll(); return; }
+    const cx = e.clientX, cy = e.clientY;
+    const tipTop = Math.max(8, cy - 90);
+    const overflow = Math.max(0, tipTop + TOOLTIP_H + 8 - window.innerHeight);
+    let adjustedY = cy;
+    if (overflow > 0) {
+      const scrollEl = getScrollParent(wrapRef.current);
+      if (scrollEl) { scrollEl.scrollTop += overflow; }
+      else { window.scrollBy(0, overflow); }
+      adjustedY = cy - overflow;
+    }
+    setPinned(dot);
+    setTooltip({ dot, x: cx, y: adjustedY });
+  };
 
   if (!entries.length) return (
     <div className="tlEmpty">
@@ -160,7 +189,7 @@ const TvTimeline = ({ history }) => {
             <g key={dot.id} className="tlDotGroup" transform={`translate(${dot.x}, ${dot.y})`}
               onMouseEnter={(e) => setTooltip({ dot, x: e.clientX, y: e.clientY })}
               onMouseLeave={() => { if (!pinned) setTooltip(null); }}
-              onClick={(e) => { e.stopPropagation(); if (pinned?.id === dot.id) clearAll(); else { setPinned(dot); setTooltip({ dot, x: e.clientX, y: e.clientY }); } }}>
+              onClick={(e) => handleClick(e, dot)}>
               <circle className="tlDot" cx={0} cy={0} r={DOT_R}
                 fill={ACCENT}
                 stroke={activeDot?.id === dot.id ? '#1a1a1a' : '#fff'}

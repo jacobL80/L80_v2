@@ -115,10 +115,11 @@ fun RunningScreen(vm: RunningViewModel = viewModel(), onOpenDrawer: () -> Unit =
                 saveError = state.saveError,
             )
         }
-        if (state.showEditModal && state.editingEntry != null) {
+        val editingEntry = state.editingEntry
+        if (state.showEditModal && editingEntry != null) {
             EditRunEntryDialog(
-                entry     = state.editingEntry,
-                onSave    = { miles, date, pace -> vm.updateEntry(state.editingEntry.id, miles, date, pace) },
+                entry     = editingEntry,
+                onSave    = { miles, date, pace -> vm.updateEntry(editingEntry.id, miles, date, pace) },
                 onDismiss = vm::closeEditModal,
                 saveError = state.editError,
             )
@@ -326,7 +327,7 @@ private fun RStatsContent(weeks: List<RunningWeek>, modifier: Modifier = Modifie
 
     LazyColumn(
         modifier       = modifier,
-        contentPadding = PaddingValues(horizontal = 14.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(start = 14.dp, top = 0.dp, end = 14.dp, bottom = 24.dp),
     ) {
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 24.dp)) {

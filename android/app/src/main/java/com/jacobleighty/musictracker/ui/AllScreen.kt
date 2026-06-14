@@ -116,7 +116,7 @@ private fun AMainContent(state: AllUiState, onOpenDrawer: () -> Unit) {
 private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
     val counts = upcoming.groupBy { it.type }.mapValues { it.value.size }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(start = 20.dp, top = 32.dp, end = 20.dp, bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onOpenDrawer, modifier = Modifier.size(28.dp).offset(x = (-4).dp)) {
                 Icon(Icons.Default.Menu, "Menu", tint = AAccent, modifier = Modifier.size(20.dp))
@@ -124,16 +124,13 @@ private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
             Text("ALL", color = AAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
                 letterSpacing = 4.sp, modifier = Modifier.padding(start = 4.dp))
         }
-        Text("Upcoming", color = ATextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 6.dp))
-        Box(modifier = Modifier.padding(top = 14.dp).width(48.dp).height(3.dp).background(AAccent))
-        HorizontalDivider(modifier = Modifier.padding(top = 14.dp), color = ABorder)
-
-        if (counts.isNotEmpty()) {
-            Row(
-                modifier = Modifier.padding(top = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+        Row(
+            modifier = Modifier.padding(top = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("Upcoming", color = ATextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            if (counts.isNotEmpty()) {
                 listOf("music", "concert", "tv").forEach { type ->
                     val count = counts[type] ?: return@forEach
                     val color = TYPE_COLORS[type] ?: AAccent
@@ -152,13 +149,15 @@ private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
                 }
             }
         }
+        Box(modifier = Modifier.padding(top = 14.dp).width(48.dp).height(3.dp).background(AAccent))
+        HorizontalDivider(modifier = Modifier.padding(top = 14.dp), color = ABorder)
     }
 }
 
 @Composable
-private fun ASectionHeader(title: String, dim: Boolean = false) {
+private fun ASectionHeader(title: String, dim: Boolean = false, topPadding: androidx.compose.ui.unit.Dp = 24.dp) {
     val color = if (dim) Color(0xFFAAAAAA) else ATextPrimary
-    Row(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 24.dp, bottom = 8.dp),
+    Row(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = topPadding, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.width(3.dp).height(14.dp).background(if (dim) Color(0xFFAAAAAA) else AAccent))
         Text(title.uppercase(), color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold,
@@ -271,7 +270,7 @@ private fun ReleaseCalendarSection(items: List<AllItem>) {
     val months = grouped.entries.sortedWith(compareBy({ it.key.first }, { it.key.second }))
 
     Column {
-        ASectionHeader("Calendar")
+        ASectionHeader("Calendar", topPadding = 6.dp)
         Row(
             modifier = Modifier
                 .horizontalScroll(rememberScrollState())

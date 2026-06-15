@@ -2,12 +2,15 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.Artist
 import com.jacobleighty.musictracker.data.ArtistRepository
 import com.jacobleighty.musictracker.data.HistoryEntry
+import com.jacobleighty.musictracker.widget.UpcomingWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +63,7 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
             val history = historyResult.getOrDefault(emptyList())
             _uiState.update { it.copy(loading = false, history = history) }
             updateSections(artists)
+            warmWidgetCache(artists)
         }
     }
 
@@ -191,5 +195,18 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
     private fun allArtistsList(): List<Artist> {
         val s = _uiState.value
         return s.upcoming + s.expected + s.watching + s.hiatus
+    }
+
+    private fun warmWidgetCache(artists: List<Artist>) {
+        val ctx = getApplication<Application>()
+        val upcoming = artists
+            .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
+            .sortedBy { DateUtils.parseDate(it.nextRelease) }
+        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+            .edit().putString("artists_json", Gson().toJson(upcoming)).apply()
+        viewModelScope.launch {
+            val manager = GlanceAppWidgetManager(ctx)
+            manager.getGlanceIds(UpcomingWidget::class.java).forEach { UpcomingWidget().update(ctx, it) }
+        }
     }
 }

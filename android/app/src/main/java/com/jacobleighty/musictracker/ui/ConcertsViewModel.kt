@@ -2,11 +2,14 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.Concert
+import com.jacobleighty.musictracker.widget.ConcertsWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +51,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { api.getConcerts() }.onSuccess { concerts ->
                 _uiState.update { it.copy(loading = false) }
                 updateSections(concerts)
+                warmWidgetCache(concerts)
             }.onFailure {
                 _uiState.update { it.copy(loading = false, fetchError = true) }
             }
@@ -137,4 +141,18 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun allConcerts() = with(_uiState.value) { upcoming + attended }
+
+    private fun warmWidgetCache(concerts: List<Concert>) {
+        val ctx = getApplication<Application>()
+        val upcoming = concerts
+            .filter { !it.attended && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
+            .sortedBy { DateUtils.parseDate(it.date) }
+            .take(10)
+        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+            .edit().putString("concerts_json", Gson().toJson(upcoming)).apply()
+        viewModelScope.launch {
+            val manager = GlanceAppWidgetManager(ctx)
+            manager.getGlanceIds(ConcertsWidget::class.java).forEach { ConcertsWidget().update(ctx, it) }
+        }
+    }
 }

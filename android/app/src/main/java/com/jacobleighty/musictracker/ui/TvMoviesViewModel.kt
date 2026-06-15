@@ -2,11 +2,14 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.TvShow
+import com.jacobleighty.musictracker.widget.TvMoviesWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +55,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { api.getTvShows() }.onSuccess { shows ->
                 _uiState.update { it.copy(loading = false) }
                 updateSections(shows)
+                warmWidgetCache(shows)
             }.onFailure {
                 _uiState.update { it.copy(loading = false, fetchError = true) }
             }
@@ -150,4 +154,18 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
     fun markWatched(show: TvShow) = saveShow(show.copy(watched = true))
 
     private fun allShows() = with(_uiState.value) { toWatch + upcoming + expected + watchlist + watched }
+
+    private fun warmWidgetCache(shows: List<TvShow>) {
+        val ctx = getApplication<Application>()
+        val upcoming = shows
+            .filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
+            .sortedBy { DateUtils.parseDate(it.date) }
+            .take(10)
+        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+            .edit().putString("tvmovies_json", Gson().toJson(upcoming)).apply()
+        viewModelScope.launch {
+            val manager = GlanceAppWidgetManager(ctx)
+            manager.getGlanceIds(TvMoviesWidget::class.java).forEach { TvMoviesWidget().update(ctx, it) }
+        }
+    }
 }

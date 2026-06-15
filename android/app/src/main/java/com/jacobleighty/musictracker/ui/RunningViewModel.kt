@@ -2,12 +2,15 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.RunningDayEntry
 import com.jacobleighty.musictracker.data.RunningWeek
+import com.jacobleighty.musictracker.widget.RunningWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,6 +69,7 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
                     availableYears = years,
                     selectedYear = selectedYear,
                 )}
+                warmWidgetCache(weeks)
             }.onFailure {
                 _uiState.update { it.copy(loading = false, fetchError = true) }
             }
@@ -173,6 +177,17 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         val token = _uiState.value.editToken ?: return
         viewModelScope.launch {
             runCatching { api.deleteRunEntry(id, token) }.onSuccess { loadAll() }
+        }
+    }
+
+    private fun warmWidgetCache(weeks: List<RunningWeek>) {
+        val ctx = getApplication<Application>()
+        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+            .edit().putString("running_weeks_json", Gson().toJson(weeks)).apply()
+        viewModelScope.launch {
+            val manager = GlanceAppWidgetManager(ctx)
+            val ids = manager.getGlanceIds(RunningWidget::class.java)
+            ids.forEach { RunningWidget().update(ctx, it) }
         }
     }
 

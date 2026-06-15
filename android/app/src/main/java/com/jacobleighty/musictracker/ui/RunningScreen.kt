@@ -219,7 +219,22 @@ private fun RMainContent(state: RunningUiState, vm: RunningViewModel, onOpenDraw
                             modifier = Modifier.padding(top = 6.dp),
                         )
                         Box(modifier = Modifier.padding(top = 14.dp).width(48.dp).height(3.dp).background(RAccent))
-                        HorizontalDivider(modifier = Modifier.padding(top = 14.dp), color = RBorder)
+                        Row(
+                            modifier = Modifier.padding(top = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            DAY_LABELS.zip(DAY_COLORS).forEach { (label, color) ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Box(modifier = Modifier.size(7.dp).clip(RoundedCornerShape(2.dp)).background(color))
+                                    Text(label, color = RTextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(top = 12.dp), color = RBorder)
                     }
                 }
 

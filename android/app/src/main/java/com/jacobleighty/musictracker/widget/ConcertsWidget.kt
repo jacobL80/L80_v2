@@ -56,20 +56,18 @@ class ConcertsWidget : GlanceAppWidget() {
 
     private suspend fun fetchUpcoming(context: Context): List<Concert> = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-        try {
+        val cached: List<Concert>? = prefs.getString("concerts_json", null)?.let { json ->
+            try { Gson().fromJson(json, object : TypeToken<List<Concert>>() {}.type) }
+            catch (_: Exception) { null }
+        }?.takeIf { (it as List<*>).isNotEmpty() }
+        cached ?: try {
             val concerts = ApiService.create().getConcerts()
                 .filter { !it.attended && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
                 .sortedBy { DateUtils.parseDate(it.date) }
                 .take(10)
             prefs.edit().putString("concerts_json", Gson().toJson(concerts)).apply()
             concerts
-        } catch (_: Exception) {
-            val json = prefs.getString("concerts_json", null) ?: return@withContext emptyList()
-            try {
-                val all: List<Concert> = Gson().fromJson(json, object : TypeToken<List<Concert>>() {}.type)
-                all.take(10)
-            } catch (_: Exception) { emptyList() }
-        }
+        } catch (_: Exception) { emptyList() }
     }
 }
 

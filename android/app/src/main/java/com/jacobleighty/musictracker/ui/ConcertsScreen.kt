@@ -312,16 +312,28 @@ private fun ConcertHistorySection(attended: List<Concert>) {
 
     Column {
         // Stats
-        Row(
+        Column(
             modifier = Modifier
-                .horizontalScroll(rememberScrollState())
+                .fillMaxWidth()
                 .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            CStatChip(totalCount.toString(), "attended")
-            topVenuePair?.let { (venue, cnt) -> CStatChip(venue, "top venue · $cnt") }
-            topArtistPair?.let { (artist, cnt) -> CStatChip(artist, "top artist · $cnt") }
-            topAttendeePair?.let { (name, cnt) -> CStatChip(name, "most with · $cnt") }
+            Row(Modifier.fillMaxWidth()) {
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    CStatChip(totalCount.toString(), "attended")
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    topVenuePair?.let { (venue, cnt) -> CStatChip(venue, "top venue · $cnt") }
+                }
+            }
+            Row(Modifier.fillMaxWidth()) {
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    topArtistPair?.let { (artist, cnt) -> CStatChip(artist, "top artist · $cnt") }
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    topAttendeePair?.let { (name, cnt) -> CStatChip(name, "most with · $cnt") }
+                }
+            }
         }
 
         HorizontalDivider(color = CBorder, modifier = Modifier.padding(horizontal = 14.dp))
@@ -418,7 +430,7 @@ private fun ConcertTimeline(
 
     fun mToX(yr: Int, mo: Int) = padL + ((yr - minYear) * 12 + mo) * pxPerMonth + pxPerMonth / 2f
 
-    val canvasW = padL + (maxYear - minYear + 2) * 12 * pxPerMonth + padR
+    val canvasW = padL + (maxYear - minYear + 1) * 12 * pxPerMonth + padR
 
     val dots = remember(validConcerts, minYear, pxPerMonth, padL) {
         val byKey = mutableMapOf<String, MutableList<Concert>>()
@@ -439,7 +451,7 @@ private fun ConcertTimeline(
     }
 
     val yearTicks = remember(minYear, maxYear, padL, pxPerMonth) {
-        (minYear..maxYear + 1).map { yr -> Pair(yr, padL + (yr - minYear) * 12 * pxPerMonth) }
+        (minYear..maxYear).map { yr -> Pair(yr, padL + (yr - minYear) * 12 * pxPerMonth) }
     }
 
     val bandColor = Color(0xFFF5F3F0)
@@ -454,7 +466,11 @@ private fun ConcertTimeline(
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+    val timelineScroll = rememberScrollState()
+    LaunchedEffect(timelineScroll.maxValue) {
+        if (timelineScroll.maxValue > 0) timelineScroll.scrollTo(timelineScroll.maxValue)
+    }
+    Box(modifier = Modifier.fillMaxWidth().horizontalScroll(timelineScroll)) {
         Canvas(
             modifier = Modifier
                 .width(with(density) { canvasW.toDp() })

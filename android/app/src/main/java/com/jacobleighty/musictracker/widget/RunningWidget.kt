@@ -49,18 +49,20 @@ class RunningWidget : GlanceAppWidget() {
     private suspend fun fetchData(context: Context): Triple<List<RunningWeek>, Float, Float> =
         withContext(Dispatchers.IO) {
             val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-            val weeks: List<RunningWeek> = try {
+
+            // Prefer cache (warmed by RunningViewModel on every successful app fetch).
+            // Only hit the network when the cache is empty (e.g. first placement).
+            val cachedWeeks: List<RunningWeek>? = prefs.getString("running_weeks_json", null)?.let { json ->
+                try { Gson().fromJson(json, object : TypeToken<List<RunningWeek>>() {}.type) }
+                catch (_: Exception) { null }
+            }?.takeIf { (it as List<*>).isNotEmpty() }
+
+            val weeks: List<RunningWeek> = cachedWeeks ?: try {
                 val result = ApiService.create().getRunningWeeks().sortedBy { it.weekStart }
                 prefs.edit().putString("running_weeks_json", Gson().toJson(result)).apply()
                 result
             } catch (_: Exception) {
-                val json = prefs.getString("running_weeks_json", null)
-                    ?: return@withContext Triple(emptyList<RunningWeek>(), 0f, 0f)
-                try {
-                    Gson().fromJson(json, object : TypeToken<List<RunningWeek>>() {}.type)
-                } catch (_: Exception) {
-                    return@withContext Triple(emptyList<RunningWeek>(), 0f, 0f)
-                }
+                return@withContext Triple(emptyList<RunningWeek>(), 0f, 0f)
             }
 
             val today = LocalDate.now()

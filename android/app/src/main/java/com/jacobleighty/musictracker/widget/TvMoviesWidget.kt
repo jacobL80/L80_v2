@@ -56,20 +56,18 @@ class TvMoviesWidget : GlanceAppWidget() {
 
     private suspend fun fetchUpcoming(context: Context): List<TvShow> = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-        try {
+        val cached: List<TvShow>? = prefs.getString("tvmovies_json", null)?.let { json ->
+            try { Gson().fromJson(json, object : TypeToken<List<TvShow>>() {}.type) }
+            catch (_: Exception) { null }
+        }?.takeIf { (it as List<*>).isNotEmpty() }
+        cached ?: try {
             val shows = ApiService.create().getTvShows()
                 .filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
                 .sortedBy { DateUtils.parseDate(it.date) }
                 .take(10)
             prefs.edit().putString("tvmovies_json", Gson().toJson(shows)).apply()
             shows
-        } catch (_: Exception) {
-            val json = prefs.getString("tvmovies_json", null) ?: return@withContext emptyList()
-            try {
-                val all: List<TvShow> = Gson().fromJson(json, object : TypeToken<List<TvShow>>() {}.type)
-                all.take(10)
-            } catch (_: Exception) { emptyList() }
-        }
+        } catch (_: Exception) { emptyList() }
     }
 }
 

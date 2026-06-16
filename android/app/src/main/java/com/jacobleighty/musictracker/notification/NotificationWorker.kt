@@ -15,27 +15,38 @@ import java.time.LocalDate
 class NotificationWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        val category = inputData.getString(KEY_CATEGORY) ?: return Result.success()
         val api = ApiService.create()
         val today = LocalDate.now()
         val notifs = mutableListOf<Pair<String, String>>()
 
-        try {
-            api.getConcerts()
-                .filter { !it.attended && DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) == today }
-                .forEach { notifs.add("Concert Today" to "${it.band} @ ${it.venue}") }
-        } catch (_: Exception) {}
+        when (category) {
+            WorkerScheduler.CAT_MUSIC -> try {
+                api.getArtists()
+                    .filter { !it.hiatus && DateUtils.hasFullDate(it.nextRelease) && DateUtils.parseDate(it.nextRelease) == today }
+                    .forEach { notifs.add("Album Out Today" to "${it.name} – ${it.albumTitle}") }
+            } catch (_: Exception) {}
 
-        try {
-            api.getArtists()
-                .filter { !it.hiatus && DateUtils.hasFullDate(it.nextRelease) && DateUtils.parseDate(it.nextRelease) == today }
-                .forEach { notifs.add("Album Out Today" to "${it.name} – ${it.albumTitle}") }
-        } catch (_: Exception) {}
+            WorkerScheduler.CAT_CONCERTS -> try {
+                api.getConcerts()
+                    .filter { !it.attended && DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) == today }
+                    .forEach { notifs.add("Concert Today" to "${it.band} @ ${it.venue}") }
+            } catch (_: Exception) {}
 
-        try {
-            api.getTvShows()
-                .filter { !it.watched && DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) == today }
-                .forEach { notifs.add("New Episode Today" to it.programName) }
-        } catch (_: Exception) {}
+            WorkerScheduler.CAT_TV -> try {
+                api.getTvShows()
+                    .filter { !it.watched && DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) == today }
+                    .forEach { notifs.add("New Episode Today" to it.programName) }
+            } catch (_: Exception) {}
+
+            else -> return Result.success()
+        }
+
+        val notifIdBase = when (category) {
+            WorkerScheduler.CAT_CONCERTS -> 200
+            WorkerScheduler.CAT_TV -> 300
+            else -> 100
+        }
 
         if (notifs.isNotEmpty()) {
             val nm = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -53,7 +64,7 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Coroutine
                     .setContentIntent(intent)
                     .setAutoCancel(true)
                     .build()
-                nm.notify(i + 1, notif)
+                nm.notify(notifIdBase + i, notif)
             }
         }
 
@@ -70,5 +81,6 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Coroutine
 
     companion object {
         const val CHANNEL_ID = "upcoming_events"
+        const val KEY_CATEGORY = "category"
     }
 }

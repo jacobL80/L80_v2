@@ -31,7 +31,7 @@ import com.jacobleighty.musictracker.ui.*
 import kotlinx.coroutines.launch
 
 enum class Screen {
-    ALL, MUSIC, CONCERTS, RUNNING, TV_MOVIES
+    ALL, MUSIC, CONCERTS, RUNNING, TV_MOVIES, SETTINGS
 }
 
 class MainActivity : ComponentActivity() {
@@ -119,6 +119,7 @@ fun MainApp(initialScreen: Screen = Screen.MUSIC) {
                 Screen.CONCERTS   -> ConcertsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.RUNNING    -> RunningScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.TV_MOVIES  -> TvMoviesScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
+                Screen.SETTINGS   -> SettingsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
             }
         }
     }
@@ -134,6 +135,7 @@ private val NAV_ITEMS = listOf(
     NavItem(Screen.CONCERTS,  "Concerts",    Icons.Default.Stadium,       Color(0xFF1696B6)),
     NavItem(Screen.TV_MOVIES, "TV / Movies", Icons.Default.Tv,            Color(0xFF7C3AED)),
     NavItem(Screen.RUNNING,   "Running",     Icons.Default.DirectionsRun, Color(0xFF47A025), divider = true),
+    NavItem(Screen.SETTINGS,  "Settings",    Icons.Default.Settings,      Color(0xFF888888), divider = true),
 )
 
 @Composable

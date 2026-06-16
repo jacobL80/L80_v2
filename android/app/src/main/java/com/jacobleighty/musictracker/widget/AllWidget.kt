@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.glance.*
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -71,7 +72,11 @@ class AllWidget : GlanceAppWidget() {
 
     private suspend fun fetchUpcoming(context: Context): List<AllItem> = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-        try {
+        val cached: List<AllItem>? = prefs.getString("all_items_json", null)?.let { json ->
+            try { Gson().fromJson(json, object : TypeToken<List<AllItem>>() {}.type) }
+            catch (_: Exception) { null }
+        }?.takeIf { (it as List<*>).isNotEmpty() }
+        cached ?: try {
             val today = java.time.LocalDate.now()
             val items = ApiService.create().getAllItems()
                 .filter { DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) >= today }
@@ -79,19 +84,29 @@ class AllWidget : GlanceAppWidget() {
                 .take(10)
             prefs.edit().putString("all_items_json", Gson().toJson(items)).apply()
             items
-        } catch (_: Exception) {
-            val json = prefs.getString("all_items_json", null) ?: return@withContext emptyList()
-            try {
-                val all: List<AllItem> = Gson().fromJson(json, object : TypeToken<List<AllItem>>() {}.type)
-                all.take(10)
-            } catch (_: Exception) { emptyList() }
-        }
+        } catch (_: Exception) { emptyList() }
     }
 }
+
+private val ITEM_TYPE_KEY = ActionParameters.Key<String>("item_type")
 
 class OpenAllAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("l80://all")).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        })
+    }
+}
+
+class OpenItemTypeAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val host = when (parameters[ITEM_TYPE_KEY]) {
+            "music"   -> "music"
+            "concert" -> "concerts"
+            "tv"      -> "tv"
+            else      -> "all"
+        }
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("l80://$host")).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         })
     }
@@ -194,6 +209,7 @@ private fun AllWidgetCard(item: AllItem, modifier: GlanceModifier = GlanceModifi
                 .fillMaxWidth()
                 .background(cardBg)
                 .cornerRadius(8.dp)
+                .clickable(actionRunCallback<OpenItemTypeAction>(actionParametersOf(ITEM_TYPE_KEY to item.type)))
                 .padding(6.dp),
             verticalAlignment = Alignment.Vertical.CenterVertically,
         ) {

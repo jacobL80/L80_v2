@@ -55,15 +55,14 @@ class UpcomingWidget : GlanceAppWidget() {
 
     private suspend fun fetchUpcoming(context: Context): List<Artist> = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-        try {
+        val cached = loadCachedArtists(prefs).takeIf { it.isNotEmpty() }
+        cached ?: try {
             val artists = ApiService.create().getArtists()
                 .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
                 .sortedBy { DateUtils.parseDate(it.nextRelease) }
             prefs.edit().putString("artists_json", Gson().toJson(artists)).apply()
             artists
-        } catch (_: Exception) {
-            loadCachedArtists(prefs)
-        }
+        } catch (_: Exception) { emptyList() }
     }
 
     private fun loadCachedArtists(prefs: SharedPreferences): List<Artist> {

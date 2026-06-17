@@ -44,7 +44,7 @@ class TvMoviesWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val upcoming = fetchUpcoming(context)
+        val upcoming = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
         provideContent {
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false

@@ -41,7 +41,8 @@ class RunningWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val (weeks, yearTotal, weekTotal) = fetchData(context)
+        val (weeks, yearTotal, weekTotal) = runCatching { fetchData(context) }
+            .getOrDefault(Triple(emptyList(), 0f, 0f))
         val last10 = weeks.takeLast(10)
         provideContent { RunningWidgetContent(weekTotal, yearTotal, last10) }
     }
@@ -95,7 +96,8 @@ private fun buildBarChart(weeks: List<RunningWeek>, bmpW: Int, bmpH: Int, densit
     val gap = 4f * density
     val barW = (bmpW - gap * (count - 1)) / count
     val labelH = 14f * density
-    val maxBarH = bmpH - labelH
+    val valueH = 14f * density
+    val maxBarH = bmpH - labelH - valueH
 
     val pastPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.argb(140, 71, 160, 37)
@@ -109,35 +111,45 @@ private fun buildBarChart(weeks: List<RunningWeek>, bmpW: Int, bmpH: Int, densit
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT
     }
-    val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    val valueAbovePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.parseColor("#aaaaaa")
         textSize = 10f * density
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT_BOLD
     }
+    val valueInsidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#ffffff")
+        textSize = 10f * density
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    val textRowH = 12f * density  // height needed to fit the value inside the bar
 
     weeks.forEachIndexed { i, week ->
         val x = i * (barW + gap)
         val barH = (week.total / maxTotal) * maxBarH
-        val top = maxBarH - barH
         val isCurrent = week.weekStart == thisMonday
 
-        canvas.drawRoundRect(RectF(x, top, x + barW, maxBarH), 3f, 3f, if (isCurrent) currentPaint else pastPaint)
+        val barTop = valueH + maxBarH - barH
+        canvas.drawRoundRect(RectF(x, barTop, x + barW, valueH + maxBarH), 3f, 3f, if (isCurrent) currentPaint else pastPaint)
 
-        // Date label below bars for first, last, and current week
-        if (i == 0 || i == count - 1 || isCurrent) {
-            val parts = week.weekStart.split("-")
-            if (parts.size >= 3) {
-                canvas.drawText(
-                    "${parts[1]}/${parts[2].trimStart('0')}",
-                    x + barW / 2, bmpH.toFloat() - 1f, labelPaint,
-                )
+        // Mileage value: inside bar when it fits, above bar otherwise
+        if (week.total > 0f) {
+            val fitsInside = barH >= textRowH + 4f * density
+            if (fitsInside) {
+                canvas.drawText("%.2f".format(week.total), x + barW / 2, barTop + textRowH, valueInsidePaint)
+            } else {
+                canvas.drawText("%.2f".format(week.total), x + barW / 2, barTop - 2f, valueAbovePaint)
             }
         }
 
-        // Miles value above the current week bar
-        if (isCurrent && barH > 16f && week.total > 0f) {
-            canvas.drawText("%.1f".format(week.total), x + barW / 2, top - 2f, valuePaint)
+        // Date label below every bar
+        val parts = week.weekStart.split("-")
+        if (parts.size >= 3) {
+            canvas.drawText(
+                "${parts[1]}/${parts[2].trimStart('0')}",
+                x + barW / 2, bmpH.toFloat() - 1f, labelPaint,
+            )
         }
     }
 
@@ -173,14 +185,14 @@ private fun RunningWidgetContent(weekTotal: Float, yearTotal: Float, weeks: List
         Row(modifier = GlanceModifier.fillMaxWidth()) {
             Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
-                    "%.1f mi".format(weekTotal),
+                    "%.2f mi".format(weekTotal),
                     style = TextStyle(color = textPri, fontSize = 20.sp, fontWeight = FontWeight.Bold),
                 )
                 Text("this week", style = TextStyle(color = textSec, fontSize = 10.sp))
             }
             Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
-                    "%.0f mi".format(yearTotal),
+                    "%.2f mi".format(yearTotal),
                     style = TextStyle(color = textPri, fontSize = 20.sp, fontWeight = FontWeight.Bold),
                 )
                 Text("this year", style = TextStyle(color = textSec, fontSize = 10.sp))

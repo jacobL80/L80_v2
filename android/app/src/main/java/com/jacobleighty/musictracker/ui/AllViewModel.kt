@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 data class AllUiState(
@@ -37,9 +38,10 @@ class AllViewModel(app: Application) : AndroidViewModel(app) {
             .filter { DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) >= today }
             .sortedBy { DateUtils.parseDate(it.date) }
             .take(10)
-        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-            .edit().putString("all_items_json", Gson().toJson(upcoming)).apply()
-        viewModelScope.launch {
+        if (upcoming.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+                .edit().putString("all_items_json", Gson().toJson(upcoming)).commit()
             val manager = GlanceAppWidgetManager(ctx)
             manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
         }

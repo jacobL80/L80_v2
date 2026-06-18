@@ -43,8 +43,8 @@ class RunningWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val (weeks, yearTotal, weekTotal) = runCatching { fetchData(context) }
             .getOrDefault(Triple(emptyList(), 0f, 0f))
-        val last10 = weeks.takeLast(10)
-        provideContent { RunningWidgetContent(weekTotal, yearTotal, last10) }
+        if (weeks.isEmpty()) return  // keep last rendered frame rather than blanking
+        provideContent { RunningWidgetContent(weekTotal, yearTotal, weeks.takeLast(10)) }
     }
 
     private suspend fun fetchData(context: Context): Triple<List<RunningWeek>, Float, Float> =
@@ -60,7 +60,7 @@ class RunningWidget : GlanceAppWidget() {
 
             val weeks: List<RunningWeek> = cachedWeeks ?: try {
                 val result = ApiService.create().getRunningWeeks().sortedBy { it.weekStart }
-                prefs.edit().putString("running_weeks_json", Gson().toJson(result)).apply()
+                if (result.isNotEmpty()) prefs.edit().putString("running_weeks_json", Gson().toJson(result)).commit()
                 result
             } catch (_: Exception) {
                 return@withContext Triple(emptyList<RunningWeek>(), 0f, 0f)

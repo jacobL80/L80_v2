@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 enum class ConcertViewType { SCHEDULE, HISTORY }
@@ -148,9 +149,10 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
             .filter { !it.attended && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
             .sortedBy { DateUtils.parseDate(it.date) }
             .take(10)
-        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-            .edit().putString("concerts_json", Gson().toJson(upcoming)).apply()
-        viewModelScope.launch {
+        if (upcoming.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+                .edit().putString("concerts_json", Gson().toJson(upcoming)).commit()
             val manager = GlanceAppWidgetManager(ctx)
             manager.getGlanceIds(ConcertsWidget::class.java).forEach { ConcertsWidget().update(ctx, it) }
         }

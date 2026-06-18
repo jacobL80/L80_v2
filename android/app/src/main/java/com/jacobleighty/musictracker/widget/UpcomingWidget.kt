@@ -44,6 +44,7 @@ class UpcomingWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val upcoming = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
+        if (upcoming.isEmpty()) return  // keep last rendered frame rather than blanking
         provideContent {
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
@@ -60,7 +61,7 @@ class UpcomingWidget : GlanceAppWidget() {
             val artists = ApiService.create().getArtists()
                 .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
                 .sortedBy { DateUtils.parseDate(it.nextRelease) }
-            prefs.edit().putString("artists_json", Gson().toJson(artists)).apply()
+            if (artists.isNotEmpty()) prefs.edit().putString("artists_json", Gson().toJson(artists)).commit()
             artists
         } catch (_: Exception) { emptyList() }
     }

@@ -61,6 +61,7 @@ class AllWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val items = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
+        if (items.isEmpty()) return  // keep last rendered frame rather than blanking
         provideContent {
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
@@ -82,7 +83,7 @@ class AllWidget : GlanceAppWidget() {
                 .filter { DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) >= today }
                 .sortedBy { DateUtils.parseDate(it.date) }
                 .take(10)
-            prefs.edit().putString("all_items_json", Gson().toJson(items)).apply()
+            if (items.isNotEmpty()) prefs.edit().putString("all_items_json", Gson().toJson(items)).commit()
             items
         } catch (_: Exception) { emptyList() }
     }

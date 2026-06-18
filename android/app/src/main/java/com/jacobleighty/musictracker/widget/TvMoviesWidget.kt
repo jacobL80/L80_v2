@@ -45,6 +45,7 @@ class TvMoviesWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val upcoming = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
+        if (upcoming.isEmpty()) return  // keep last rendered frame rather than blanking
         provideContent {
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
@@ -65,7 +66,7 @@ class TvMoviesWidget : GlanceAppWidget() {
                 .filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
                 .sortedBy { DateUtils.parseDate(it.date) }
                 .take(10)
-            prefs.edit().putString("tvmovies_json", Gson().toJson(shows)).apply()
+            if (shows.isNotEmpty()) prefs.edit().putString("tvmovies_json", Gson().toJson(shows)).commit()
             shows
         } catch (_: Exception) { emptyList() }
     }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -202,9 +203,10 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
         val upcoming = artists
             .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
             .sortedBy { DateUtils.parseDate(it.nextRelease) }
-        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-            .edit().putString("artists_json", Gson().toJson(upcoming)).apply()
-        viewModelScope.launch {
+        if (upcoming.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+                .edit().putString("artists_json", Gson().toJson(upcoming)).commit()
             val manager = GlanceAppWidgetManager(ctx)
             manager.getGlanceIds(UpcomingWidget::class.java).forEach { UpcomingWidget().update(ctx, it) }
         }

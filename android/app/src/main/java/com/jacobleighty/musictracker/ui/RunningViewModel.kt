@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -181,13 +182,14 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun warmWidgetCache(weeks: List<RunningWeek>) {
+        if (weeks.isEmpty()) return
         val ctx = getApplication<Application>()
-        ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-            .edit().putString("running_weeks_json", Gson().toJson(weeks)).apply()
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+                .edit().putString("running_weeks_json", Gson().toJson(weeks)).commit()
             val manager = GlanceAppWidgetManager(ctx)
-            val ids = manager.getGlanceIds(RunningWidget::class.java)
-            ids.forEach { RunningWidget().update(ctx, it) }
+            manager.getGlanceIds(RunningWidget::class.java)
+                .forEach { RunningWidget().update(ctx, it) }
         }
     }
 

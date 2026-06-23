@@ -71,6 +71,12 @@ class MainActivity : ComponentActivity() {
             val onToggleDark: (Boolean) -> Unit = { dark ->
                 isDark.value = dark
                 currentAppColors = if (dark) DarkAppColors else LightAppColors
+                enableEdgeToEdge(
+                    statusBarStyle = if (dark)
+                        SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                    else
+                        SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                )
                 prefs.edit().putBoolean(Constants.PREF_DARK_MODE, dark).apply()
             }
 
@@ -130,6 +136,7 @@ fun MainApp(
     var currentScreen by remember { mutableStateOf(initialScreen) }
     val drawerState   = rememberDrawerState(DrawerValue.Closed)
     val scope         = rememberCoroutineScope()
+    val colors        = LocalAppColors.current
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -143,7 +150,7 @@ fun MainApp(
             )
         },
     ) {
-        Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        Box(modifier = Modifier.fillMaxSize().background(colors.pageBg).statusBarsPadding()) {
             when (currentScreen) {
                 Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.MUSIC      -> MusicScreen(onOpenDrawer = { scope.launch { drawerState.open() } })

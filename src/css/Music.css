@@ -18,9 +18,14 @@
 }
 
 .musicHeader {
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.06) 0%, transparent 55%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.11) 0%, transparent 60%);
   border-bottom: 1px solid var(--c-border-alt);
   margin-bottom: 0;
+}
+
+[data-theme="dark"] .musicHeader {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.20) 0%, transparent 60%);
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.22);
 }
 
 .musicHeaderInner {

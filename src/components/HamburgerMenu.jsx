@@ -9,6 +9,7 @@ const SECTIONS = [
   { label: 'Concerts',    path: '/concerts' },
   { label: 'TV / Movies', path: '/tv' },
   { label: 'Running',     path: '/running', divider: true },
+  { label: 'Settings',    path: '/settings', divider: true },
 ];
 
 const HamburgerMenu = () => {

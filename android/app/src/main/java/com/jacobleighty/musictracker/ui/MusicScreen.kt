@@ -45,19 +45,19 @@ import java.util.Calendar
 
 // ── Colors matching the web ───────────────────────────────────────────────────
 
-private val PageBg         = Color(0xFFFAF9F7)
-private val CardBg         = Color(0xFFFFFFFF)
+private val PageBg         get() = currentAppColors.pageBg
+private val CardBg         get() = currentAppColors.cardBg
 private val Accent         = Color(0xFFEC6F00)
-private val AccentLight    = Color(0xFFFFF4E6)
+private val AccentLight    get() = currentAppColors.musicAccentLight
 private val AccentExpected = Color(0xFF1696B6)
-private val ExpectedBg     = Color(0xFFF2FAFD)
-private val HiatusBg       = Color(0xFFF5F5F5)
+private val ExpectedBg     get() = currentAppColors.musicExpectedBg
+private val HiatusBg       get() = currentAppColors.surfaceHover
 private val HiatusAccent   = Color(0xFFAAAAAA)
-private val TextPrimary    = Color(0xFF1A1A1A)
-private val TextSecondary  = Color(0xFF888888)
-private val TextDim        = Color(0xFFBBBBBB)
-private val TextDimmer     = Color(0xFFCCCCCC)
-private val BorderColor    = Color(0xFFE8E8E8)
+private val TextPrimary    get() = currentAppColors.textPrimary
+private val TextSecondary  get() = currentAppColors.textSecondary
+private val TextDim        get() = currentAppColors.textDim
+private val TextDimmer     get() = currentAppColors.textDimmer
+private val BorderColor    get() = currentAppColors.border
 
 private val cardShape = RoundedCornerShape(4.dp)
 
@@ -148,7 +148,7 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: (
                 }
                 state.saveError?.let {
                     Box(
-                        modifier = Modifier.fillMaxWidth().background(Color(0xFFFFF3E3))
+                        modifier = Modifier.fillMaxWidth().background(AccentLight)
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                     ) { Text(it, color = Accent, fontSize = 14.sp) }
                 }
@@ -790,9 +790,9 @@ private fun HistoryTimeline(
         (minYear..maxYear + 1).map { yr -> Pair(yr, padL + (yr - minYear) * 12 * pxPerMonth) }
     }
 
-    val bandColor = Color(0xFFF5F3F0)
-    val gridColor = Color(0xFFE8E3DE)
-    val baseColor = Color(0xFFCEC9C3)
+    val bandColor = currentAppColors.chartBand
+    val gridColor = currentAppColors.chartGrid
+    val baseColor = currentAppColors.chartBase
 
     val labelPaint = remember(density) {
         android.graphics.Paint().apply {
@@ -873,7 +873,7 @@ private fun HistoryTimeline(
                 val isSelected = selected?.e?.id == dot.e.id
                 drawCircle(Accent, dotR, Offset(dot.x, dot.y))
                 drawCircle(
-                    color  = if (isSelected) Color(0xFF1A1A1A) else Color.White,
+                    color  = if (isSelected) TextPrimary else Color.White,
                     radius = dotR,
                     center = Offset(dot.x, dot.y),
                     style  = Stroke(width = if (isSelected) with(density) { 2.5.dp.toPx() } else with(density) { 2.dp.toPx() }),

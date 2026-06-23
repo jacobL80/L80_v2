@@ -2,7 +2,7 @@
 
 .musicOuter.concertsOuter {
   --accent:       #1696b6;
-  --accent-light: #e8f7fb;
+  --accent-light: var(--c-concert-accent-light);
   --accent-hover: #0f7a96;
   --accent-rgb:   22, 150, 182;
 }
@@ -16,9 +16,9 @@
   align-items: center;
   min-height: 38px;
   padding: 4px 10px;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--c-border-input);
   border-radius: 6px;
-  background: #fff;
+  background: var(--c-surface);
   cursor: text;
 }
 
@@ -31,9 +31,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: #e8f7fb;
+  background: var(--c-concert-accent-light);
   color: #0d7a96;
-  border: 1px solid #b0dce8;
+  border: 1px solid rgba(22, 150, 182, 0.3);
   border-radius: 12px;
   padding: 2px 8px 2px 10px;
   font-size: 13px;
@@ -65,5 +65,5 @@
   flex: 1;
   background: transparent;
   padding: 2px 0;
-  color: #1a1a1a;
+  color: var(--c-text);
 }

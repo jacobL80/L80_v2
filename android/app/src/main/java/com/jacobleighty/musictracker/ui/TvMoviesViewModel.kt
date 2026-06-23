@@ -110,15 +110,28 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveShow(show: TvShow) {
         val token = _uiState.value.editToken ?: return
+        val toSave = if (show.id == 0) {
+            val existing = allShows().find { it.programName.equals(show.programName, ignoreCase = true) }
+            if (existing != null) {
+                existing.copy(
+                    programName = show.programName,
+                    service = show.service.ifBlank { existing.service },
+                    date = show.date.ifBlank { existing.date },
+                    notes = show.notes.ifBlank { existing.notes },
+                    type = show.type.ifBlank { existing.type },
+                    watched = show.watched || existing.watched,
+                )
+            } else show
+        } else show
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
             val result = runCatching {
-                if (show.id == 0) {
-                    val res = api.createTvShow(token, show)
+                if (toSave.id == 0) {
+                    val res = api.createTvShow(token, toSave)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 } else {
-                    val res = api.updateTvShow(show.id, token, show)
+                    val res = api.updateTvShow(toSave.id, token, toSave)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 }

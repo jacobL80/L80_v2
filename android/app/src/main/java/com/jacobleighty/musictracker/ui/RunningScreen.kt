@@ -35,14 +35,14 @@ import com.jacobleighty.musictracker.data.RunningWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-private val RPageBg      = Color(0xFFFAF9F7)
-private val RCardBg      = Color(0xFFFFFFFF)
+private val RPageBg      get() = currentAppColors.pageBg
+private val RCardBg      get() = currentAppColors.cardBg
 private val RAccent      = Color(0xFF47A025)
-private val RAccentLight = Color(0xFFEDF7E8)
-private val RTextPrimary = Color(0xFF1A1A1A)
-private val RTextSec     = Color(0xFF888888)
-private val RTextDim     = Color(0xFFBBBBBB)
-private val RBorder      = Color(0xFFE8E8E8)
+private val RAccentLight get() = currentAppColors.runAccentLight
+private val RTextPrimary get() = currentAppColors.textPrimary
+private val RTextSec     get() = currentAppColors.textSecondary
+private val RTextDim     get() = currentAppColors.textDim
+private val RBorder      get() = currentAppColors.border
 private val rCardShape   = RoundedCornerShape(4.dp)
 
 private val DAY_COLORS = listOf(
@@ -501,7 +501,7 @@ private fun RDayFrequencyChart(weeks: List<RunningWeek>) {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxWidth()
                         .clip(RoundedCornerShape(3.dp))
-                        .background(Color(0xFFF2F0ED)),
+                        .background(currentAppColors.chartBand),
                     contentAlignment = Alignment.BottomCenter,
                 ) {
                     if (count > 0) {
@@ -653,7 +653,7 @@ private fun RunningBarChart(weeks: List<RunningWeek>) {
                 ticks.forEach { tickVal ->
                     val y = chartH - (tickVal / maxTotal) * maxBarH
                     drawLine(
-                        color       = Color(0xFFEEEEEE),
+                        color       = currentAppColors.border,
                         start       = Offset(0f, y),
                         end         = Offset(canvasW, y),
                         strokeWidth = 1f,

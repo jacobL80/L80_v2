@@ -24,19 +24,19 @@ class NotificationWorker(context: Context, params: WorkerParameters) : Coroutine
             WorkerScheduler.CAT_MUSIC -> try {
                 api.getArtists()
                     .filter { !it.hiatus && DateUtils.hasFullDate(it.nextRelease) && DateUtils.parseDate(it.nextRelease) == today }
-                    .forEach { notifs.add("Album Out Today" to "${it.name} – ${it.albumTitle}") }
+                    .forEach { notifs.add("New Release Today" to "${it.name} – ${it.albumTitle}") }
             } catch (_: Exception) {}
 
             WorkerScheduler.CAT_CONCERTS -> try {
                 api.getConcerts()
                     .filter { !it.attended && DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) == today }
-                    .forEach { notifs.add("Concert Today" to "${it.band} @ ${it.venue}") }
+                    .forEach { notifs.add("Your Concert is Today!" to "${it.band} @ ${it.venue}") }
             } catch (_: Exception) {}
 
             WorkerScheduler.CAT_TV -> try {
                 api.getTvShows()
                     .filter { !it.watched && DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) == today }
-                    .forEach { notifs.add("New Episode Today" to it.programName) }
+                    .forEach { notifs.add("New Release Today" to it.programName) }
             } catch (_: Exception) {}
 
             else -> return Result.success()

@@ -140,9 +140,24 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveArtist(artist: Artist) {
         val token = _uiState.value.editToken ?: return
+        val toSave = if (artist.id == 0) {
+            val existing = allArtistsList().find { it.name.equals(artist.name, ignoreCase = true) }
+            if (existing != null) {
+                existing.copy(
+                    name = artist.name,
+                    albumTitle = artist.albumTitle.ifBlank { existing.albumTitle },
+                    nextRelease = artist.nextRelease.ifBlank { existing.nextRelease },
+                    lastRelease = artist.lastRelease.ifBlank { existing.lastRelease },
+                    notes = artist.notes.ifBlank { existing.notes },
+                    url = artist.url.ifBlank { existing.url },
+                    hiatus = artist.hiatus || existing.hiatus,
+                    incompleteCollection = artist.incompleteCollection || existing.incompleteCollection,
+                )
+            } else artist
+        } else artist
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
-            val result = repo.saveArtist(artist, token)
+            val result = repo.saveArtist(toSave, token)
             result.onSuccess { saved ->
                 val allArtists = buildUpdatedList(saved)
                 _uiState.update { it.copy(editingArtist = null) }

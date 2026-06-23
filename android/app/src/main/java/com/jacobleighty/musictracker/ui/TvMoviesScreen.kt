@@ -39,16 +39,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.TvShow
 import java.util.Calendar
 
-private val TPageBg      = Color(0xFFFAF9F7)
-private val TCardBg      = Color(0xFFFFFFFF)
+private val TPageBg      get() = currentAppColors.pageBg
+private val TCardBg      get() = currentAppColors.cardBg
 private val TAccent      = Color(0xFF7C3AED)
-private val TAccentLight = Color(0xFFF3EEFF)
-private val TExpectedBg  = Color(0xFFF5F0FF)
-private val TTextPrimary = Color(0xFF1A1A1A)
-private val TTextSec     = Color(0xFF888888)
-private val TTextDim     = Color(0xFFBBBBBB)
-private val TTextDimmer  = Color(0xFFCCCCCC)
-private val TBorder      = Color(0xFFE8E8E8)
+private val TAccentLight get() = currentAppColors.tvAccentLight
+private val TExpectedBg  get() = currentAppColors.tvExpectedBg
+private val TTextPrimary get() = currentAppColors.textPrimary
+private val TTextSec     get() = currentAppColors.textSecondary
+private val TTextDim     get() = currentAppColors.textDim
+private val TTextDimmer  get() = currentAppColors.textDimmer
+private val TBorder      get() = currentAppColors.border
 private val tCardShape   = RoundedCornerShape(4.dp)
 
 @Composable
@@ -64,6 +64,10 @@ fun TvMoviesScreen(vm: TvMoviesViewModel = viewModel(), onOpenDrawer: () -> Unit
         if (state.showPasswordDialog) {
             PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
         }
+        val programNames = remember(state) {
+            (state.upcoming + state.expected + state.watchlist + state.watched)
+                .map { it.programName }.filter { it.isNotEmpty() }.distinct().sorted()
+        }
         val serviceNames = remember(state) {
             (state.upcoming + state.expected + state.watchlist + state.watched)
                 .map { it.service }.filter { it.isNotEmpty() }.distinct().sorted()
@@ -71,6 +75,7 @@ fun TvMoviesScreen(vm: TvMoviesViewModel = viewModel(), onOpenDrawer: () -> Unit
         state.editingShow?.let { show ->
             EditShowDialog(
                 show         = show,
+                programNames = programNames,
                 serviceNames = serviceNames,
                 onSave       = vm::saveShow,
                 onDelete     = { vm.deleteShow(show.id) },
@@ -391,7 +396,7 @@ private fun TvHistorySection(watched: List<TvShow>) {
                     Text(t, color = TTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium,
                         modifier = Modifier.width(56.dp))
                     Box(modifier = Modifier.weight(1f).height(9.dp)
-                        .background(Color(0xFFF0EEEB), RoundedCornerShape(2.dp))) {
+                        .background(currentAppColors.chartGrid, RoundedCornerShape(2.dp))) {
                         if (frac > 0f) Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(frac)
                             .background(color, RoundedCornerShape(2.dp)))
                     }
@@ -461,7 +466,7 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
     }
     val yearTicks = remember(minYear, maxYear) { (minYear..maxYear + 1).map { yr -> Pair(yr, padL + (yr - minYear) * 12 * pxPerMonth) } }
 
-    val bandColor = Color(0xFFF5F3F0); val gridColor = Color(0xFFE8E3DE); val baseColor = Color(0xFFCEC9C3)
+    val bandColor = currentAppColors.chartBand; val gridColor = currentAppColors.chartGrid; val baseColor = currentAppColors.chartBase
     val labelPaint = remember(density) {
         android.graphics.Paint().apply {
             textSize = with(density) { 11.dp.toPx() }; color = android.graphics.Color.parseColor("#BFBAB4")
@@ -505,7 +510,7 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
                 val isSelected = selected?.show?.id == dot.show.id
                 drawCircle(TAccent, dotR, Offset(dot.x, dot.y))
                 drawCircle(
-                    color = if (isSelected) Color(0xFF1A1A1A) else Color.White, radius = dotR, center = Offset(dot.x, dot.y),
+                    color = if (isSelected) TTextPrimary else Color.White, radius = dotR, center = Offset(dot.x, dot.y),
                     style = Stroke(width = if (isSelected) with(density) { 2.5.dp.toPx() } else with(density) { 2.dp.toPx() }),
                 )
             }
@@ -517,8 +522,9 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditShowDialog(show: TvShow, serviceNames: List<String> = emptyList(), onSave: (TvShow) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
+private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(), serviceNames: List<String> = emptyList(), onSave: (TvShow) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
     var programName   by remember { mutableStateOf(show.programName) }
+    var programSug    by remember { mutableStateOf<List<String>>(emptyList()) }
     var service       by remember { mutableStateOf(show.service) }
     var serviceSug    by remember { mutableStateOf<List<String>>(emptyList()) }
     var date          by remember { mutableStateOf(show.date) }
@@ -533,8 +539,30 @@ private fun EditShowDialog(show: TvShow, serviceNames: List<String> = emptyList(
         title = { Text(if (show.id == 0) "Add Show" else "Edit Show") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(programName, { programName = it }, label = { Text("Program name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
+                OutlinedTextField(
+                    value = programName,
+                    onValueChange = {
+                        programName = it
+                        programSug = if (it.isBlank()) emptyList()
+                            else programNames.filter { n -> n.contains(it, ignoreCase = true) && !n.equals(it, ignoreCase = true) }.take(5)
+                    },
+                    label = { Text("Program name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                )
+                if (programSug.isNotEmpty()) {
+                    Column(modifier = Modifier.fillMaxWidth()
+                        .border(BorderStroke(1.dp, TBorder), RoundedCornerShape(4.dp))) {
+                        programSug.forEach { sug ->
+                            TextButton(
+                                onClick = { programName = sug; programSug = emptyList() },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            ) { Text(sug, color = TAccent, modifier = Modifier.fillMaxWidth()) }
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = service,
                     onValueChange = {
@@ -559,7 +587,9 @@ private fun EditShowDialog(show: TvShow, serviceNames: List<String> = emptyList(
                         }
                     }
                 }
-                OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YYYY or M/YYYY or YYYY)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YYYY, M/D, M/YYYY, or YYYY)") },
+                    isError = date.isNotBlank() && !DateUtils.isValidDate(date),
+                    singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
                 ExposedDropdownMenuBox(
                     expanded = typeExpanded,
@@ -601,7 +631,7 @@ private fun EditShowDialog(show: TvShow, serviceNames: List<String> = emptyList(
         confirmButton = {
             Button(
                 onClick = { onSave(show.copy(programName = programName.trim(), service = service.trim(), date = date.trim(), notes = notes.trim(), type = showType.trim(), watched = watched)) },
-                enabled = programName.isNotBlank(),
+                enabled = programName.isNotBlank() && DateUtils.isValidDate(date),
                 colors  = ButtonDefaults.buttonColors(containerColor = TAccent),
             ) { Text("Save") }
         },

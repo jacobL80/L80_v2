@@ -2,7 +2,7 @@
 
 .musicOuter.tvOuter {
   --accent:       #7c3aed;
-  --accent-light: #f5f0ff;
+  --accent-light: var(--c-tv-accent-light);
   --accent-hover: #6d28d9;
   --accent-rgb:   124, 58, 237;
 }
@@ -44,7 +44,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: #c4bfba;
+  color: var(--c-text-dimmer);
   flex-shrink: 0;
 }
 
@@ -59,9 +59,9 @@
   font-weight: 600;
   padding: 2px 9px;
   border-radius: 99px;
-  border: 1.5px solid #e0ddd9;
+  border: 1.5px solid var(--c-border);
   background: transparent;
-  color: #888;
+  color: var(--c-text-sec);
   cursor: pointer;
   transition: all 0.15s;
   line-height: 1.6;
@@ -70,7 +70,7 @@
 .tvTypeYearPill--active {
   border-color: #7c3aed;
   color: #7c3aed;
-  background: #f3eeff;
+  background: var(--c-tv-accent-light);
 }
 
 .tvTypeBarItem {
@@ -82,7 +82,7 @@
 
 .tvTypeBarLabel {
   font-size: 13px;
-  color: #1a1a1a;
+  color: var(--c-text);
   font-weight: 500;
   width: 52px;
   flex-shrink: 0;
@@ -91,7 +91,7 @@
 .tvTypeBarTrack {
   flex: 1;
   height: 9px;
-  background: #f0eeeb;
+  background: var(--c-chart-grid);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -106,12 +106,12 @@
 .tvTypeBarStat {
   font-size: 11px;
   font-weight: 700;
-  color: #666;
+  color: var(--c-text-sec);
   min-width: 58px;
   text-align: right;
 }
 
 .tvTypeBarCount {
-  color: #bbb;
+  color: var(--c-text-dim);
   font-weight: 400;
 }

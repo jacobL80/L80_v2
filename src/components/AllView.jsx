@@ -22,7 +22,6 @@ const parseDate = (s) => {
 
 const TYPE_LABELS      = { music: 'Music', concert: 'Concert', tv: 'TV / Movie' };
 const TYPE_COLORS      = { music: '#ec6f00', concert: '#1696b6', tv: '#7c3aed' };
-const TYPE_IMMINENT_BG = { music: '#fff4e6', concert: '#e8f7fb', tv: '#f5f0ff' };
 const SHOW_TYPE_COLORS = { TV: '#7c3aed', Movie: '#0ea5e9', Anime: '#f59e0b' };
 
 const TYPE_ICONS = {
@@ -128,8 +127,8 @@ const AllCard = ({ item }) => {
 
   return (
     <div
-      className={`allCard${imminent ? ' allCard--imminent' : ''}${released ? ' allCard--released' : ''}`}
-      style={{ borderLeftColor: color, ...(imminent ? { background: TYPE_IMMINENT_BG[item.type] } : {}) }}
+      className={`allCard${imminent ? ' allCard--imminent' : ''}${released ? ' allCard--released' : ''} allCard--type-${item.type}`}
+      style={{ borderLeftColor: color }}
     >
       <div className="allCardDate">
         <div className="allCardMonth" style={{ color }}>{month}</div>

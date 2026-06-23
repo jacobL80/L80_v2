@@ -41,15 +41,15 @@ import com.jacobleighty.musictracker.data.Concert
 import java.util.Calendar
 import kotlin.math.abs
 
-private val CPageBg      = Color(0xFFFAF9F7)
-private val CCardBg      = Color(0xFFFFFFFF)
+private val CPageBg      get() = currentAppColors.pageBg
+private val CCardBg      get() = currentAppColors.cardBg
 private val CAccent      = Color(0xFF1696B6)
-private val CAccentLight = Color(0xFFE8F7FB)
-private val CTextPrimary = Color(0xFF1A1A1A)
-private val CTextSec     = Color(0xFF888888)
-private val CTextDim     = Color(0xFFBBBBBB)
-private val CTextDimmer  = Color(0xFFCCCCCC)
-private val CBorder      = Color(0xFFE8E8E8)
+private val CAccentLight get() = currentAppColors.concertAccentLight
+private val CTextPrimary get() = currentAppColors.textPrimary
+private val CTextSec     get() = currentAppColors.textSecondary
+private val CTextDim     get() = currentAppColors.textDim
+private val CTextDimmer  get() = currentAppColors.textDimmer
+private val CBorder      get() = currentAppColors.border
 private val cCardShape   = RoundedCornerShape(4.dp)
 
 @Composable
@@ -66,6 +66,9 @@ fun ConcertsScreen(vm: ConcertsViewModel = viewModel(), onOpenDrawer: () -> Unit
             PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
         }
         state.editingConcert?.let { concert ->
+            val bandNames = remember(state.upcoming, state.attended) {
+                (state.upcoming + state.attended).mapNotNull { it.band.takeIf { b -> b.isNotEmpty() } }.distinct().sorted()
+            }
             val venueNames = remember(state.upcoming, state.attended) {
                 (state.upcoming + state.attended).mapNotNull { it.venue.takeIf { v -> v.isNotEmpty() } }.distinct().sorted()
             }
@@ -76,6 +79,7 @@ fun ConcertsScreen(vm: ConcertsViewModel = viewModel(), onOpenDrawer: () -> Unit
             }
             EditConcertDialog(
                 concert       = concert,
+                bandNames     = bandNames,
                 venueNames    = venueNames,
                 attendeeNames = attendeeNames,
                 onSave        = vm::saveConcert,
@@ -454,9 +458,9 @@ private fun ConcertTimeline(
         (minYear..maxYear).map { yr -> Pair(yr, padL + (yr - minYear) * 12 * pxPerMonth) }
     }
 
-    val bandColor = Color(0xFFF5F3F0)
-    val gridColor = Color(0xFFE8E3DE)
-    val baseColor = Color(0xFFCEC9C3)
+    val bandColor = currentAppColors.chartBand
+    val gridColor = currentAppColors.chartGrid
+    val baseColor = currentAppColors.chartBase
     val labelPaint = remember(density) {
         android.graphics.Paint().apply {
             textSize = with(density) { 11.dp.toPx() }
@@ -513,7 +517,7 @@ private fun ConcertTimeline(
                 val isSelected = selected?.c?.id == dot.c.id
                 drawCircle(CAccent, dotR, Offset(dot.x, dot.y))
                 drawCircle(
-                    color  = if (isSelected) Color(0xFF1A1A1A) else Color.White,
+                    color  = if (isSelected) CTextPrimary else Color.White,
                     radius = dotR,
                     center = Offset(dot.x, dot.y),
                     style  = Stroke(width = if (isSelected) with(density) { 2.5.dp.toPx() } else with(density) { 2.dp.toPx() }),
@@ -528,6 +532,7 @@ private fun ConcertTimeline(
 @Composable
 private fun EditConcertDialog(
     concert: Concert,
+    bandNames: List<String>,
     venueNames: List<String>,
     attendeeNames: List<String>,
     onSave: (Concert) -> Unit,
@@ -543,6 +548,13 @@ private fun EditConcertDialog(
     var attendeeChips by remember { mutableStateOf(parseAttendeesKt(concert.attendees)) }
     var attendeeInput by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
+    val bandSuggestions = remember(band, bandNames) {
+        if (band.isBlank()) emptyList()
+        else {
+            val q = band.lowercase()
+            bandNames.filter { it.lowercase().contains(q) && !it.equals(band, ignoreCase = true) }.take(5)
+        }
+    }
     val attendeeSuggestions = remember(attendeeInput, attendeeNames, attendeeChips) {
         if (attendeeInput.isBlank()) emptyList()
         else {
@@ -564,8 +576,30 @@ private fun EditConcertDialog(
         title = { Text(if (concert.id == 0) "Add Concert" else "Edit Concert") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(band, { band = it }, label = { Text("Band") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(band, { band = it }, label = { Text("Band") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
+                    if (bandSuggestions.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                                .border(androidx.compose.foundation.BorderStroke(1.dp, CBorder), RoundedCornerShape(4.dp))
+                                .background(CCardBg, RoundedCornerShape(4.dp)),
+                        ) {
+                            bandSuggestions.forEach { suggestion ->
+                                Text(
+                                    text = suggestion,
+                                    modifier = Modifier.fillMaxWidth()
+                                        .clickable { band = suggestion }
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    color = CTextPrimary, fontSize = 14.sp,
+                                )
+                                if (suggestion != bandSuggestions.last()) {
+                                    HorizontalDivider(color = CBorder)
+                                }
+                            }
+                        }
+                    }
+                }
                 OutlinedTextField(tourName, { tourName = it }, label = { Text("Tour name") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words))
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -592,7 +626,8 @@ private fun EditConcertDialog(
                         }
                     }
                 }
-                OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YYYY or M/YYYY or YYYY)") },
+                OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YYYY, M/D, M/YYYY, or YYYY)") },
+                    isError = date.isNotBlank() && !DateUtils.isValidDate(date),
                     singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -685,7 +720,7 @@ private fun EditConcertDialog(
         confirmButton = {
             Button(
                 onClick = { onSave(concert.copy(band = band.trim(), tourName = tourName.trim(), venue = venue.trim(), date = date.trim(), notes = notes.trim(), attended = attended, attendees = joinAttendeesKt(attendeeChips))) },
-                enabled = band.isNotBlank(),
+                enabled = band.isNotBlank() && DateUtils.isValidDate(date),
                 colors  = ButtonDefaults.buttonColors(containerColor = CAccent),
             ) { Text("Save") }
         },
@@ -725,7 +760,7 @@ private fun CHBarChart(title: String, items: List<Pair<String, Int>>, color: Col
                     modifier = Modifier.width(110.dp))
                 Box(
                     modifier = Modifier.weight(1f).height(8.dp)
-                        .background(Color(0xFFF0EEEB), RoundedCornerShape(2.dp))
+                        .background(currentAppColors.chartGrid, RoundedCornerShape(2.dp))
                 ) {
                     Box(
                         modifier = Modifier.fillMaxHeight()

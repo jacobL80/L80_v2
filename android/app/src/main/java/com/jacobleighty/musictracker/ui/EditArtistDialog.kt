@@ -52,6 +52,11 @@ fun EditArtistDialog(
     var confirmDelete by remember { mutableStateOf(false) }
     val isNew = artist.id == 0
     val scroll = rememberScrollState()
+    var nameExpanded by remember { mutableStateOf(false) }
+    val nameSuggestions = remember(form.name, allArtists) {
+        if (form.name.isBlank()) emptyList()
+        else allArtists.filter { it.name.contains(form.name, ignoreCase = true) }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -62,14 +67,37 @@ fun EditArtistDialog(
                 modifier = Modifier.verticalScroll(scroll),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedTextField(
-                    value = form.name,
-                    onValueChange = { form = form.copy(name = it) },
-                    label = { Text("Name") },
-                    singleLine = true,
+                ExposedDropdownMenuBox(
+                    expanded = nameExpanded && nameSuggestions.isNotEmpty(),
+                    onExpandedChange = { nameExpanded = it },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                )
+                ) {
+                    OutlinedTextField(
+                        value = form.name,
+                        onValueChange = {
+                            form = form.copy(name = it)
+                            nameExpanded = true
+                        },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = nameExpanded && nameSuggestions.isNotEmpty(),
+                        onDismissRequest = { nameExpanded = false },
+                    ) {
+                        nameSuggestions.forEach { suggestion ->
+                            DropdownMenuItem(
+                                text = { Text(suggestion.name) },
+                                onClick = {
+                                    form = form.copy(name = suggestion.name)
+                                    nameExpanded = false
+                                },
+                            )
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = form.albumTitle,
                     onValueChange = { form = form.copy(albumTitle = it) },
@@ -83,7 +111,8 @@ fun EditArtistDialog(
                         value = form.nextRelease,
                         onValueChange = { form = form.copy(nextRelease = it) },
                         label = { Text("Next Release") },
-                        placeholder = { Text("M/D/YYYY") },
+                        placeholder = { Text("M/D/YYYY or M/D") },
+                        isError = form.nextRelease.isNotBlank() && !DateUtils.isValidDate(form.nextRelease),
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
@@ -92,16 +121,20 @@ fun EditArtistDialog(
                         onValueChange = { form = form.copy(lastRelease = it) },
                         label = { Text("Last Release") },
                         placeholder = { Text("YYYY") },
+                        isError = form.lastRelease.isNotBlank() && !DateUtils.isValidDate(form.lastRelease),
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = form.incompleteCollection, onCheckedChange = { form = form.copy(incompleteCollection = it) })
-                    Text("Incomplete collection")
-                    Spacer(Modifier.width(16.dp))
-                    Checkbox(checked = form.hiatus, onCheckedChange = { form = form.copy(hiatus = it) })
-                    Text("Hiatus")
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = form.incompleteCollection, onCheckedChange = { form = form.copy(incompleteCollection = it) })
+                        Text("Incomplete collection")
+                    }
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = form.hiatus, onCheckedChange = { form = form.copy(hiatus = it) })
+                        Text("Hiatus")
+                    }
                 }
                 OutlinedTextField(
                     value = form.notes,
@@ -141,7 +174,7 @@ fun EditArtistDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { if (form.name.isNotBlank()) onSave(form) }, enabled = form.name.isNotBlank()) {
+            TextButton(onClick = { if (form.name.isNotBlank()) onSave(form) }, enabled = form.name.isNotBlank() && DateUtils.isValidDate(form.nextRelease) && DateUtils.isValidDate(form.lastRelease)) {
                 Text("Save")
             }
         },

@@ -3,22 +3,23 @@
   gap: 18px;
   align-items: center;
   padding: 22px 20px;
-  border: 1.5px solid #e8e8e8;
-  border-left: 3px solid #e8e8e8;
+  border: 1.5px solid var(--c-border);
+  border-left: 3px solid var(--c-border);
   border-radius: 4px;
-  background: #fff;
+  background: var(--c-surface);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   cursor: default;
   position: relative;
 }
 
 .allCard:hover {
-  box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+  box-shadow: 0 4px 18px var(--c-shadow-sm);
 }
 
-.allCard--imminent {
-  background: #fafafa;
-}
+/* Type-specific imminent backgrounds */
+.allCard--imminent.allCard--type-music   { background: var(--c-music-accent-light); }
+.allCard--imminent.allCard--type-concert { background: var(--c-concert-accent-light); }
+.allCard--imminent.allCard--type-tv      { background: var(--c-tv-accent-light); }
 
 .allCard--released {
   opacity: 0.65;
@@ -41,7 +42,7 @@
 .allCardDay {
   font-size: 38px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--c-text);
   line-height: 1;
   margin-bottom: 3px;
 }
@@ -52,13 +53,13 @@
 
 .allCardYear {
   font-size: 11px;
-  color: #bbb;
+  color: var(--c-text-dim);
   letter-spacing: 1px;
 }
 
 .allCardDivider {
   width: 1.5px;
-  background: #e8e8e8;
+  background: var(--c-border);
   align-self: stretch;
   flex-shrink: 0;
 }
@@ -87,7 +88,7 @@
 .allCardTitle {
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--c-text);
   line-height: 1.2;
   margin-bottom: 4px;
 }
@@ -109,7 +110,7 @@
 
 .allCardSub {
   font-size: 13px;
-  color: #888;
+  color: var(--c-text-sec);
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;
@@ -149,7 +150,7 @@
 }
 
 .allEmpty {
-  color: #999;
+  color: var(--c-text-sec);
   font-size: 15px;
   padding: 40px 0;
   text-align: center;
@@ -167,17 +168,17 @@
   overflow-x: auto;
   padding-bottom: 6px;
   scrollbar-width: thin;
-  scrollbar-color: #e0e0e0 transparent;
+  scrollbar-color: var(--c-scroll) transparent;
 }
 
 .allCalScroll::-webkit-scrollbar { height: 3px; }
-.allCalScroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
+.allCalScroll::-webkit-scrollbar-thumb { background: var(--c-scroll); border-radius: 2px; }
 
 .allCalMonth {
   flex-shrink: 0;
   width: 210px;
-  background: #fff;
-  border: 1.5px solid #e8e8e8;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border);
   border-radius: 8px;
   padding: 12px 10px 10px;
 }
@@ -187,7 +188,7 @@
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #888;
+  color: var(--c-text-sec);
   text-align: center;
   margin-bottom: 6px;
 }
@@ -200,7 +201,7 @@
 .allCalDow {
   font-size: 9px;
   font-weight: 600;
-  color: #ccc;
+  color: var(--c-text-dimmer);
   text-align: center;
   padding-bottom: 4px;
 }
@@ -215,12 +216,12 @@
 
 .allCalDayNum {
   font-size: 10px;
-  color: #ccc;
+  color: var(--c-text-dimmer);
   line-height: 1.2;
 }
 
 .allCalDayNum--event {
-  color: #1a1a1a;
+  color: var(--c-text);
   font-weight: 600;
 }
 

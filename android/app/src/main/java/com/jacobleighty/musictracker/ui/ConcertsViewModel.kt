@@ -95,15 +95,29 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveConcert(concert: Concert) {
         val token = _uiState.value.editToken ?: return
+        val toSave = if (concert.id == 0) {
+            val existing = allConcerts().find { it.band.equals(concert.band, ignoreCase = true) }
+            if (existing != null) {
+                existing.copy(
+                    band = concert.band,
+                    tourName = concert.tourName.ifBlank { existing.tourName },
+                    venue = concert.venue.ifBlank { existing.venue },
+                    date = concert.date.ifBlank { existing.date },
+                    notes = concert.notes.ifBlank { existing.notes },
+                    attendees = concert.attendees.ifBlank { existing.attendees },
+                    attended = concert.attended || existing.attended,
+                )
+            } else concert
+        } else concert
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
             val result = runCatching {
-                if (concert.id == 0) {
-                    val res = api.createConcert(token, concert)
+                if (toSave.id == 0) {
+                    val res = api.createConcert(token, toSave)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 } else {
-                    val res = api.updateConcert(concert.id, token, concert)
+                    val res = api.updateConcert(toSave.id, token, toSave)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 }

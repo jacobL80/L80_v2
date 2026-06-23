@@ -9,4 +9,6 @@ object Constants {
     const val PREF_NOTIF_HOUR_CONCERTS = "notif_hour_concerts"
     const val PREF_NOTIF_HOUR_TV = "notif_hour_tv"
     const val DEFAULT_NOTIF_HOUR = 7
+
+    const val PREF_DARK_MODE = "dark_mode"
 }

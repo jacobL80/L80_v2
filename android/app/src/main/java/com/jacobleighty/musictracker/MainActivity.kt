@@ -1,6 +1,7 @@
 package com.jacobleighty.musictracker
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -42,11 +43,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val prefs = getSharedPreferences(Constants.NOTIF_PREFS, Context.MODE_PRIVATE)
+        val isDarkInitial = prefs.getBoolean(Constants.PREF_DARK_MODE, false)
+        currentAppColors = if (isDarkInitial) DarkAppColors else LightAppColors
+
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-            )
+            statusBarStyle = if (isDarkInitial)
+                SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+            else
+                SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -60,16 +66,37 @@ class MainActivity : ComponentActivity() {
 
         val initialScreen = screenFromIntent(intent)
         setContent {
-            MaterialTheme(
-                colorScheme = lightColorScheme(
-                    background   = Color(0xFFFAF9F7),
-                    surface      = Color(0xFFFFFFFF),
-                    primary      = Color(0xFFEC6F00),
-                    onBackground = Color(0xFF1A1A1A),
-                    onSurface    = Color(0xFF1A1A1A),
-                )
-            ) {
-                MainApp(initialScreen)
+            val isDark = remember { mutableStateOf(isDarkInitial) }
+
+            val onToggleDark: (Boolean) -> Unit = { dark ->
+                isDark.value = dark
+                currentAppColors = if (dark) DarkAppColors else LightAppColors
+                prefs.edit().putBoolean(Constants.PREF_DARK_MODE, dark).apply()
+            }
+
+            val appColors = if (isDark.value) DarkAppColors else LightAppColors
+
+            CompositionLocalProvider(LocalAppColors provides appColors) {
+                MaterialTheme(
+                    colorScheme = if (isDark.value)
+                        darkColorScheme(
+                            background   = Color(0xFF121212),
+                            surface      = Color(0xFF1C1C1C),
+                            primary      = Color(0xFFEC6F00),
+                            onBackground = Color(0xFFE5E5E5),
+                            onSurface    = Color(0xFFE5E5E5),
+                        )
+                    else
+                        lightColorScheme(
+                            background   = Color(0xFFFAF9F7),
+                            surface      = Color(0xFFFFFFFF),
+                            primary      = Color(0xFFEC6F00),
+                            onBackground = Color(0xFF1A1A1A),
+                            onSurface    = Color(0xFF1A1A1A),
+                        )
+                ) {
+                    MainApp(initialScreen, isDark, onToggleDark)
+                }
             }
         }
     }
@@ -95,7 +122,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainApp(initialScreen: Screen = Screen.MUSIC) {
+fun MainApp(
+    initialScreen: Screen = Screen.MUSIC,
+    isDark: MutableState<Boolean> = remember { mutableStateOf(false) },
+    onToggleDark: (Boolean) -> Unit = {},
+) {
     var currentScreen by remember { mutableStateOf(initialScreen) }
     val drawerState   = rememberDrawerState(DrawerValue.Closed)
     val scope         = rememberCoroutineScope()
@@ -119,7 +150,11 @@ fun MainApp(initialScreen: Screen = Screen.MUSIC) {
                 Screen.CONCERTS   -> ConcertsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.RUNNING    -> RunningScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.TV_MOVIES  -> TvMoviesScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
-                Screen.SETTINGS   -> SettingsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
+                Screen.SETTINGS   -> SettingsScreen(
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                    isDark = isDark.value,
+                    onToggleDark = onToggleDark,
+                )
             }
         }
     }
@@ -140,20 +175,21 @@ private val NAV_ITEMS = listOf(
 
 @Composable
 private fun NavDrawerContent(currentScreen: Screen, onNavigate: (Screen) -> Unit) {
+    val colors = LocalAppColors.current
     ModalDrawerSheet(
         modifier = Modifier.width(260.dp),
-        drawerContainerColor = Color(0xFFFAF9F7),
+        drawerContainerColor = colors.pageBg,
     ) {
         Spacer(Modifier.height(48.dp))
         Text(
             "L80",
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            color = Color(0xFF1A1A1A), fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp,
+            color = colors.textPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp,
         )
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = Color(0xFFE8E8E8))
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), color = colors.border)
 
         NAV_ITEMS.forEach { item ->
-            if (item.divider) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = Color(0xFFE8E8E8))
+            if (item.divider) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = colors.border)
             val selected = currentScreen == item.screen
             Row(
                 modifier = Modifier
@@ -164,10 +200,10 @@ private fun NavDrawerContent(currentScreen: Screen, onNavigate: (Screen) -> Unit
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Icon(item.icon, null, tint = if (selected) item.color else Color(0xFF888888), modifier = Modifier.size(20.dp))
+                Icon(item.icon, null, tint = if (selected) item.color else colors.textSecondary, modifier = Modifier.size(20.dp))
                 Text(
                     item.label,
-                    color = if (selected) item.color else Color(0xFF1A1A1A),
+                    color = if (selected) item.color else colors.textPrimary,
                     fontSize = 16.sp,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                 )

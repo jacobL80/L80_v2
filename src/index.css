@@ -1,3 +1,80 @@
+:root {
+  /* Backgrounds */
+  --c-bg:           #F1F1F1;
+  --c-page-bg:      #FAF9F7;
+  --c-surface:      #FFFFFF;
+  --c-surface-hover:#F5F5F5;
+  --c-surface-alt:  #FAFAFA;
+
+  /* Text */
+  --c-text:         #1A1A1A;
+  --c-text-sec:     #888888;
+  --c-text-dim:     #BBBBBB;
+  --c-text-dimmer:  #CCCCCC;
+
+  /* Borders */
+  --c-border:       #E8E8E8;
+  --c-border-alt:   #EBE7E3;
+  --c-border-input: #DDDDDD;
+  --c-border-light: #F0F0F0;
+
+  /* Shadows / overlays */
+  --c-shadow:       rgba(0, 0, 0, 0.12);
+  --c-shadow-sm:    rgba(0, 0, 0, 0.07);
+  --c-modal-bg:     rgba(0, 0, 0, 0.35);
+
+  /* Scrollbar */
+  --c-scroll:       #E0E0E0;
+
+  /* Category-specific accent light backgrounds */
+  --c-music-accent-light:   #FFF4E6;
+  --c-concert-accent-light: #E8F7FB;
+  --c-tv-accent-light:      #F3EEFF;
+  --c-run-accent-light:     #EDF7E8;
+  --c-music-expected-bg:    #F2FAFD;
+  --c-tv-expected-bg:       #F5F0FF;
+
+  /* Chart surface colors */
+  --c-chart-band: #F5F3F0;
+  --c-chart-grid: #F0EEEB;
+  --c-chart-base: #CEC9C3;
+}
+
+[data-theme="dark"] {
+  --c-bg:           #0D0D0D;
+  --c-page-bg:      #121212;
+  --c-surface:      #1C1C1C;
+  --c-surface-hover:#242424;
+  --c-surface-alt:  #181818;
+
+  --c-text:         #E5E5E5;
+  --c-text-sec:     #9A9A9A;
+  --c-text-dim:     #555555;
+  --c-text-dimmer:  #444444;
+
+  --c-border:       #2A2A2A;
+  --c-border-alt:   #252525;
+  --c-border-input: #383838;
+  --c-border-light: #202020;
+
+  --c-shadow:       rgba(0, 0, 0, 0.5);
+  --c-shadow-sm:    rgba(0, 0, 0, 0.3);
+  --c-modal-bg:     rgba(0, 0, 0, 0.65);
+
+  --c-scroll:       #333333;
+
+  --c-music-accent-light:   rgba(236, 111, 0, 0.14);
+  --c-concert-accent-light: rgba(22, 150, 182, 0.14);
+  --c-tv-accent-light:      rgba(124, 58, 237, 0.14);
+  --c-run-accent-light:     rgba(71, 160, 37, 0.14);
+  --c-music-expected-bg:    rgba(22, 150, 182, 0.1);
+  --c-tv-expected-bg:       rgba(124, 58, 237, 0.1);
+
+  --c-chart-band: #212121;
+  --c-chart-grid: #2A2A2A;
+  --c-chart-base: #404040;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

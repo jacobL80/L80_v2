@@ -23,13 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.notification.WorkerScheduler
 
-private val PageBg       = Color(0xFFFAF9F7)
-private val CardBg       = Color(0xFFFFFFFF)
-private val Accent       = Color(0xFFEC6F00)
-private val TextPrimary  = Color(0xFF1A1A1A)
-private val TextSecondary = Color(0xFF888888)
-private val TextDim      = Color(0xFFBBBBBB)
-private val BorderColor  = Color(0xFFE8E8E8)
+private val Accent = Color(0xFFEC6F00)
 
 private data class CategoryRow(
     val label: String,
@@ -46,7 +40,12 @@ private val CATEGORIES = listOf(
 )
 
 @Composable
-fun SettingsScreen(onOpenDrawer: () -> Unit = {}) {
+fun SettingsScreen(
+    onOpenDrawer: () -> Unit = {},
+    isDark: Boolean = false,
+    onToggleDark: (Boolean) -> Unit = {},
+) {
+    val colors = LocalAppColors.current
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(Constants.NOTIF_PREFS, Context.MODE_PRIVATE) }
 
@@ -58,14 +57,30 @@ fun SettingsScreen(onOpenDrawer: () -> Unit = {}) {
 
     var pickingCategory by remember { mutableStateOf<CategoryRow?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize().background(PageBg)) {
+    Column(modifier = Modifier.fillMaxSize().background(colors.pageBg)) {
         LazyColumn {
-            item { SettingsPageHeader(onOpenDrawer) }
-            item { SettingsSectionHeader("NOTIFICATION TIMES") }
+            item { SettingsPageHeader(onOpenDrawer, colors) }
+
+            // ── Appearance section ─────────────────────────────────────────
+            item { SettingsSectionHeader("APPEARANCE", colors) }
+            item {
+                SettingsToggleRow(
+                    label = "Dark Mode",
+                    desc  = "Use a dark color scheme",
+                    icon  = Icons.Default.DarkMode,
+                    checked = isDark,
+                    onToggle = onToggleDark,
+                    colors = colors,
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = colors.border)
+            }
+
+            // ── Notification times section ─────────────────────────────────
+            item { SettingsSectionHeader("NOTIFICATION TIMES", colors) }
             item {
                 Text(
                     "Choose when to receive notifications on content release dates.",
-                    color = TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                 )
@@ -73,15 +88,13 @@ fun SettingsScreen(onOpenDrawer: () -> Unit = {}) {
             items(CATEGORIES) { cat ->
                 NotifTimeRow(
                     label = cat.label,
-                    icon = cat.icon,
+                    icon  = cat.icon,
                     color = cat.color,
-                    hour = hours[cat.prefKey] ?: Constants.DEFAULT_NOTIF_HOUR,
+                    hour  = hours[cat.prefKey] ?: Constants.DEFAULT_NOTIF_HOUR,
+                    colors = colors,
                     onClick = { pickingCategory = cat },
                 )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    color = BorderColor,
-                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = colors.border)
             }
         }
     }
@@ -89,6 +102,7 @@ fun SettingsScreen(onOpenDrawer: () -> Unit = {}) {
     pickingCategory?.let { cat ->
         HourPickerDialog(
             currentHour = hours[cat.prefKey] ?: Constants.DEFAULT_NOTIF_HOUR,
+            colors = colors,
             onDismiss = { pickingCategory = null },
             onConfirm = { h ->
                 hours[cat.prefKey] = h
@@ -103,7 +117,7 @@ fun SettingsScreen(onOpenDrawer: () -> Unit = {}) {
 // ── Page header ───────────────────────────────────────────────────────────────
 
 @Composable
-private fun SettingsPageHeader(onOpenDrawer: () -> Unit) {
+private fun SettingsPageHeader(onOpenDrawer: () -> Unit, colors: AppColors) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 32.dp),
     ) {
@@ -117,18 +131,18 @@ private fun SettingsPageHeader(onOpenDrawer: () -> Unit) {
             )
         }
         Text(
-            "Settings", color = TextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold,
+            "Settings", color = colors.textPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(top = 6.dp),
         )
         Box(modifier = Modifier.padding(top = 14.dp).width(48.dp).height(3.dp).background(Accent))
-        HorizontalDivider(modifier = Modifier.padding(top = 14.dp), color = BorderColor)
+        HorizontalDivider(modifier = Modifier.padding(top = 14.dp), color = colors.border)
     }
 }
 
 // ── Section header ────────────────────────────────────────────────────────────
 
 @Composable
-private fun SettingsSectionHeader(title: String) {
+private fun SettingsSectionHeader(title: String, colors: AppColors) {
     Row(
         modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 28.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -141,6 +155,50 @@ private fun SettingsSectionHeader(title: String) {
     }
 }
 
+// ── Toggle row (dark mode) ────────────────────────────────────────────────────
+
+@Composable
+private fun SettingsToggleRow(
+    label: String,
+    desc: String,
+    icon: ImageVector,
+    checked: Boolean,
+    onToggle: (Boolean) -> Unit,
+    colors: AppColors,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(Accent.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, tint = Accent, modifier = Modifier.size(18.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, color = colors.textPrimary, fontSize = 16.sp)
+            Text(desc, color = colors.textSecondary, fontSize = 13.sp)
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onToggle,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Accent,
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = colors.border,
+                uncheckedBorderColor = colors.border,
+            ),
+        )
+    }
+}
+
 // ── Category row ──────────────────────────────────────────────────────────────
 
 @Composable
@@ -149,6 +207,7 @@ private fun NotifTimeRow(
     icon: ImageVector,
     color: Color,
     hour: Int,
+    colors: AppColors,
     onClick: () -> Unit,
 ) {
     Row(
@@ -167,23 +226,28 @@ private fun NotifTimeRow(
         ) {
             Icon(icon, null, tint = color, modifier = Modifier.size(18.dp))
         }
-        Text(label, color = TextPrimary, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Text(label, color = colors.textPrimary, fontSize = 16.sp, modifier = Modifier.weight(1f))
         Text(formatHour(hour), color = color, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-        Icon(Icons.Default.ChevronRight, null, tint = TextDim, modifier = Modifier.size(18.dp))
+        Icon(Icons.Default.ChevronRight, null, tint = colors.textDim, modifier = Modifier.size(18.dp))
     }
 }
 
 // ── Hour picker dialog ────────────────────────────────────────────────────────
 
 @Composable
-private fun HourPickerDialog(currentHour: Int, onDismiss: () -> Unit, onConfirm: (Int) -> Unit) {
+private fun HourPickerDialog(
+    currentHour: Int,
+    colors: AppColors,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
     var selected by remember { mutableStateOf(currentHour) }
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = currentHour)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = CardBg,
-        title = { Text("Notification Time", fontWeight = FontWeight.Bold) },
+        containerColor = colors.cardBg,
+        title = { Text("Notification Time", fontWeight = FontWeight.Bold, color = colors.textPrimary) },
         text = {
             LazyColumn(state = listState, modifier = Modifier.height(300.dp)) {
                 items((0..23).toList()) { h ->
@@ -199,7 +263,7 @@ private fun HourPickerDialog(currentHour: Int, onDismiss: () -> Unit, onConfirm:
                             onClick = { selected = h },
                             colors = RadioButtonDefaults.colors(selectedColor = Accent),
                         )
-                        Text(formatHour(h), color = TextPrimary, fontSize = 16.sp)
+                        Text(formatHour(h), color = colors.textPrimary, fontSize = 16.sp)
                     }
                 }
             }
@@ -211,7 +275,7 @@ private fun HourPickerDialog(currentHour: Int, onDismiss: () -> Unit, onConfirm:
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextSecondary)
+                Text("Cancel", color = colors.textSecondary)
             }
         },
     )

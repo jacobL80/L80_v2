@@ -1,6 +1,7 @@
 package com.jacobleighty.musictracker.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -522,7 +523,6 @@ private fun TvTimeline(shows: List<TvShow>, selected: TvDot?, onTap: (TvDot?) ->
 
 // ── Edit dialog ───────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(), serviceNames: List<String> = emptyList(), onSave: (TvShow) -> Unit, onDelete: () -> Unit, onDismiss: () -> Unit) {
     var programName   by remember { mutableStateOf(show.programName) }
@@ -593,25 +593,40 @@ private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(
                     isError = date.isNotBlank() && !DateUtils.isValidDate(date),
                     singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())
-                ExposedDropdownMenuBox(
-                    expanded = typeExpanded,
-                    onExpandedChange = { typeExpanded = !typeExpanded },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    OutlinedTextField(
-                        value = showType.ifEmpty { "— Select type —" },
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor(),
-                    )
-                    ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }, modifier = Modifier.heightIn(max = 200.dp)) {
-                        listOf("", "TV", "Movie", "Anime").forEach { opt ->
-                            DropdownMenuItem(
-                                text = { Text(if (opt.isEmpty()) "— None —" else opt) },
-                                onClick = { showType = opt; typeExpanded = false },
-                            )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = showType.ifEmpty { "— Select type —" },
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Type") },
+                            trailingIcon = {
+                                Icon(
+                                    if (typeExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                    contentDescription = null,
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Box(modifier = Modifier.matchParentSize().clickable { typeExpanded = !typeExpanded })
+                    }
+                    if (typeExpanded) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)
+                                .border(BorderStroke(1.dp, TBorder), RoundedCornerShape(4.dp)),
+                        ) {
+                            listOf("", "TV", "Movie", "Anime").forEach { opt ->
+                                TextButton(
+                                    onClick = { showType = opt; typeExpanded = false },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        if (opt.isEmpty()) "— None —" else opt,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

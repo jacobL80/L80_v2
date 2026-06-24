@@ -286,7 +286,7 @@ private fun ConcertCard(
             }
             if (isEditing) {
                 Row(modifier = Modifier.align(Alignment.TopEnd).padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (past || imminent) {
+                    if (!concert.attended && (past || imminent)) {
                         OutlinedButton(
                             onClick = { onAttend(concert) },
                             modifier = Modifier.height(26.dp),

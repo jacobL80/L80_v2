@@ -35,11 +35,18 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jacobleighty.musictracker.Screen
 import com.jacobleighty.musictracker.data.AllItem
 import java.time.YearMonth
 
 private val AAccent    = Color(0xFFEC6F00)
 private val aCardShape = RoundedCornerShape(4.dp)
+
+private val TYPE_SCREENS = mapOf(
+    "music"   to Screen.MUSIC,
+    "concert" to Screen.CONCERTS,
+    "tv"      to Screen.TV_MOVIES,
+)
 
 private val TYPE_COLORS = mapOf(
     "music"   to Color(0xFFEC6F00),
@@ -58,7 +65,7 @@ private val TYPE_ICONS: Map<String, ImageVector> = mapOf(
 )
 
 @Composable
-fun AllScreen(vm: AllViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
+fun AllScreen(vm: AllViewModel = viewModel(), onOpenDrawer: () -> Unit = {}, onNavigate: (Screen) -> Unit = {}) {
     val colors = LocalAppColors.current
     val state by vm.uiState.collectAsState()
 
@@ -68,18 +75,18 @@ fun AllScreen(vm: AllViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
         when {
             state.loading    -> AllLoadingSpinner()
             state.fetchError -> ACenteredText("Could not load data.")
-            else             -> AMainContent(state, onOpenDrawer)
+            else             -> AMainContent(state, onOpenDrawer, onNavigate)
         }
     }
 }
 
 @Composable
-private fun AMainContent(state: AllUiState, onOpenDrawer: () -> Unit) {
+private fun AMainContent(state: AllUiState, onOpenDrawer: () -> Unit, onNavigate: (Screen) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
-        item { APageHeader(onOpenDrawer, state.upcoming) }
+        item { APageHeader(onOpenDrawer, state.upcoming, onNavigate) }
 
         val allItems = state.upcoming + state.past
         if (allItems.isNotEmpty()) {
@@ -111,7 +118,7 @@ private fun AMainContent(state: AllUiState, onOpenDrawer: () -> Unit) {
 }
 
 @Composable
-private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
+private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>, onNavigate: (Screen) -> Unit) {
     val colors = LocalAppColors.current
     val counts = upcoming.groupBy { it.type }.mapValues { it.value.size }
 
@@ -131,11 +138,14 @@ private fun APageHeader(onOpenDrawer: () -> Unit, upcoming: List<AllItem>) {
             Text("Upcoming", color = colors.textPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold)
             if (counts.isNotEmpty()) {
                 listOf("music", "concert", "tv").forEach { type ->
-                    val count = counts[type] ?: return@forEach
-                    val color = TYPE_COLORS[type] ?: AAccent
-                    val icon  = TYPE_ICONS[type] ?: Icons.Default.Apps
+                    val count  = counts[type] ?: return@forEach
+                    val color  = TYPE_COLORS[type] ?: AAccent
+                    val icon   = TYPE_ICONS[type] ?: Icons.Default.Apps
+                    val screen = TYPE_SCREENS[type]
                     Row(
                         modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .then(if (screen != null) Modifier.clickable { onNavigate(screen) } else Modifier)
                             .border(BorderStroke(1.5.dp, color), RoundedCornerShape(20.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,

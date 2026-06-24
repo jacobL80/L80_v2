@@ -1,7 +1,10 @@
 package com.jacobleighty.musictracker.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -39,7 +42,6 @@ fun PasswordDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditArtistDialog(
     artist: Artist,
@@ -55,7 +57,7 @@ fun EditArtistDialog(
     var nameExpanded by remember { mutableStateOf(false) }
     val nameSuggestions = remember(form.name, allArtists) {
         if (form.name.isBlank()) emptyList()
-        else allArtists.filter { it.name.contains(form.name, ignoreCase = true) }
+        else allArtists.filter { it.name.contains(form.name, ignoreCase = true) }.take(5)
     }
 
     AlertDialog(
@@ -67,11 +69,7 @@ fun EditArtistDialog(
                 modifier = Modifier.verticalScroll(scroll),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                ExposedDropdownMenuBox(
-                    expanded = nameExpanded && nameSuggestions.isNotEmpty(),
-                    onExpandedChange = { nameExpanded = it },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = form.name,
                         onValueChange = {
@@ -80,22 +78,26 @@ fun EditArtistDialog(
                         },
                         label = { Text("Name") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     )
-                    ExposedDropdownMenu(
-                        expanded = nameExpanded && nameSuggestions.isNotEmpty(),
-                        onDismissRequest = { nameExpanded = false },
-                        modifier = Modifier.heightIn(max = 200.dp),
-                    ) {
-                        nameSuggestions.forEach { suggestion ->
-                            DropdownMenuItem(
-                                text = { Text(suggestion.name) },
-                                onClick = {
-                                    form = form.copy(name = suggestion.name)
-                                    nameExpanded = false
-                                },
-                            )
+                    if (nameExpanded && nameSuggestions.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)
+                                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), RoundedCornerShape(4.dp)),
+                        ) {
+                            nameSuggestions.forEach { suggestion ->
+                                TextButton(
+                                    onClick = {
+                                        form = form.copy(name = suggestion.name)
+                                        nameExpanded = false
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                ) {
+                                    Text(suggestion.name, modifier = Modifier.fillMaxWidth())
+                                }
+                            }
                         }
                     }
                 }

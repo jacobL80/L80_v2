@@ -156,7 +156,7 @@ fun MainApp(
     ) {
         Box(modifier = Modifier.fillMaxSize().background(colors.pageBg).statusBarsPadding()) {
             when (currentScreen) {
-                Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
+                Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } }, onNavigate = { currentScreen = it })
                 Screen.MUSIC      -> MusicScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.CONCERTS   -> ConcertsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.RUNNING    -> RunningScreen(onOpenDrawer = { scope.launch { drawerState.open() } })

@@ -10,7 +10,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -92,6 +95,18 @@ fun ConcertsScreen(vm: ConcertsViewModel = viewModel(), onOpenDrawer: () -> Unit
 
 @Composable
 private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDrawer: () -> Unit = {}) {
+    val listState    = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    var navFocusPast by remember { mutableStateOf(false) }
+
+    val pastConcerts = remember(state.attended) {
+        state.attended.sortedWith(compareByDescending { c ->
+            if (c.date.isNotEmpty()) runCatching { DateUtils.parseDate(c.date) }.getOrNull() else null
+        })
+    }
+    // index of the Past section header in the LazyColumn
+    val pastSectionIdx = if (state.upcoming.isNotEmpty()) state.upcoming.size + 2 else 1
+
     Scaffold(
         containerColor = CPageBg,
         topBar = {
@@ -129,15 +144,32 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                         colors = cAddNavColors(),
                     )
                     NavigationBarItem(
-                        selected = state.view == ConcertViewType.SCHEDULE,
-                        onClick  = { vm.setView(ConcertViewType.SCHEDULE) },
+                        selected = state.view == ConcertViewType.SCHEDULE && !navFocusPast,
+                        onClick  = {
+                            navFocusPast = false
+                            vm.setView(ConcertViewType.SCHEDULE)
+                        },
                         icon     = { Icon(Icons.Default.DateRange, null) },
                         label    = { Text("Schedule") },
                         colors   = cDefaultNavColors(),
                     )
                     NavigationBarItem(
+                        selected = state.view == ConcertViewType.SCHEDULE && navFocusPast,
+                        onClick  = {
+                            navFocusPast = true
+                            if (state.view != ConcertViewType.SCHEDULE) vm.setView(ConcertViewType.SCHEDULE)
+                            coroutineScope.launch { listState.animateScrollToItem(pastSectionIdx) }
+                        },
+                        icon     = { Icon(Icons.Default.EventAvailable, null) },
+                        label    = { Text("Past") },
+                        colors   = cDefaultNavColors(),
+                    )
+                    NavigationBarItem(
                         selected = state.view == ConcertViewType.HISTORY,
-                        onClick  = { vm.setView(ConcertViewType.HISTORY) },
+                        onClick  = {
+                            navFocusPast = false
+                            vm.setView(ConcertViewType.HISTORY)
+                        },
                         icon     = { Icon(Icons.Default.BarChart, null) },
                         label    = { Text("History") },
                         colors   = cDefaultNavColors(),
@@ -147,6 +179,7 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
         },
     ) { padding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
@@ -176,8 +209,14 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                     items(state.upcoming) { c ->
                         ConcertCard(c, state.isEditing, vm::openEdit, vm::markAttended)
                     }
-                } else {
-                    item { CCenteredText("No upcoming concerts. Tap Add to get started.") }
+                } else if (pastConcerts.isEmpty()) {
+                    item { CCenteredText("No concerts yet. Tap Add to get started.") }
+                }
+                if (pastConcerts.isNotEmpty()) {
+                    item { CSectionHeader("Past", CAccent) }
+                    items(pastConcerts) { c ->
+                        ConcertCard(c, state.isEditing, vm::openEdit, vm::markAttended)
+                    }
                 }
             }
         }

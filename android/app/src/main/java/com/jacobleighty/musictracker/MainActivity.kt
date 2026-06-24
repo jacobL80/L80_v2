@@ -14,6 +14,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.jacobleighty.musictracker.notification.WorkerScheduler
+import androidx.compose.runtime.MutableState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -36,6 +37,8 @@ enum class Screen {
 }
 
 class MainActivity : ComponentActivity() {
+
+    private val screenState = mutableStateOf(Screen.ALL)
 
     private val requestNotificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -64,7 +67,7 @@ class MainActivity : ComponentActivity() {
 
         WorkerScheduler.schedule(this)
 
-        val initialScreen = screenFromIntent(intent)
+        screenState.value = screenFromIntent(intent)
         setContent {
             val isDark = remember { mutableStateOf(isDarkInitial) }
 
@@ -101,7 +104,7 @@ class MainActivity : ComponentActivity() {
                             onSurface    = Color(0xFF1A1A1A),
                         )
                 ) {
-                    MainApp(initialScreen, isDark, onToggleDark)
+                    MainApp(screenState, isDark, onToggleDark)
                 }
             }
         }
@@ -110,6 +113,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        screenState.value = screenFromIntent(intent)
     }
 
     private fun screenFromIntent(intent: Intent?): Screen {
@@ -129,11 +133,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainApp(
-    initialScreen: Screen = Screen.MUSIC,
+    screenState: MutableState<Screen> = remember { mutableStateOf(Screen.ALL) },
     isDark: MutableState<Boolean> = remember { mutableStateOf(false) },
     onToggleDark: (Boolean) -> Unit = {},
 ) {
-    var currentScreen by remember { mutableStateOf(initialScreen) }
+    var currentScreen by screenState
     val drawerState   = rememberDrawerState(DrawerValue.Closed)
     val scope         = rememberCoroutineScope()
     val colors        = LocalAppColors.current

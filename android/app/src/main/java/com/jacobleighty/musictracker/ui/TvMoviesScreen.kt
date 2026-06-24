@@ -48,8 +48,10 @@ private val TTextPrimary get() = currentAppColors.textPrimary
 private val TTextSec     get() = currentAppColors.textSecondary
 private val TTextDim     get() = currentAppColors.textDim
 private val TTextDimmer  get() = currentAppColors.textDimmer
-private val TBorder      get() = currentAppColors.border
-private val tCardShape   = RoundedCornerShape(4.dp)
+private val TBorder        get() = currentAppColors.border
+private val TToWatchBg     get() = currentAppColors.tvToWatchBg
+private val TToWatchBorder get() = currentAppColors.tvToWatchBorder
+private val tCardShape     = RoundedCornerShape(4.dp)
 
 @Composable
 fun TvMoviesScreen(vm: TvMoviesViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
@@ -192,8 +194,8 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
     val imminent  = !watchable && daysUntil in 0..6
     val past      = daysUntil < 0
     val toWatchGreen = Color(0xFF16A34A)
-    val cardBg    = when { watchable -> Color(0xFFF0FDF4); imminent -> TAccentLight; else -> TCardBg }
-    val borderCol = when { watchable -> Color(0xFFBBF7D0); imminent -> TAccent; else -> TBorder }
+    val cardBg    = when { watchable -> TToWatchBg; imminent -> TAccentLight; else -> TCardBg }
+    val borderCol = when { watchable -> TToWatchBorder; imminent -> TAccent; else -> TBorder }
     val accentBar = if (watchable) toWatchGreen else TAccent
 
     Row(
@@ -552,7 +554,7 @@ private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 )
                 if (programSug.isNotEmpty()) {
-                    Column(modifier = Modifier.fillMaxWidth()
+                    Column(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)
                         .border(BorderStroke(1.dp, TBorder), RoundedCornerShape(4.dp))) {
                         programSug.forEach { sug ->
                             TextButton(
@@ -576,7 +578,7 @@ private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 )
                 if (serviceSug.isNotEmpty()) {
-                    Column(modifier = Modifier.fillMaxWidth()
+                    Column(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)
                         .border(BorderStroke(1.dp, TBorder), RoundedCornerShape(4.dp))) {
                         serviceSug.forEach { sug ->
                             TextButton(
@@ -604,7 +606,7 @@ private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
                         modifier = Modifier.fillMaxWidth().menuAnchor(),
                     )
-                    ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                    ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }, modifier = Modifier.heightIn(max = 200.dp)) {
                         listOf("", "TV", "Movie", "Anime").forEach { opt ->
                             DropdownMenuItem(
                                 text = { Text(if (opt.isEmpty()) "— None —" else opt) },

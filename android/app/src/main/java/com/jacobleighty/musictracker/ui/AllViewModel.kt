@@ -49,7 +49,8 @@ class AllViewModel(app: Application) : AndroidViewModel(app) {
 
     fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, fetchError = false) }
+            val hasData = _uiState.value.upcoming.isNotEmpty() || _uiState.value.past.isNotEmpty()
+            _uiState.update { it.copy(loading = !hasData, fetchError = false) }
             runCatching { api.getAllItems() }.onSuccess { items ->
                 val today = java.time.LocalDate.now()
                 val sorted = items.sortedBy { DateUtils.parseDate(it.date) }

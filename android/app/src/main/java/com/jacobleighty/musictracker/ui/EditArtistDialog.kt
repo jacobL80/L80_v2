@@ -86,6 +86,7 @@ fun EditArtistDialog(
                     ExposedDropdownMenu(
                         expanded = nameExpanded && nameSuggestions.isNotEmpty(),
                         onDismissRequest = { nameExpanded = false },
+                        modifier = Modifier.heightIn(max = 200.dp),
                     ) {
                         nameSuggestions.forEach { suggestion ->
                             DropdownMenuItem(

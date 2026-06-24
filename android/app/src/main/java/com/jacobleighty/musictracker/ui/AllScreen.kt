@@ -62,6 +62,8 @@ fun AllScreen(vm: AllViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
     val colors = LocalAppColors.current
     val state by vm.uiState.collectAsState()
 
+    LaunchedEffect(Unit) { vm.loadData() }
+
     Box(modifier = Modifier.fillMaxSize().background(colors.pageBg)) {
         when {
             state.loading    -> AllLoadingSpinner()

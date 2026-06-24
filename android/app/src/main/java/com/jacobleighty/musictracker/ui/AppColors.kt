@@ -22,6 +22,8 @@ data class AppColors(
     // Section-specific backgrounds
     val musicExpectedBg: Color,
     val tvExpectedBg: Color,
+    val tvToWatchBg: Color,
+    val tvToWatchBorder: Color,
     // Music chart colors
     val chartBand: Color,
     val chartGrid: Color,
@@ -45,6 +47,8 @@ val LightAppColors = AppColors(
     runAccentLight   = Color(0xFFEDF7E8),
     musicExpectedBg  = Color(0xFFF2FAFD),
     tvExpectedBg     = Color(0xFFF5F0FF),
+    tvToWatchBg      = Color(0xFFF0FDF4),
+    tvToWatchBorder  = Color(0xFFBBF7D0),
     chartBand        = Color(0xFFF5F3F0),
     chartGrid        = Color(0xFFF0EEEB),
     chartBase        = Color(0xFFCEC9C3),
@@ -67,6 +71,8 @@ val DarkAppColors = AppColors(
     runAccentLight   = Color(0x2347A025),  // rgba(71,160,37,0.14)
     musicExpectedBg  = Color(0x1A1696B6),  // rgba(22,150,182,0.10)
     tvExpectedBg     = Color(0x1A7C3AED),  // rgba(124,58,237,0.10)
+    tvToWatchBg      = Color(0x2316A34A),  // rgba(22,163,74,0.14)
+    tvToWatchBorder  = Color(0x5016A34A),  // rgba(22,163,74,0.31)
     chartBand        = Color(0xFF212121),
     chartGrid        = Color(0xFF2A2A2A),
     chartBase        = Color(0xFF404040),

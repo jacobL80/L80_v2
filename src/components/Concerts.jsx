@@ -418,6 +418,11 @@ const BarChartIcon = () => (
     <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
   </svg>
 );
+const ClockIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </svg>
+);
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -434,8 +439,18 @@ const Concerts = () => {
   const [pendingAdd,    setPendingAdd]= useState(false);
   const [history,       setHistory]   = useState([]);
   const [view,          setView]      = useState('schedule'); // 'schedule' | 'history'
+  const [navFocus,      setNavFocus]  = useState('upcoming'); // 'upcoming' | 'past'
+  const pastSectionRef    = useRef(null);
+  const pendingScrollPast = useRef(false);
 
   useEffect(() => { const t = getCookie(); if (t) setToken(t); }, []);
+
+  useEffect(() => {
+    if (view === 'schedule' && pendingScrollPast.current) {
+      pendingScrollPast.current = false;
+      setTimeout(() => pastSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+  }, [view]);
 
   useEffect(() => {
     Promise.all([
@@ -559,7 +574,7 @@ const Concerts = () => {
                 <p className="allEmpty">No upcoming concerts — tap Add New to get started.</p>
               )}
               {past.length > 0 && (
-                <section className="musicSection">
+                <section ref={pastSectionRef} className="musicSection">
                   <h2 className="musicSectionTitle">Past</h2>
                   <div className="upcomingGrid">
                     {past.map(c => (
@@ -582,15 +597,30 @@ const Concerts = () => {
         </button>
         <div className="bottomNavDivider" />
         <button
-          className={`bottomNavBtn${view === 'schedule' ? ' bottomNavBtn--active' : ''}`}
-          onClick={() => setView('schedule')}
+          className={`bottomNavBtn${view === 'schedule' && navFocus === 'upcoming' ? ' bottomNavBtn--active' : ''}`}
+          onClick={() => { setView('schedule'); setNavFocus('upcoming'); }}
         >
           <CalendarIcon />
           <span>Schedule</span>
         </button>
         <button
+          className={`bottomNavBtn${view === 'schedule' && navFocus === 'past' ? ' bottomNavBtn--active' : ''}`}
+          onClick={() => {
+            setNavFocus('past');
+            if (view !== 'schedule') {
+              setView('schedule');
+              pendingScrollPast.current = true;
+            } else {
+              pastSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+        >
+          <ClockIcon />
+          <span>Past</span>
+        </button>
+        <button
           className={`bottomNavBtn${view === 'history' ? ' bottomNavBtn--active' : ''}`}
-          onClick={() => setView('history')}
+          onClick={() => { setView('history'); setNavFocus('upcoming'); }}
         >
           <BarChartIcon />
           <span>History</span>

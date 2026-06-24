@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -137,10 +138,24 @@ fun MainApp(
     isDark: MutableState<Boolean> = remember { mutableStateOf(false) },
     onToggleDark: (Boolean) -> Unit = {},
 ) {
-    var currentScreen by screenState
-    val drawerState   = rememberDrawerState(DrawerValue.Closed)
-    val scope         = rememberCoroutineScope()
-    val colors        = LocalAppColors.current
+    val backStack   = remember { mutableStateListOf(screenState.value) }
+    val currentScreen = backStack.lastOrNull() ?: Screen.ALL
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope       = rememberCoroutineScope()
+    val colors      = LocalAppColors.current
+
+    // Sync deep-link / intent-driven navigation into the back stack
+    LaunchedEffect(screenState.value) {
+        if (backStack.lastOrNull() != screenState.value) backStack.add(screenState.value)
+    }
+
+    BackHandler(enabled = backStack.size > 1) {
+        backStack.removeLastOrNull()
+    }
+
+    val navigateTo: (Screen) -> Unit = { screen ->
+        if (backStack.lastOrNull() != screen) backStack.add(screen)
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -148,7 +163,7 @@ fun MainApp(
             NavDrawerContent(
                 currentScreen = currentScreen,
                 onNavigate    = { screen ->
-                    currentScreen = screen
+                    navigateTo(screen)
                     scope.launch { drawerState.close() }
                 },
             )
@@ -156,7 +171,7 @@ fun MainApp(
     ) {
         Box(modifier = Modifier.fillMaxSize().background(colors.pageBg).statusBarsPadding()) {
             when (currentScreen) {
-                Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } }, onNavigate = { currentScreen = it })
+                Screen.ALL        -> AllScreen(onOpenDrawer = { scope.launch { drawerState.open() } }, onNavigate = navigateTo)
                 Screen.MUSIC      -> MusicScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.CONCERTS   -> ConcertsScreen(onOpenDrawer = { scope.launch { drawerState.open() } })
                 Screen.RUNNING    -> RunningScreen(onOpenDrawer = { scope.launch { drawerState.open() } })

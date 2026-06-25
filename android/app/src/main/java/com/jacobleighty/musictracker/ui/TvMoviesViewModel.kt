@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.TvShow
+import com.jacobleighty.musictracker.widget.AllWidget
 import com.jacobleighty.musictracker.widget.TvMoviesWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -144,6 +145,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingShow = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
+                refreshAllWidget()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -168,6 +170,16 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun markWatched(show: TvShow) = saveShow(show.copy(watched = true))
+
+    private fun refreshAllWidget() {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch(Dispatchers.IO) {
+            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+                .edit().remove("all_items_json").commit()
+            val manager = GlanceAppWidgetManager(ctx)
+            manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
+        }
+    }
 
     private fun allShows() = with(_uiState.value) { toWatch + upcoming + expected + watchlist + watched }
 

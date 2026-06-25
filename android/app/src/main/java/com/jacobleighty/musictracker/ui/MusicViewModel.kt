@@ -10,6 +10,7 @@ import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.Artist
 import com.jacobleighty.musictracker.data.ArtistRepository
 import com.jacobleighty.musictracker.data.HistoryEntry
+import com.jacobleighty.musictracker.widget.AllWidget
 import com.jacobleighty.musictracker.widget.UpcomingWidget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -163,6 +164,7 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingArtist = null) }
                 updateSections(allArtists)
                 DataChangeEvents.emit()
+                refreshAllWidget()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -207,6 +209,16 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
             current.map { if (it.id == saved.id) saved else it }
         } else {
             current + saved
+        }
+    }
+
+    private fun refreshAllWidget() {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch(Dispatchers.IO) {
+            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
+                .edit().remove("all_items_json").commit()
+            val manager = GlanceAppWidgetManager(ctx)
+            manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
         }
     }
 

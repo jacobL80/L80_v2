@@ -129,7 +129,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 _uiState.update { it.copy(editingConcert = null) }
                 updateSections(all)
-                DataChangeEvents.notify()
+                DataChangeEvents.emit()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -148,7 +148,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
                 val all = allConcerts().filter { it.id != id }
                 _uiState.update { it.copy(editingConcert = null) }
                 updateSections(all)
-                DataChangeEvents.notify()
+                DataChangeEvents.emit()
             }
         }
     }

@@ -165,19 +165,19 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
                 item { TvHistorySection(state.watched) }
             } else {
                 if (state.toWatch.isNotEmpty()) {
-                    item { TSectionHeader("To Watch", Color(0xFF16A34A)) }
+                    item { TSectionHeader("To Watch", Color(0xFF16A34A), state.toWatch.size) }
                     items(state.toWatch) { show -> TvCard(show, state.isEditing, vm::openEdit, vm::handleMarkWatched, watchable = true) }
                 }
                 if (state.upcoming.isNotEmpty()) {
-                    item { TSectionHeader("Upcoming", TAccent) }
+                    item { TSectionHeader("Upcoming", TAccent, state.upcoming.size) }
                     items(state.upcoming) { show -> TvCard(show, state.isEditing, vm::openEdit, vm::markWatched) }
                 }
                 if (state.expected.isNotEmpty()) {
-                    item { TSectionHeader("Expected", TAccent) }
+                    item { TSectionHeader("Expected", TAccent, state.expected.size) }
                     items(state.expected) { show -> TvRow(show, DateUtils.getYear(show.date), state.isEditing, vm::openEdit) }
                 }
                 if (state.watchlist.isNotEmpty()) {
-                    item { TSectionHeader("Watchlist", TTextDim) }
+                    item { TSectionHeader("Watchlist", TTextDim, state.watchlist.size) }
                     items(state.watchlist) { show -> TvRow(show, "—", state.isEditing, vm::openEdit) }
                 }
                 if (state.toWatch.isEmpty() && state.upcoming.isEmpty() && state.expected.isEmpty() && state.watchlist.isEmpty()) {
@@ -658,10 +658,10 @@ private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-@Composable private fun TSectionHeader(title: String, color: Color) {
+@Composable private fun TSectionHeader(title: String, color: Color, count: Int? = null) {
     Row(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 28.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.width(3.dp).height(14.dp).background(color))
-        Text(title.uppercase(), color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 3.sp, modifier = Modifier.padding(start = 10.dp))
+        Text(if (count != null) "${title.uppercase()} ($count)" else title.uppercase(), color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 3.sp, modifier = Modifier.padding(start = 10.dp))
     }
 }
 

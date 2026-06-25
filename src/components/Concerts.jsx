@@ -561,7 +561,7 @@ const Concerts = () => {
             <>
               {upcoming.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle">Upcoming</h2>
+                  <h2 className="musicSectionTitle">Upcoming ({upcoming.length})</h2>
                   <div className="upcomingGrid">
                     {upcoming.map(c => (
                       <ConcertCard key={c.id} concert={c} onEdit={setEditing}
@@ -575,7 +575,7 @@ const Concerts = () => {
               )}
               {past.length > 0 && (
                 <section ref={pastSectionRef} className="musicSection">
-                  <h2 className="musicSectionTitle">Past</h2>
+                  <h2 className="musicSectionTitle">Past ({past.length})</h2>
                   <div className="upcomingGrid">
                     {past.map(c => (
                       <ConcertCard key={c.id} concert={c} onEdit={setEditing}

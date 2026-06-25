@@ -58,17 +58,33 @@ const delCookie  = ()  => { document.cookie = `${COOKIE}=; max-age=0; path=/; Sa
 
 const sortKey     = (name) => name.replace(/^(The|A)\s+/i, '');
 const expandYear    = (y) => y < 100 ? (y < 50 ? 2000 + y : 1900 + y) : y;
-const hasFullDate   = (s) => s.split('/').length === 3;
+const hasFullDate   = (s) => { const p = s.split('/'); return p.length === 3 || (p.length === 2 && Number(p[1]) <= 31); };
 const parseDate     = (s) => {
   const p = s.split('/').map(Number);
   if (p.length === 3) return new Date(expandYear(p[2]), p[0] - 1, p[1]);
-  if (p.length === 2) return new Date(expandYear(p[1]), p[0] - 1, 1);
+  if (p.length === 2) {
+    if (p[1] <= 31) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const yr = today.getFullYear();
+      const c = new Date(yr, p[0] - 1, p[1]);
+      return c >= today ? c : new Date(yr + 1, p[0] - 1, p[1]);
+    }
+    return new Date(expandYear(p[1]), p[0] - 1, 1);
+  }
   return new Date(expandYear(p[0]), 0, 1);
 };
 const parseParts    = (s) => {
   const p = s.split('/').map(Number);
   if (p.length === 3) return { month: MONTHS[p[0] - 1], day: p[1], year: expandYear(p[2]) };
-  if (p.length === 2) return { month: MONTHS[p[0] - 1], day: null, year: expandYear(p[1]) };
+  if (p.length === 2) {
+    if (p[1] <= 31) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const yr = today.getFullYear();
+      const resolvedYear = new Date(yr, p[0] - 1, p[1]) >= today ? yr : yr + 1;
+      return { month: MONTHS[p[0] - 1], day: p[1], year: resolvedYear };
+    }
+    return { month: MONTHS[p[0] - 1], day: null, year: expandYear(p[1]) };
+  }
   return { month: null, day: null, year: p[0] ? expandYear(p[0]) : null };
 };
 const getYear       = (s) => String(expandYear(Number(s.split('/').slice(-1)[0])));
@@ -643,7 +659,7 @@ const Music = () => {
         <>
           {upcoming.length > 0 && (
             <section id="section-upcoming" className="musicSection musicSection--upcoming">
-              <h2 className="musicSectionTitle">Upcoming</h2>
+              <h2 className="musicSectionTitle">Upcoming ({upcoming.length})</h2>
               <div className="upcomingGrid">
                 {upcoming.map(a => (
                   <UpcomingCard key={a.id} artist={a} onEdit={setEditing}
@@ -655,7 +671,7 @@ const Music = () => {
 
           {expected.length > 0 && (
             <section id="section-expected" className="musicSection musicSection--expected">
-              <h2 className="musicSectionTitle">Expected</h2>
+              <h2 className="musicSectionTitle">Expected ({expected.length})</h2>
               <div className="rowGrid">
                 {expected.map(a => (
                   <ArtistRow key={a.id} artist={a}
@@ -668,7 +684,7 @@ const Music = () => {
 
           {watching.length > 0 && (
             <section id="section-watching" className="musicSection musicSection--watching">
-              <h2 className="musicSectionTitle">Watching</h2>
+              <h2 className="musicSectionTitle">Watching ({watching.length})</h2>
               <div className="rowGrid">
                 {watching.map(a => (
                   <ArtistRow key={a.id} artist={a}
@@ -681,7 +697,7 @@ const Music = () => {
 
           {hiatus.length > 0 && (
             <section id="section-hiatus" className="musicSection musicSection--hiatus">
-              <h2 className="musicSectionTitle">Hiatus</h2>
+              <h2 className="musicSectionTitle">Hiatus ({hiatus.length})</h2>
               <div className="rowGrid">
                 {hiatus.map(a => (
                   <ArtistRow key={a.id} artist={a}

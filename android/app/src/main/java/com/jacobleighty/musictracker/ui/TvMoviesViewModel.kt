@@ -143,6 +143,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 _uiState.update { it.copy(editingShow = null) }
                 updateSections(all)
+                DataChangeEvents.notify()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -161,6 +162,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 val all = allShows().filter { it.id != id }
                 _uiState.update { it.copy(editingShow = null) }
                 updateSections(all)
+                DataChangeEvents.notify()
             }
         }
     }

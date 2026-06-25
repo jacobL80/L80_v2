@@ -205,7 +205,7 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                 item { ConcertHistorySection(state.attended) }
             } else {
                 if (state.upcoming.isNotEmpty()) {
-                    item { CSectionHeader("Upcoming", CAccent) }
+                    item { CSectionHeader("Upcoming", CAccent, state.upcoming.size) }
                     items(state.upcoming) { c ->
                         ConcertCard(c, state.isEditing, vm::openEdit, vm::markAttended)
                     }
@@ -213,7 +213,7 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                     item { CCenteredText("No concerts yet. Tap Add to get started.") }
                 }
                 if (pastConcerts.isNotEmpty()) {
-                    item { CSectionHeader("Past", CAccent) }
+                    item { CSectionHeader("Past", CAccent, pastConcerts.size) }
                     items(pastConcerts) { c ->
                         ConcertCard(c, state.isEditing, vm::openEdit, vm::markAttended)
                     }
@@ -770,11 +770,11 @@ private fun EditConcertDialog(
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 @Composable
-private fun CSectionHeader(title: String, color: Color) {
+private fun CSectionHeader(title: String, color: Color, count: Int? = null) {
     Row(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 28.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.width(3.dp).height(14.dp).background(color))
-        Text(title.uppercase(), color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+        Text(if (count != null) "${title.uppercase()} ($count)" else title.uppercase(), color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold,
             letterSpacing = 3.sp, modifier = Modifier.padding(start = 10.dp))
     }
 }

@@ -92,9 +92,11 @@ const MonthCalendar = ({ year, month, monthItems }) => {
   );
 };
 
+const hasFullDate = (s) => !!(s && s.split('/').length === 3);
+
 const AllCalendar = ({ items }) => {
   const grouped = {};
-  items.forEach(item => {
+  items.filter(item => hasFullDate(item.date)).forEach(item => {
     const d   = parseDate(item.date);
     const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
     if (!grouped[key]) grouped[key] = { year: d.getFullYear(), month: d.getMonth(), items: [] };
@@ -174,7 +176,7 @@ const AllView = () => {
   const [error,   setError]   = useState(false);
 
   useEffect(() => {
-    fetch('/api/all.php')
+    fetch('/api/all.php', { cache: 'no-store' })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         const sorted = [...data].sort((a, b) => parseDate(a.date) - parseDate(b.date));

@@ -23,17 +23,36 @@ try {
 }
 
 function hasFullDate(string $s): bool {
-    return substr_count($s, '/') === 2;
+    $p = explode('/', $s);
+    if (count($p) === 3) return true;
+    if (count($p) === 2 && (int)$p[1] <= 31) return true; // M/D
+    return false;
+}
+
+// Resolves M/D to M/D/YYYY (next upcoming occurrence) so all returned dates are 3-part.
+function resolveDate(string $s): string {
+    $p = explode('/', $s);
+    if (count($p) === 3) return $s;
+    if (count($p) === 2 && (int)$p[1] <= 31) {
+        $year      = (int)date('Y');
+        $candidate = mktime(0, 0, 0, (int)$p[0], (int)$p[1], $year);
+        $today     = mktime(0, 0, 0, (int)date('n'), (int)date('j'), $year);
+        if ($candidate < $today) $year++;
+        return $p[0] . '/' . $p[1] . '/' . $year;
+    }
+    return $s;
 }
 
 function toSortTs(string $s): int {
+    $s = resolveDate($s);
     $p = explode('/', $s);
-    if (count($p) === 3) {
-        $d = DateTime::createFromFormat('m/d/Y', $s);
-        if (!$d) $d = DateTime::createFromFormat('m/d/y', $s);
-        return $d ? $d->getTimestamp() : PHP_INT_MAX;
-    }
-    return PHP_INT_MAX;
+    if (count($p) !== 3) return PHP_INT_MAX;
+    $month = (int)$p[0];
+    $day   = (int)$p[1];
+    $year  = (int)$p[2];
+    if ($year < 100) $year += ($year < 50 ? 2000 : 1900);
+    $ts = mktime(0, 0, 0, $month, $day, $year);
+    return $ts === false ? PHP_INT_MAX : (int)$ts;
 }
 
 $items = [];
@@ -47,7 +66,7 @@ try {
         if (hasFullDate($r['next_release'])) {
             $items[] = [
                 'type'     => 'music',
-                'date'     => $r['next_release'],
+                'date'     => resolveDate($r['next_release']),
                 'title'    => $r['name'],
                 'subtitle' => $r['album_title'],
                 'url'      => $r['url'] ?? '',
@@ -67,7 +86,7 @@ try {
             $sub = array_filter([$r['tour_name'], $r['venue']]);
             $items[] = [
                 'type'     => 'concert',
-                'date'     => $r['date'],
+                'date'     => resolveDate($r['date']),
                 'title'    => $r['band'],
                 'subtitle' => implode(' · ', $sub),
                 'url'      => '',
@@ -87,7 +106,7 @@ try {
             $items[] = [
                 'type'     => 'tv',
                 'showType' => $r['type'] ?? '',
-                'date'     => $r['date'],
+                'date'     => resolveDate($r['date']),
                 'title'    => $r['program_name'],
                 'subtitle' => $r['service'],
                 'url'      => '',
@@ -97,7 +116,7 @@ try {
     }
 } catch (PDOException $e) {}
 
-usort($items, fn($a, $b) => $a['_sort'] - $b['_sort']);
+usort($items, fn($a, $b) => $a['_sort'] <=> $b['_sort']);
 
 echo json_encode(array_map(function($item) {
     unset($item['_sort']);

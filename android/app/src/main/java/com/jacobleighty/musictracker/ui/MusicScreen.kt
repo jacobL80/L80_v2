@@ -212,7 +212,7 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: (
                 item { HistorySection(state.history) }
             } else {
                 if (state.upcoming.isNotEmpty()) {
-                    item { SectionHeader("Upcoming", Accent) }
+                    item { SectionHeader("Upcoming", Accent, state.upcoming.size) }
                     items(state.upcoming) { a ->
                         UpcomingCard(
                             artist = a, isEditing = state.isEditing,
@@ -222,19 +222,19 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: (
                     }
                 }
                 if (state.expected.isNotEmpty()) {
-                    item { SectionHeader("Expected", AccentExpected) }
+                    item { SectionHeader("Expected", AccentExpected, state.expected.size) }
                     items(state.expected) { a ->
                         ArtistRowItem(a, "~${DateUtils.getYear(a.nextRelease)}", state.isEditing, vm::openEdit, Section.EXPECTED)
                     }
                 }
                 if (state.watching.isNotEmpty()) {
-                    item { SectionHeader("Watching", Accent) }
+                    item { SectionHeader("Watching", Accent, state.watching.size) }
                     items(state.watching) { a ->
                         ArtistRowItem(a, "—", state.isEditing, vm::openEdit, Section.WATCHING)
                     }
                 }
                 if (state.hiatus.isNotEmpty()) {
-                    item { SectionHeader("Hiatus", HiatusAccent) }
+                    item { SectionHeader("Hiatus", HiatusAccent, state.hiatus.size) }
                     items(state.hiatus) { a ->
                         ArtistRowItem(a, "—", state.isEditing, vm::openEdit, Section.HIATUS)
                     }
@@ -272,14 +272,17 @@ private fun PageHeader(view: ViewType, onOpenDrawer: () -> Unit = {}) {
 // ── Section header ────────────────────────────────────────────────────────────
 
 @Composable
-private fun SectionHeader(title: String, color: Color) {
+private fun SectionHeader(title: String, color: Color, count: Int? = null) {
     Row(
         modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 28.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.width(3.dp).height(14.dp).background(color))
-        Text(title.uppercase(), color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold,
-            letterSpacing = 3.sp, modifier = Modifier.padding(start = 10.dp))
+        Text(
+            if (count != null) "${title.uppercase()} ($count)" else title.uppercase(),
+            color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            letterSpacing = 3.sp, modifier = Modifier.padding(start = 10.dp),
+        )
     }
 }
 

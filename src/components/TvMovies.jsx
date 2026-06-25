@@ -488,7 +488,7 @@ const TvMovies = () => {
             <>
               {toWatch.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle" style={{ color: TO_WATCH_GREEN }}>To Watch</h2>
+                  <h2 className="musicSectionTitle" style={{ color: TO_WATCH_GREEN }}>To Watch ({toWatch.length})</h2>
                   <div className="upcomingGrid">
                     {toWatch.map(s => (
                       <ShowCard key={s.id} show={s} onEdit={setEditing}
@@ -499,7 +499,7 @@ const TvMovies = () => {
               )}
               {upcoming.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle">Upcoming</h2>
+                  <h2 className="musicSectionTitle">Upcoming ({upcoming.length})</h2>
                   <div className="upcomingGrid">
                     {upcoming.map(s => (
                       <ShowCard key={s.id} show={s} onEdit={setEditing}
@@ -510,7 +510,7 @@ const TvMovies = () => {
               )}
               {expected.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle">Expected</h2>
+                  <h2 className="musicSectionTitle">Expected ({expected.length})</h2>
                   <div className="rowGrid">
                     {expected.map(s => (
                       <ShowRow key={s.id} show={s} onEdit={setEditing} editing={isEditing} accent={ACCENT} />
@@ -520,7 +520,7 @@ const TvMovies = () => {
               )}
               {watchlist.length > 0 && (
                 <section className="musicSection">
-                  <h2 className="musicSectionTitle" style={{ color: '#aaa' }}>Watchlist</h2>
+                  <h2 className="musicSectionTitle" style={{ color: '#aaa' }}>Watchlist ({watchlist.length})</h2>
                   <div className="rowGrid">
                     {watchlist.map(s => (
                       <ShowRow key={s.id} show={s} onEdit={setEditing} editing={isEditing} accent="#aaa" />

@@ -29,7 +29,12 @@ class AllViewModel(app: Application) : AndroidViewModel(app) {
     private val _uiState = MutableStateFlow(AllUiState())
     val uiState: StateFlow<AllUiState> = _uiState.asStateFlow()
 
-    init { loadData() }
+    init {
+        loadData()
+        viewModelScope.launch {
+            DataChangeEvents.flow.collect { loadData() }
+        }
+    }
 
     private fun warmWidgetCache(items: List<AllItem>) {
         val ctx = getApplication<Application>()

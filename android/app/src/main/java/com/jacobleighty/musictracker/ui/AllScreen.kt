@@ -273,7 +273,7 @@ private fun AllItemCard(item: AllItem, dimmed: Boolean = false) {
 @Composable
 private fun ReleaseCalendarSection(items: List<AllItem>) {
     val grouped = mutableMapOf<Pair<Int, Int>, MutableList<AllItem>>()
-    items.forEach { item ->
+    items.filter { it.date.trim().split("/").size == 3 }.forEach { item ->
         val d   = DateUtils.parseDate(item.date)
         val key = Pair(d.year, d.monthValue - 1) // 0-indexed month
         grouped.getOrPut(key) { mutableListOf() }.add(item)

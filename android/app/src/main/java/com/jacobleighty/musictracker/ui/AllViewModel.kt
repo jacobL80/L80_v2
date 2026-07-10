@@ -2,13 +2,12 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.jacobleighty.musictracker.data.AllItem
 import com.jacobleighty.musictracker.data.ApiService
-import com.jacobleighty.musictracker.widget.AllWidget
+import com.jacobleighty.musictracker.widget.updateAllWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,8 +46,7 @@ class AllViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("all_items_json", Gson().toJson(upcoming)).commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
+            updateAllWidgets(ctx)
         }
     }
 

@@ -114,7 +114,7 @@ fun EditArtistDialog(
                         value = form.nextRelease,
                         onValueChange = { form = form.copy(nextRelease = it) },
                         label = { Text("Next Release") },
-                        placeholder = { Text("M/D/YYYY or M/D") },
+                        placeholder = { Text("M/D/YY, M/D/YYYY, or M/D") },
                         isError = form.nextRelease.isNotBlank() && !DateUtils.isValidDate(form.nextRelease),
                         singleLine = true,
                         modifier = Modifier.weight(1f),

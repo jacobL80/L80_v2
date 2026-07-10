@@ -102,4 +102,14 @@ object DateUtils {
 
     fun daysUntil(nextRelease: String): Long =
         ChronoUnit.DAYS.between(LocalDate.now(), parseDate(nextRelease))
+
+    fun lockYearIfMD(s: String): String {
+        if (s.isBlank()) return s
+        val parts = s.trim().split("/")
+        if (parts.size != 2) return s
+        val second = parts[1].toIntOrNull() ?: return s
+        if (second > 31) return s  // M/YY format, already has a year
+        val yy = LocalDate.now().year % 100
+        return "${parts[0]}/${parts[1]}/$yy"
+    }
 }

@@ -2,7 +2,6 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -10,8 +9,7 @@ import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.Artist
 import com.jacobleighty.musictracker.data.ArtistRepository
 import com.jacobleighty.musictracker.data.HistoryEntry
-import com.jacobleighty.musictracker.widget.AllWidget
-import com.jacobleighty.musictracker.widget.UpcomingWidget
+import com.jacobleighty.musictracker.widget.updateAllWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,6 +78,8 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
             .filter { it.nextRelease.isNotEmpty() && !DateUtils.hasFullDate(it.nextRelease) }
             .sortedWith(compareBy(
                 { DateUtils.getYear(it.nextRelease).toIntOrNull() ?: 9999 },
+                { if (it.nextRelease.split("/").size >= 2) 0 else 1 },
+                { it.nextRelease.split("/").firstOrNull()?.toIntOrNull() ?: 0 },
                 { DateUtils.sortKey(it.name) }
             ))
 
@@ -156,15 +156,19 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
                 )
             } else artist
         } else artist
+        val normalized = toSave.copy(
+            nextRelease = DateUtils.lockYearIfMD(toSave.nextRelease),
+            lastRelease = DateUtils.lockYearIfMD(toSave.lastRelease),
+        )
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
-            val result = repo.saveArtist(toSave, token)
+            val result = repo.saveArtist(normalized, token)
             result.onSuccess { saved ->
                 val allArtists = buildUpdatedList(saved)
                 _uiState.update { it.copy(editingArtist = null) }
                 updateSections(allArtists)
                 DataChangeEvents.emit()
-                refreshAllWidget()
+                viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -212,16 +216,6 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun refreshAllWidget() {
-        val ctx = getApplication<Application>()
-        viewModelScope.launch(Dispatchers.IO) {
-            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-                .edit().remove("all_items_json").commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
-        }
-    }
-
     private fun allArtistsList(): List<Artist> {
         val s = _uiState.value
         return s.upcoming + s.expected + s.watching + s.hiatus
@@ -236,8 +230,7 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("artists_json", Gson().toJson(upcoming)).commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(UpcomingWidget::class.java).forEach { UpcomingWidget().update(ctx, it) }
+            updateAllWidgets(ctx)
         }
     }
 }

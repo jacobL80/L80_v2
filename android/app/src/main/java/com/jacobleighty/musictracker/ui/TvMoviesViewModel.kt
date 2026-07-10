@@ -2,15 +2,13 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.TvShow
-import com.jacobleighty.musictracker.widget.AllWidget
-import com.jacobleighty.musictracker.widget.TvMoviesWidget
+import com.jacobleighty.musictracker.widget.updateAllWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -124,15 +122,16 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 )
             } else show
         } else show
+        val normalized = toSave.copy(date = DateUtils.lockYearIfMD(toSave.date))
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
             val result = runCatching {
-                if (toSave.id == 0) {
-                    val res = api.createTvShow(token, toSave)
+                if (normalized.id == 0) {
+                    val res = api.createTvShow(token, normalized)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 } else {
-                    val res = api.updateTvShow(toSave.id, token, toSave)
+                    val res = api.updateTvShow(normalized.id, token, normalized)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 }
@@ -145,7 +144,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingShow = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
-                refreshAllWidget()
+                viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -171,16 +170,6 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun markWatched(show: TvShow) = saveShow(show.copy(watched = true))
 
-    private fun refreshAllWidget() {
-        val ctx = getApplication<Application>()
-        viewModelScope.launch(Dispatchers.IO) {
-            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-                .edit().remove("all_items_json").commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
-        }
-    }
-
     private fun allShows() = with(_uiState.value) { toWatch + upcoming + expected + watchlist + watched }
 
     private fun warmWidgetCache(shows: List<TvShow>) {
@@ -193,8 +182,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("tvmovies_json", Gson().toJson(upcoming)).commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(TvMoviesWidget::class.java).forEach { TvMoviesWidget().update(ctx, it) }
+            updateAllWidgets(ctx)
         }
     }
 }

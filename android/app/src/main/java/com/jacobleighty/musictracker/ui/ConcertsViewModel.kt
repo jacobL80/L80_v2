@@ -2,15 +2,13 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.Concert
-import com.jacobleighty.musictracker.widget.AllWidget
-import com.jacobleighty.musictracker.widget.ConcertsWidget
+import com.jacobleighty.musictracker.widget.updateAllWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -110,15 +108,16 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
                 )
             } else concert
         } else concert
+        val normalized = toSave.copy(date = DateUtils.lockYearIfMD(toSave.date))
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
             val result = runCatching {
-                if (toSave.id == 0) {
-                    val res = api.createConcert(token, toSave)
+                if (normalized.id == 0) {
+                    val res = api.createConcert(token, normalized)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 } else {
-                    val res = api.updateConcert(toSave.id, token, toSave)
+                    val res = api.updateConcert(normalized.id, token, normalized)
                     if (res.code() == 401) error("UNAUTHORIZED")
                     res.body() ?: error("Empty response")
                 }
@@ -131,7 +130,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingConcert = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
-                refreshAllWidget()
+                viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
@@ -159,16 +158,6 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
         saveConcert(concert.copy(attended = true))
     }
 
-    private fun refreshAllWidget() {
-        val ctx = getApplication<Application>()
-        viewModelScope.launch(Dispatchers.IO) {
-            ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-                .edit().remove("all_items_json").commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(AllWidget::class.java).forEach { AllWidget().update(ctx, it) }
-        }
-    }
-
     private fun allConcerts() = with(_uiState.value) { upcoming + attended }
 
     private fun warmWidgetCache(concerts: List<Concert>) {
@@ -181,8 +170,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("concerts_json", Gson().toJson(upcoming)).commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(ConcertsWidget::class.java).forEach { ConcertsWidget().update(ctx, it) }
+            updateAllWidgets(ctx)
         }
     }
 }

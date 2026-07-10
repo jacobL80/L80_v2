@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.Screen
 import com.jacobleighty.musictracker.data.AllItem
+import java.time.LocalDate
 import java.time.YearMonth
 
 private val AAccent    = Color(0xFFEC6F00)
@@ -311,6 +312,9 @@ private fun MonthCalendarCard(year: Int, month: Int, monthItems: List<AllItem>) 
         byDay.getOrPut(d.dayOfMonth) { mutableListOf() }.add(item)
     }
 
+    val today = LocalDate.now()
+    val isCurrentMonth = year == today.year && month + 1 == today.monthValue
+
     val cells = mutableListOf<Int?>()
     repeat(firstDow) { cells.add(null) }
     (1..daysInMonth).forEach { cells.add(it) }
@@ -350,6 +354,7 @@ private fun MonthCalendarCard(year: Int, month: Int, monthItems: List<AllItem>) 
                         ) {
                             if (day != null) {
                                 val events = byDay[day]
+                                val isToday = isCurrentMonth && day == today.dayOfMonth
                                 var menuOpen by remember { mutableStateOf(false) }
 
                                 Column(
@@ -359,12 +364,19 @@ private fun MonthCalendarCard(year: Int, month: Int, monthItems: List<AllItem>) 
                                         interactionSource = remember { MutableInteractionSource() },
                                     ) { menuOpen = true } else Modifier,
                                 ) {
-                                    Text(
-                                        text = day.toString(),
-                                        fontSize = 10.sp,
-                                        color = if (events != null) colors.textPrimary else colors.textDim,
-                                        fontWeight = if (events != null) FontWeight.SemiBold else FontWeight.Normal,
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .then(if (isToday) Modifier.border(1.5.dp, AAccent, RoundedCornerShape(3.dp)) else Modifier),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = day.toString(),
+                                            fontSize = 10.sp,
+                                            color = if (isToday) AAccent else if (events != null) colors.textPrimary else colors.textDim,
+                                            fontWeight = if (isToday || events != null) FontWeight.SemiBold else FontWeight.Normal,
+                                        )
+                                    }
                                     if (events != null) {
                                         Row(
                                             horizontalArrangement = Arrangement.spacedBy(2.dp),

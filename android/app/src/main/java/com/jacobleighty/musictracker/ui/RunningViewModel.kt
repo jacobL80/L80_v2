@@ -2,15 +2,19 @@ package com.jacobleighty.musictracker.ui
 
 import android.app.Application
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.RunningDayEntry
 import com.jacobleighty.musictracker.data.RunningWeek
-import com.jacobleighty.musictracker.widget.RunningWidget
+import com.jacobleighty.musictracker.widget.WidgetRefreshWorker
+import com.jacobleighty.musictracker.widget.updateAllWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -129,6 +133,7 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
                 res.body() ?: error("Empty response")
             }.onSuccess {
                 _uiState.update { it.copy(showAddModal = false) }
+                enqueueWidgetRefresh()
                 loadAll()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
@@ -162,6 +167,7 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
                 res.body() ?: error("Empty response")
             }.onSuccess {
                 _uiState.update { it.copy(showEditModal = false, editingEntry = null) }
+                enqueueWidgetRefresh()
                 loadAll()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
@@ -177,8 +183,19 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteEntry(id: Int) {
         val token = _uiState.value.editToken ?: return
         viewModelScope.launch {
-            runCatching { api.deleteRunEntry(id, token) }.onSuccess { loadAll() }
+            runCatching { api.deleteRunEntry(id, token) }.onSuccess {
+                enqueueWidgetRefresh()
+                loadAll()
+            }
         }
+    }
+
+    private fun enqueueWidgetRefresh() {
+        WorkManager.getInstance(getApplication()).enqueue(
+            OneTimeWorkRequestBuilder<WidgetRefreshWorker>()
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .build()
+        )
     }
 
     private fun warmWidgetCache(weeks: List<RunningWeek>) {
@@ -187,9 +204,7 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("running_weeks_json", Gson().toJson(weeks)).commit()
-            val manager = GlanceAppWidgetManager(ctx)
-            manager.getGlanceIds(RunningWidget::class.java)
-                .forEach { RunningWidget().update(ctx, it) }
+            updateAllWidgets(ctx)
         }
     }
 

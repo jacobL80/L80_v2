@@ -589,7 +589,7 @@ private fun EditShowDialog(show: TvShow, programNames: List<String> = emptyList(
                         }
                     }
                 }
-                OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YYYY, M/D, M/YYYY, or YYYY)") },
+                OutlinedTextField(date, { date = it }, label = { Text("Date (M/D/YY, M/D/YYYY, M/D, M/YYYY, or YYYY)") },
                     isError = date.isNotBlank() && !DateUtils.isValidDate(date),
                     singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(notes, { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth())

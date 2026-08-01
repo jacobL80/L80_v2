@@ -25,10 +25,9 @@ object DateUtils {
                 2 -> {
                     val second = parts[1].toInt()
                     if (second <= 31) {
-                        // M/D — resolve to next upcoming occurrence
+                        // M/D — lock to current year; year should have been baked in at save time
                         val today = LocalDate.now()
-                        val candidate = LocalDate.of(today.year, parts[0].toInt(), second)
-                        if (!candidate.isBefore(today)) candidate else candidate.plusYears(1)
+                        LocalDate.of(today.year, parts[0].toInt(), second)
                     } else {
                         LocalDate.of(expandYear(second), parts[0].toInt(), 1)
                     }
@@ -55,9 +54,7 @@ object DateUtils {
                     if (second <= 31) {
                         val month = parts[0].toInt()
                         val today = LocalDate.now()
-                        val candidate = LocalDate.of(today.year, month, second)
-                        val year = if (!candidate.isBefore(today)) today.year else today.year + 1
-                        DateParts(MONTHS[month - 1], second, year)
+                        DateParts(MONTHS[month - 1], second, today.year)
                     } else {
                         DateParts(MONTHS[parts[0].toInt() - 1], null, expandYear(second))
                     }

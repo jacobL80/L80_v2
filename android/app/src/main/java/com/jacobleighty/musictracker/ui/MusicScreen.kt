@@ -553,9 +553,9 @@ private fun parseRDate(s: String): Calendar? {
         it.set(Calendar.SECOND, 0); it.set(Calendar.MILLISECOND, 0)
     }
     return when (p.size) {
-        3    -> { cal.set(p[2], p[0] - 1, p[1]); cal }
-        2    -> { cal.set(p[1], p[0] - 1, 15); cal }
-        1    -> { cal.set(p[0], 6, 1); cal }
+        3    -> { cal.set(DateUtils.expandYear(p[2]), p[0] - 1, p[1]); cal }
+        2    -> { cal.set(DateUtils.expandYear(p[1]), p[0] - 1, 15); cal }
+        1    -> { cal.set(DateUtils.expandYear(p[0]), 6, 1); cal }
         else -> null
     }
 }
@@ -563,7 +563,7 @@ private fun parseRDate(s: String): Calendar? {
 private fun fmtReleaseDate(s: String): String {
     val p = s.split("/").mapNotNull { it.toIntOrNull() }
     return when (p.size) {
-        3    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}, ${p[2]}"
+        3    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}, ${DateUtils.expandYear(p[2])}"
         2    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}"
         1    -> "${p[0]}"
         else -> s

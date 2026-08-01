@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.first
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.RunningDayEntry
 import com.jacobleighty.musictracker.data.RunningWeek
@@ -97,6 +100,19 @@ private fun calculateStreaks(weeks: List<RunningWeek>): Pair<Int, Int> {
 @Composable
 fun RunningScreen(vm: RunningViewModel = viewModel(), onOpenDrawer: () -> Unit = {}) {
     val state by vm.uiState.collectAsState()
+
+    // Reload when the screen enters composition (navigating back to it)
+    LaunchedEffect(Unit) { vm.loadAll() }
+
+    // Reload when the app returns from background
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) vm.loadAll()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(RPageBg)) {
         when {

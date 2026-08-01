@@ -58,7 +58,7 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         loadAll()
     }
 
-    private fun loadAll() {
+    fun loadAll() {
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, fetchError = false) }
             runCatching { api.getRunningWeeks() }.onSuccess { weeks ->

@@ -545,7 +545,7 @@ private val MONTH_SHORT = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
 
-private fun parseRDate(s: String): Calendar? {
+private fun parseRDate(s: String, acquiredAt: String = ""): Calendar? {
     if (s.isEmpty()) return null
     val p = s.split("/").mapNotNull { it.toIntOrNull() }
     val cal = Calendar.getInstance().also {
@@ -553,8 +553,19 @@ private fun parseRDate(s: String): Calendar? {
         it.set(Calendar.SECOND, 0); it.set(Calendar.MILLISECOND, 0)
     }
     return when (p.size) {
-        3    -> { cal.set(DateUtils.expandYear(p[2]), p[0] - 1, p[1]); cal }
-        2    -> { cal.set(DateUtils.expandYear(p[1]), p[0] - 1, 15); cal }
+        3 -> { cal.set(DateUtils.expandYear(p[2]), p[0] - 1, p[1]); cal }
+        2 -> {
+            val second = p[1]
+            if (second <= 31) {
+                // M/D — no year specified; anchor to when it was acquired, not render time,
+                // so the entry doesn't drift forward every new year
+                val year = acquiredAt.take(4).toIntOrNull() ?: cal.get(Calendar.YEAR)
+                cal.set(year, p[0] - 1, second)
+            } else {
+                cal.set(DateUtils.expandYear(second), p[0] - 1, 15)
+            }
+            cal
+        }
         1    -> { cal.set(DateUtils.expandYear(p[0]), 6, 1); cal }
         else -> null
     }
@@ -563,8 +574,12 @@ private fun parseRDate(s: String): Calendar? {
 private fun fmtReleaseDate(s: String): String {
     val p = s.split("/").mapNotNull { it.toIntOrNull() }
     return when (p.size) {
-        3    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}, ${DateUtils.expandYear(p[2])}"
-        2    -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}"
+        3 -> "${MONTH_SHORT.getOrNull(p[0] - 1)} ${p[1]}, ${DateUtils.expandYear(p[2])}"
+        2 -> {
+            val second = p[1]
+            if (second <= 31) "${MONTH_SHORT.getOrNull(p[0] - 1)} $second"
+            else "${MONTH_SHORT.getOrNull(p[0] - 1)} ${DateUtils.expandYear(second)}"
+        }
         1    -> "${p[0]}"
         else -> s
     }
@@ -636,7 +651,7 @@ private fun computeHStats(entries: List<RichEntry>): HStats {
 @Composable
 private fun HistorySection(history: List<HistoryEntry>) {
     val entries = remember(history) {
-        history.mapNotNull { e -> parseRDate(e.releaseDate)?.let { RichEntry(e, it) } }
+        history.mapNotNull { e -> parseRDate(e.releaseDate, e.acquiredAt)?.let { RichEntry(e, it) } }
             .sortedBy { it.cal.timeInMillis }
     }
     if (entries.isEmpty()) { CenteredText("No history yet."); return }

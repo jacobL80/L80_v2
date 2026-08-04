@@ -11,4 +11,5 @@ data class Concert(
     val notes: String = "",
     val attended: Boolean = false,
     val attendees: String = "",   // comma-separated names
+    val additionalArtists: String = "",   // comma-separated names
 )

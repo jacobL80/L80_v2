@@ -335,6 +335,18 @@ private fun RStatsContent(weeks: List<RunningWeek>, modifier: Modifier = Modifie
     }
 
     val (longestStreak, currentStreak) = remember(weeks) { calculateStreaks(weeks) }
+    val favDay = remember(weeks) {
+        val totals = listOf(
+            "Mon" to weeks.sumOf { it.mon.toDouble() },
+            "Tue" to weeks.sumOf { it.tue.toDouble() },
+            "Wed" to weeks.sumOf { it.wed.toDouble() },
+            "Thu" to weeks.sumOf { it.thu.toDouble() },
+            "Fri" to weeks.sumOf { it.fri.toDouble() },
+            "Sat" to weeks.sumOf { it.sat.toDouble() },
+            "Sun" to weeks.sumOf { it.sun.toDouble() },
+        )
+        totals.maxByOrNull { it.second }?.takeIf { it.second > 0 }?.first
+    }
 
     val avgRunDist    = if (totalRuns > 0) totalMiles / totalRuns else 0f
     val longestRun    = remember(allEntries) { allEntries.maxOfOrNull { it.miles } }
@@ -423,6 +435,8 @@ private fun RStatsContent(weeks: List<RunningWeek>, modifier: Modifier = Modifie
                 RStatCard("Best Month", bestMonth?.let { "%.2f mi".format(it.second) } ?: "—",
                     subtitle = bestMonth?.first, modifier = Modifier.weight(1f))
             }
+            Spacer(Modifier.height(8.dp))
+            RStatCard("Favorite Day", favDay ?: "—", modifier = Modifier.fillMaxWidth())
         }
 
         item {

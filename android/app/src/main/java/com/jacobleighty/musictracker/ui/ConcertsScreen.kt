@@ -269,6 +269,10 @@ private fun ConcertCard(
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(concert.band, color = CTextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    if (concert.additionalArtists.isNotEmpty()) {
+                        TruncatedText("w/ ${concert.additionalArtists}", color = CTextSec, fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 1.dp))
+                    }
                     if (concert.tourName.isNotEmpty()) {
                         TruncatedText(concert.tourName, color = CTextSec, fontSize = 14.sp, fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(top = 1.dp))
@@ -428,6 +432,7 @@ private fun ConcertHistorySection(attended: List<Concert>) {
                 Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(CAccent))
                 Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp, vertical = 12.dp)) {
                     Text(dot.c.band, color = CAccent, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    if (dot.c.additionalArtists.isNotEmpty()) Text("w/ ${dot.c.additionalArtists}", color = CTextSec, fontSize = 12.sp)
                     if (dot.c.tourName.isNotEmpty()) Text(dot.c.tourName, color = CTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic)
                     if (dot.c.venue.isNotEmpty()) Text(dot.c.venue, color = CTextDim, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
                     if (dot.c.date.isNotEmpty()) Text(DateUtils.formatLastDate(dot.c.date), color = CTextDim, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
@@ -586,12 +591,21 @@ private fun EditConcertDialog(
     var attended      by remember { mutableStateOf(concert.attended) }
     var attendeeChips by remember { mutableStateOf(parseAttendeesKt(concert.attendees)) }
     var attendeeInput by remember { mutableStateOf("") }
+    var additionalArtistChips by remember { mutableStateOf(parseAttendeesKt(concert.additionalArtists)) }
+    var additionalArtistInput by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
     val bandSuggestions = remember(band, bandNames) {
         if (band.isBlank()) emptyList()
         else {
             val q = band.lowercase()
             bandNames.filter { it.lowercase().contains(q) && !it.equals(band, ignoreCase = true) }.take(5)
+        }
+    }
+    val additionalArtistSuggestions = remember(additionalArtistInput, bandNames, additionalArtistChips) {
+        if (additionalArtistInput.isBlank()) emptyList()
+        else {
+            val q = additionalArtistInput.lowercase()
+            bandNames.filter { it.lowercase().contains(q) && !additionalArtistChips.contains(it) }.take(4)
         }
     }
     val attendeeSuggestions = remember(attendeeInput, attendeeNames, attendeeChips) {
@@ -635,6 +649,78 @@ private fun EditConcertDialog(
                                 if (suggestion != bandSuggestions.last()) {
                                     HorizontalDivider(color = CBorder)
                                 }
+                            }
+                        }
+                    }
+                }
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (additionalArtistChips.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            additionalArtistChips.forEach { chip ->
+                                Row(
+                                    modifier = Modifier
+                                        .background(CAccentLight, RoundedCornerShape(16.dp))
+                                        .border(BorderStroke(1.dp, CAccent.copy(alpha = 0.3f)), RoundedCornerShape(16.dp))
+                                        .padding(start = 10.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(chip, color = CAccent, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                    IconButton(
+                                        onClick = { additionalArtistChips = additionalArtistChips - chip },
+                                        modifier = Modifier.size(16.dp),
+                                    ) {
+                                        Icon(Icons.Default.Close, "Remove", tint = CAccent, modifier = Modifier.size(12.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = additionalArtistInput,
+                        onValueChange = { v ->
+                            if (v.endsWith(",")) {
+                                val name = v.dropLast(1).trim()
+                                if (name.isNotEmpty() && !additionalArtistChips.contains(name)) additionalArtistChips = additionalArtistChips + name
+                                additionalArtistInput = ""
+                            } else {
+                                additionalArtistInput = v
+                            }
+                        },
+                        label = { Text("Additional artists") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(onDone = {
+                            val name = additionalArtistInput.trim()
+                            if (name.isNotEmpty() && !additionalArtistChips.contains(name)) additionalArtistChips = additionalArtistChips + name
+                            additionalArtistInput = ""
+                        }),
+                    )
+                    if (additionalArtistSuggestions.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                                .border(BorderStroke(1.dp, CBorder), RoundedCornerShape(4.dp))
+                                .background(CCardBg, RoundedCornerShape(4.dp)),
+                        ) {
+                            additionalArtistSuggestions.forEach { suggestion ->
+                                Text(
+                                    text = suggestion,
+                                    modifier = Modifier.fillMaxWidth()
+                                        .clickable {
+                                            if (!additionalArtistChips.contains(suggestion)) additionalArtistChips = additionalArtistChips + suggestion
+                                            additionalArtistInput = ""
+                                        }
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    color = CTextPrimary, fontSize = 14.sp,
+                                )
+                                if (suggestion != additionalArtistSuggestions.last()) HorizontalDivider(color = CBorder)
                             }
                         }
                     }
@@ -758,7 +844,13 @@ private fun EditConcertDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(concert.copy(band = band.trim(), tourName = tourName.trim(), venue = venue.trim(), date = date.trim(), notes = notes.trim(), attended = attended, attendees = joinAttendeesKt(attendeeChips))) },
+                onClick = {
+                    val pendingAttendee = attendeeInput.trim()
+                    val finalAttendees  = if (pendingAttendee.isNotEmpty() && !attendeeChips.contains(pendingAttendee)) attendeeChips + pendingAttendee else attendeeChips
+                    val pendingArtist   = additionalArtistInput.trim()
+                    val finalArtists    = if (pendingArtist.isNotEmpty() && !additionalArtistChips.contains(pendingArtist)) additionalArtistChips + pendingArtist else additionalArtistChips
+                    onSave(concert.copy(band = band.trim(), tourName = tourName.trim(), venue = venue.trim(), date = date.trim(), notes = notes.trim(), attended = attended, attendees = joinAttendeesKt(finalAttendees), additionalArtists = joinAttendeesKt(finalArtists)))
+                },
                 enabled = band.isNotBlank() && DateUtils.isValidDate(date),
                 colors  = ButtonDefaults.buttonColors(containerColor = CAccent),
             ) { Text("Save") }

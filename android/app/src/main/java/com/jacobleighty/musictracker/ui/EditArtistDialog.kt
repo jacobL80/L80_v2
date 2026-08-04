@@ -52,7 +52,8 @@ fun EditArtistDialog(
 ) {
     var form by remember { mutableStateOf(artist) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val isNew = artist.id == 0
+    val wasNewOnOpen = remember { artist.id == 0 }
+    val isNew = form.id == 0
     val scroll = rememberScrollState()
     var nameExpanded by remember { mutableStateOf(false) }
     val nameSuggestions = remember(form.name, allArtists) {
@@ -73,7 +74,7 @@ fun EditArtistDialog(
                     OutlinedTextField(
                         value = form.name,
                         onValueChange = {
-                            form = form.copy(name = it)
+                            form = if (wasNewOnOpen && form.id != 0) Artist(name = it) else form.copy(name = it)
                             nameExpanded = true
                         },
                         label = { Text("Name") },
@@ -89,7 +90,7 @@ fun EditArtistDialog(
                             nameSuggestions.forEach { suggestion ->
                                 TextButton(
                                     onClick = {
-                                        form = form.copy(name = suggestion.name)
+                                        form = suggestion
                                         nameExpanded = false
                                     },
                                     modifier = Modifier.fillMaxWidth(),

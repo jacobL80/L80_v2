@@ -291,6 +291,10 @@ private fun TvRow(show: TvShow, dateDisplay: String, isEditing: Boolean, onEdit:
                     TruncatedText(show.service, color = TTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 3.dp))
                 }
+                if (show.notes.isNotEmpty()) {
+                    TruncatedText(show.notes, color = TTextDim, fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 3.dp))
+                }
             }
         }
         if (isEditing) {

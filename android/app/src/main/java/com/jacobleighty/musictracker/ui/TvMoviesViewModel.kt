@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.TvShow
 import com.jacobleighty.musictracker.widget.updateAllWidgets
@@ -30,22 +29,21 @@ data class TvMoviesUiState(
     val isEditing: Boolean = false,
     val editToken: String? = null,
     val saveError: String? = null,
-    val showPasswordDialog: Boolean = false,
     val editingShow: TvShow? = null,
-    val pendingAdd: Boolean = false,
-    val pendingWatch: TvShow? = null,
 )
 
 class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
-    private val api   = ApiService.create()
-    private val prefs = app.getSharedPreferences("music_prefs", Context.MODE_PRIVATE)
+    private val api = ApiService.create()
 
     private val _uiState = MutableStateFlow(TvMoviesUiState())
     val uiState: StateFlow<TvMoviesUiState> = _uiState.asStateFlow()
 
     init {
-        val token = prefs.getString(Constants.PREF_EDIT_TOKEN, null)
-        if (token != null) _uiState.update { it.copy(editToken = token, isEditing = true) }
+        viewModelScope.launch {
+            EditModeManager.editToken.collect { token ->
+                _uiState.update { it.copy(editToken = token, isEditing = token != null) }
+            }
+        }
         loadData()
     }
 
@@ -79,31 +77,13 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
 
     fun handleAddNew() {
         if (_uiState.value.isEditing) _uiState.update { it.copy(editingShow = TvShow()) }
-        else _uiState.update { it.copy(pendingAdd = true, showPasswordDialog = true) }
-    }
-
-    fun enterEditMode(password: String) {
-        prefs.edit().putString(Constants.PREF_EDIT_TOKEN, password).apply()
-        val pending      = _uiState.value.pendingAdd
-        val pendingWatch = _uiState.value.pendingWatch
-        _uiState.update { it.copy(editToken = password, isEditing = true, showPasswordDialog = false,
-            pendingAdd = false, pendingWatch = null,
-            editingShow = if (pending) TvShow() else null) }
-        if (pendingWatch != null) markWatched(pendingWatch)
-    }
-
-    fun exitEditMode() {
-        prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
-        _uiState.update { it.copy(editToken = null, isEditing = false) }
     }
 
     fun openEdit(show: TvShow) = _uiState.update { it.copy(editingShow = show) }
     fun closeEdit() = _uiState.update { it.copy(editingShow = null, saveError = null) }
-    fun dismissPasswordDialog() = _uiState.update { it.copy(showPasswordDialog = false, pendingAdd = false, pendingWatch = null) }
 
     fun handleMarkWatched(show: TvShow) {
         if (_uiState.value.isEditing) markWatched(show)
-        else _uiState.update { it.copy(pendingWatch = show, showPasswordDialog = true) }
     }
     fun setView(v: TvViewType) = _uiState.update { it.copy(view = v) }
 
@@ -147,8 +127,8 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
-                    prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
-                    _uiState.update { it.copy(editToken = null, isEditing = false, saveError = "Incorrect password.") }
+                    EditModeManager.exitEditMode()
+                    _uiState.update { it.copy(saveError = "Incorrect password.") }
                 } else {
                     _uiState.update { it.copy(saveError = "Save failed — please try again.") }
                 }

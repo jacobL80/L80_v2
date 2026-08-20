@@ -57,6 +57,9 @@ fun SettingsScreen(
 
     var pickingCategory by remember { mutableStateOf<CategoryRow?>(null) }
 
+    val editToken by EditModeManager.editToken.collectAsState()
+    var showEditPasswordDialog by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize().background(colors.pageBg)) {
         LazyColumn {
             item { SettingsPageHeader(onOpenDrawer, colors) }
@@ -70,6 +73,22 @@ fun SettingsScreen(
                     icon  = Icons.Default.DarkMode,
                     checked = isDark,
                     onToggle = onToggleDark,
+                    colors = colors,
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = colors.border)
+            }
+
+            // ── Edit mode section ────────────────────────────────────────────
+            item { SettingsSectionHeader("EDIT MODE", colors) }
+            item {
+                SettingsToggleRow(
+                    label = "Edit Mode",
+                    desc  = "Allow adding and editing entries on Music, Concerts, TV/Movies, and Running",
+                    icon  = Icons.Default.Edit,
+                    checked = editToken != null,
+                    onToggle = { enable ->
+                        if (enable) showEditPasswordDialog = true else EditModeManager.exitEditMode()
+                    },
                     colors = colors,
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = colors.border)
@@ -110,6 +129,16 @@ fun SettingsScreen(
                 WorkerScheduler.rescheduleCategory(context, cat.category, h)
                 pickingCategory = null
             },
+        )
+    }
+
+    if (showEditPasswordDialog) {
+        PasswordDialog(
+            onConfirm = { password ->
+                EditModeManager.enterEditMode(password)
+                showEditPasswordDialog = false
+            },
+            onDismiss = { showEditPasswordDialog = false },
         )
     }
 }

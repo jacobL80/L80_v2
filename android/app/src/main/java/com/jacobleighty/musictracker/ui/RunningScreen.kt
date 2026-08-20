@@ -120,9 +120,6 @@ fun RunningScreen(vm: RunningViewModel = viewModel(), onOpenDrawer: () -> Unit =
             state.fetchError -> RCenteredText("Could not load data.")
             else             -> RMainContent(state, vm, onOpenDrawer)
         }
-        if (state.showPasswordDialog) {
-            PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
-        }
         if (state.showAddModal) {
             AddRunEntryDialog(
                 onSave    = { miles, date, pace -> vm.addEntry(miles, date, pace) },
@@ -156,21 +153,6 @@ private fun RMainContent(state: RunningUiState, vm: RunningViewModel, onOpenDraw
 
     Scaffold(
         containerColor = RPageBg,
-        topBar = {
-            if (state.isEditing) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().background(RAccent).statusBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("EDIT MODE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 2.sp)
-                    TextButton(onClick = vm::exitEditMode) {
-                        Text("Done", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                    }
-                }
-            }
-        },
         bottomBar = {
             Column {
                 HorizontalDivider(color = RBorder, thickness = 1.dp)
@@ -182,15 +164,17 @@ private fun RMainContent(state: RunningUiState, vm: RunningViewModel, onOpenDraw
                         .height(56.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RNavItem(
-                        icon    = Icons.Default.Add,
-                        label   = "Log Run",
-                        selected = false,
-                        tint    = RAccent,
-                        modifier = Modifier.weight(1f),
-                        onClick = vm::handleAddNew,
-                    )
-                    Box(modifier = Modifier.width(1.dp).height(28.dp).background(RBorder))
+                    if (state.isEditing) {
+                        RNavItem(
+                            icon    = Icons.Default.Add,
+                            label   = "Log Run",
+                            selected = false,
+                            tint    = RAccent,
+                            modifier = Modifier.weight(1f),
+                            onClick = vm::handleAddNew,
+                        )
+                        Box(modifier = Modifier.width(1.dp).height(28.dp).background(RBorder))
+                    }
                     RNavItem(
                         icon    = Icons.Default.List,
                         label   = "Log",

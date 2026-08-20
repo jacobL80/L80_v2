@@ -75,9 +75,6 @@ fun MusicScreen(vm: MusicViewModel = viewModel(), onOpenDrawer: () -> Unit = {})
             state.fetchError -> CenteredText("Could not load data.")
             else             -> MainContent(state, vm, onOpenDrawer)
         }
-        if (state.showPasswordDialog) {
-            PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
-        }
         state.editingArtist?.let { artist ->
             EditArtistDialog(
                 artist     = artist,
@@ -130,40 +127,25 @@ private fun MainContent(state: MusicUiState, vm: MusicViewModel, onOpenDrawer: (
     Scaffold(
         containerColor = PageBg,
         topBar = {
-            Column {
-                if (state.isEditing) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(Accent)
-                            .statusBarsPadding()
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("EDIT MODE", color = Color.White, fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp, letterSpacing = 2.sp)
-                        TextButton(onClick = vm::exitEditMode) {
-                            Text("Done", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                        }
-                    }
-                }
-                state.saveError?.let {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().background(AccentLight)
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                    ) { Text(it, color = Accent, fontSize = 14.sp) }
-                }
+            state.saveError?.let {
+                Box(
+                    modifier = Modifier.fillMaxWidth().background(AccentLight)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                ) { Text(it, color = Accent, fontSize = 14.sp) }
             }
         },
         bottomBar = {
             Column {
                 HorizontalDivider(color = BorderColor, thickness = 1.dp)
                 NavigationBar(containerColor = CardBg, tonalElevation = 0.dp) {
-                    NavigationBarItem(
-                        selected = false, onClick = vm::handleAddNew,
-                        icon  = { Icon(Icons.Default.Add, null) },
-                        label = { Text("Add", letterSpacing = 1.sp) },
-                        colors = addNavColors(),
-                    )
+                    if (state.isEditing) {
+                        NavigationBarItem(
+                            selected = false, onClick = vm::handleAddNew,
+                            icon  = { Icon(Icons.Default.Add, null) },
+                            label = { Text("Add", letterSpacing = 1.sp) },
+                            colors = addNavColors(),
+                        )
+                    }
                     if (state.upcoming.isNotEmpty()) {
                         NavigationBarItem(
                             selected = false,

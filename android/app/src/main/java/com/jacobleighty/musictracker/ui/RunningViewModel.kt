@@ -4,16 +4,10 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.google.gson.Gson
-import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.RunningDayEntry
 import com.jacobleighty.musictracker.data.RunningWeek
-import com.jacobleighty.musictracker.widget.WidgetRefreshWorker
 import com.jacobleighty.musictracker.widget.updateAllWidgets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,9 +29,7 @@ data class RunningUiState(
     val isEditing: Boolean = false,
     val editToken: String? = null,
     val saveError: String? = null,
-    val showPasswordDialog: Boolean = false,
     val showAddModal: Boolean = false,
-    val pendingAdd: Boolean = false,
     val expandedWeekStart: String? = null,
     val activeTab: RunningTab = RunningTab.LOG,
     val showEditModal: Boolean = false,
@@ -46,15 +38,17 @@ data class RunningUiState(
 )
 
 class RunningViewModel(app: Application) : AndroidViewModel(app) {
-    private val api   = ApiService.create()
-    private val prefs = app.getSharedPreferences("music_prefs", Context.MODE_PRIVATE)
+    private val api = ApiService.create()
 
     private val _uiState = MutableStateFlow(RunningUiState())
     val uiState: StateFlow<RunningUiState> = _uiState.asStateFlow()
 
     init {
-        val token = prefs.getString(Constants.PREF_EDIT_TOKEN, null)
-        if (token != null) _uiState.update { it.copy(editToken = token, isEditing = true) }
+        viewModelScope.launch {
+            EditModeManager.editToken.collect { token ->
+                _uiState.update { it.copy(editToken = token, isEditing = token != null) }
+            }
+        }
         loadAll()
     }
 
@@ -97,22 +91,8 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
 
     fun handleAddNew() {
         if (_uiState.value.isEditing) _uiState.update { it.copy(showAddModal = true) }
-        else _uiState.update { it.copy(pendingAdd = true, showPasswordDialog = true) }
     }
 
-    fun enterEditMode(password: String) {
-        prefs.edit().putString(Constants.PREF_EDIT_TOKEN, password).apply()
-        val pending = _uiState.value.pendingAdd
-        _uiState.update { it.copy(editToken = password, isEditing = true, showPasswordDialog = false, pendingAdd = false,
-            showAddModal = pending) }
-    }
-
-    fun exitEditMode() {
-        prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
-        _uiState.update { it.copy(editToken = null, isEditing = false) }
-    }
-
-    fun dismissPasswordDialog() = _uiState.update { it.copy(showPasswordDialog = false, pendingAdd = false) }
     fun closeAddModal() = _uiState.update { it.copy(showAddModal = false, saveError = null) }
     fun toggleExpanded(weekStart: String) = _uiState.update {
         it.copy(expandedWeekStart = if (it.expandedWeekStart == weekStart) null else weekStart)
@@ -133,12 +113,12 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
                 res.body() ?: error("Empty response")
             }.onSuccess {
                 _uiState.update { it.copy(showAddModal = false) }
-                enqueueWidgetRefresh()
+                DataChangeEvents.emit()
                 loadAll()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
-                    prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
-                    _uiState.update { it.copy(editToken = null, isEditing = false, saveError = "Incorrect password.") }
+                    EditModeManager.exitEditMode()
+                    _uiState.update { it.copy(saveError = "Incorrect password.") }
                 } else {
                     _uiState.update { it.copy(saveError = "Save failed — please try again.") }
                 }
@@ -167,12 +147,12 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
                 res.body() ?: error("Empty response")
             }.onSuccess {
                 _uiState.update { it.copy(showEditModal = false, editingEntry = null) }
-                enqueueWidgetRefresh()
+                DataChangeEvents.emit()
                 loadAll()
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
-                    prefs.edit().remove(Constants.PREF_EDIT_TOKEN).apply()
-                    _uiState.update { it.copy(editToken = null, isEditing = false, editError = "Incorrect password.") }
+                    EditModeManager.exitEditMode()
+                    _uiState.update { it.copy(editError = "Incorrect password.") }
                 } else {
                     _uiState.update { it.copy(editError = "Update failed — please try again.") }
                 }
@@ -184,18 +164,10 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
         val token = _uiState.value.editToken ?: return
         viewModelScope.launch {
             runCatching { api.deleteRunEntry(id, token) }.onSuccess {
-                enqueueWidgetRefresh()
+                DataChangeEvents.emit()
                 loadAll()
             }
         }
-    }
-
-    private fun enqueueWidgetRefresh() {
-        WorkManager.getInstance(getApplication()).enqueue(
-            OneTimeWorkRequestBuilder<WidgetRefreshWorker>()
-                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-                .build()
-        )
     }
 
     private fun warmWidgetCache(weeks: List<RunningWeek>) {

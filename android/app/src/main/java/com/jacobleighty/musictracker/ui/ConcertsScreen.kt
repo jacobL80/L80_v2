@@ -65,9 +65,6 @@ fun ConcertsScreen(vm: ConcertsViewModel = viewModel(), onOpenDrawer: () -> Unit
             state.fetchError -> CCenteredText("Could not load data.")
             else             -> CMainContent(state, vm, onOpenDrawer)
         }
-        if (state.showPasswordDialog) {
-            PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
-        }
         state.editingConcert?.let { concert ->
             val bandNames = remember(state.upcoming, state.attended) {
                 (state.upcoming + state.attended).mapNotNull { it.band.takeIf { b -> b.isNotEmpty() } }.distinct().sorted()
@@ -110,39 +107,24 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
     Scaffold(
         containerColor = CPageBg,
         topBar = {
-            Column {
-                if (state.isEditing) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(CAccent)
-                            .statusBarsPadding()
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("EDIT MODE", color = Color.White, fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp, letterSpacing = 2.sp)
-                        TextButton(onClick = vm::exitEditMode) {
-                            Text("Done", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                        }
-                    }
-                }
-                state.saveError?.let {
-                    Box(modifier = Modifier.fillMaxWidth().background(CAccentLight)
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    ) { Text(it, color = CAccent, fontSize = 14.sp) }
-                }
+            state.saveError?.let {
+                Box(modifier = Modifier.fillMaxWidth().background(CAccentLight)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                ) { Text(it, color = CAccent, fontSize = 14.sp) }
             }
         },
         bottomBar = {
             Column {
                 HorizontalDivider(color = CBorder, thickness = 1.dp)
                 NavigationBar(containerColor = CCardBg, tonalElevation = 0.dp) {
-                    NavigationBarItem(
-                        selected = false, onClick = vm::handleAddNew,
-                        icon  = { Icon(Icons.Default.Add, null) },
-                        label = { Text("Add", letterSpacing = 1.sp) },
-                        colors = cAddNavColors(),
-                    )
+                    if (state.isEditing) {
+                        NavigationBarItem(
+                            selected = false, onClick = vm::handleAddNew,
+                            icon  = { Icon(Icons.Default.Add, null) },
+                            label = { Text("Add", letterSpacing = 1.sp) },
+                            colors = cAddNavColors(),
+                        )
+                    }
                     NavigationBarItem(
                         selected = state.view == ConcertViewType.SCHEDULE && !navFocusPast,
                         onClick  = {

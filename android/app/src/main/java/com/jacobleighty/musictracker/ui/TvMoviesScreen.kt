@@ -64,9 +64,6 @@ fun TvMoviesScreen(vm: TvMoviesViewModel = viewModel(), onOpenDrawer: () -> Unit
             state.fetchError -> TCenteredText("Could not load data.")
             else             -> TMainContent(state, vm, onOpenDrawer)
         }
-        if (state.showPasswordDialog) {
-            PasswordDialog(onConfirm = vm::enterEditMode, onDismiss = vm::dismissPasswordDialog)
-        }
         val programNames = remember(state) {
             (state.upcoming + state.expected + state.watchlist + state.watched)
                 .map { it.programName }.filter { it.isNotEmpty() }.distinct().sorted()
@@ -93,25 +90,9 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
     Scaffold(
         containerColor = TPageBg,
         topBar = {
-            Column {
-                if (state.isEditing) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(TAccent)
-                            .statusBarsPadding()
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("EDIT MODE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 2.sp)
-                        TextButton(onClick = vm::exitEditMode) {
-                            Text("Done", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                        }
-                    }
-                }
-                state.saveError?.let {
-                    Box(modifier = Modifier.fillMaxWidth().background(TAccentLight).padding(horizontal = 16.dp, vertical = 10.dp)) {
-                        Text(it, color = TAccent, fontSize = 14.sp)
-                    }
+            state.saveError?.let {
+                Box(modifier = Modifier.fillMaxWidth().background(TAccentLight).padding(horizontal = 16.dp, vertical = 10.dp)) {
+                    Text(it, color = TAccent, fontSize = 14.sp)
                 }
             }
         },
@@ -119,12 +100,14 @@ private fun TMainContent(state: TvMoviesUiState, vm: TvMoviesViewModel, onOpenDr
             Column {
                 HorizontalDivider(color = TBorder, thickness = 1.dp)
                 NavigationBar(containerColor = TCardBg, tonalElevation = 0.dp) {
-                    NavigationBarItem(
-                        selected = false, onClick = vm::handleAddNew,
-                        icon  = { Icon(Icons.Default.Add, null) },
-                        label = { Text("Add", letterSpacing = 1.sp) },
-                        colors = tAddNavColors(),
-                    )
+                    if (state.isEditing) {
+                        NavigationBarItem(
+                            selected = false, onClick = vm::handleAddNew,
+                            icon  = { Icon(Icons.Default.Add, null) },
+                            label = { Text("Add", letterSpacing = 1.sp) },
+                            colors = tAddNavColors(),
+                        )
+                    }
                     NavigationBarItem(
                         selected = state.view == TvViewType.SCHEDULE,
                         onClick  = { vm.setView(TvViewType.SCHEDULE) },
@@ -208,7 +191,7 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
         Box(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                    .then(if (isEditing || watchable) Modifier.padding(end = 34.dp) else Modifier),
+                    .then(if (isEditing) Modifier.padding(end = 34.dp) else Modifier),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
@@ -236,7 +219,7 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
                     }
                 }
             }
-            if (watchable || isEditing) {
+            if (isEditing) {
                 Row(modifier = Modifier.align(Alignment.TopEnd).padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (watchable || past || imminent) {
                         val watchColor = if (watchable) toWatchGreen else Color(0xFF5A9A5A)
@@ -245,12 +228,10 @@ private fun TvCard(show: TvShow, isEditing: Boolean, onEdit: (TvShow) -> Unit, o
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
                             border = BorderStroke(1.5.dp, watchColor),
                         ) { Text("✓", color = watchColor, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
-                        if (isEditing) Spacer(Modifier.width(4.dp))
+                        Spacer(Modifier.width(4.dp))
                     }
-                    if (isEditing) {
-                        IconButton(onClick = { onEdit(show) }, modifier = Modifier.size(28.dp)) {
-                            Icon(Icons.Default.Edit, null, tint = TTextDimmer, modifier = Modifier.size(15.dp))
-                        }
+                    IconButton(onClick = { onEdit(show) }, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Edit, null, tint = TTextDimmer, modifier = Modifier.size(15.dp))
                     }
                 }
             }

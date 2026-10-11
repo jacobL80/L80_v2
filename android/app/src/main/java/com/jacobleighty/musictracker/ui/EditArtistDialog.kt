@@ -88,6 +88,10 @@ fun EditArtistDialog(
                                 .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), RoundedCornerShape(4.dp)),
                         ) {
                             nameSuggestions.forEach { suggestion ->
+                                // A band with several releases pending is listed once per release; say which
+                                val detail = if (nameSuggestions.count { it.name.equals(suggestion.name, ignoreCase = true) } > 1)
+                                    suggestion.albumTitle.ifBlank { suggestion.nextRelease }.ifBlank { suggestion.lastRelease }
+                                else ""
                                 TextButton(
                                     onClick = {
                                         form = suggestion
@@ -96,7 +100,8 @@ fun EditArtistDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                                 ) {
-                                    Text(suggestion.name, modifier = Modifier.fillMaxWidth())
+                                    Text(if (detail.isBlank()) suggestion.name else "${suggestion.name} — $detail",
+                                        modifier = Modifier.fillMaxWidth())
                                 }
                             }
                         }

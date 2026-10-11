@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
@@ -42,6 +42,8 @@ const BarChartIcon = () => (
 
 const API_URL     = '/api/artists.php';
 const HISTORY_URL = '/api/history.php';
+
+const fetchArtists = () => fetch(API_URL).then(r => { if (!r.ok) throw new Error(); return r.json(); });
 
 const EMPTY_ARTIST = {
   name: '', lastRelease: '', nextRelease: '', albumTitle: '',
@@ -95,6 +97,9 @@ const formatLastDate = (s) => {
   if (month) return `${month} ${year}`;
   return String(year);
 };
+// A band's last release only ever moves forward
+const laterRelease = (current, released) => current && parseDate(current) > parseDate(released) ? current : released;
+const sameBand     = (a, b) => a.name.trim().toLowerCase() === b.name.trim().toLowerCase();
 
 // ─── Password modal ───────────────────────────────────────────────────────────
 
@@ -199,11 +204,15 @@ const ArtistForm = ({ artist, onSave, onDelete, onCancel, allArtists }) => {
             autoFocus />
           {suggestions.length > 0 && (
             <div className="autocompleteDrop">
-              {suggestions.map((a, i) => (
-                <button key={a.id} className={`autocompleteItem${i === sugIdx ? ' autocompleteItem--active' : ''}`} onClick={() => selectSuggestion(a)}>
-                  {a.name}
-                </button>
-              ))}
+              {suggestions.map((a, i) => {
+                // A band with several releases pending is listed once per release; say which
+                const detail = suggestions.filter(s => sameBand(s, a)).length > 1 && (a.albumTitle || a.nextRelease || a.lastRelease);
+                return (
+                  <button key={a.id} className={`autocompleteItem${i === sugIdx ? ' autocompleteItem--active' : ''}`} onClick={() => selectSuggestion(a)}>
+                    {a.name}{detail && <span className="musicNotes"> — {detail}</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -422,6 +431,7 @@ const Music = () => {
   const [showPassModal,   setPassModal]  = useState(false);
   const [pendingAdd,      setPendingAdd] = useState(false);
   const [history,         setHistory]   = useState([]);
+  const acquireQueue = useRef(Promise.resolve());
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view') === 'history' ? 'timeline' : 'schedule';
 
@@ -451,8 +461,7 @@ const Music = () => {
 
   // Fetch artists
   useEffect(() => {
-    fetch(API_URL)
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    fetchArtists()
       .then(data => { setArtists(data); setLoading(false); })
       .catch(() => { setFetchErr(true); setLoading(false); });
   }, []);
@@ -525,7 +534,21 @@ const Music = () => {
     }
   };
 
-  const acquireArtist = async (artist) => {
+  // One at a time: two entries for the same band fold into each other, so the second has to see
+  // what the first one did.
+  const acquireArtist = (artist) => {
+    acquireQueue.current = acquireQueue.current.then(() => acquireNow(artist)).catch(() => {});
+  };
+
+  const acquireNow = async (card) => {
+    // Work from the server's current list: an earlier acquire may have changed or removed this entry
+    let latest;
+    try { latest = await fetchArtists(); }
+    catch { setSaveErr('Network error — please try again.'); return; }
+    setArtists(latest);
+    const artist = latest.find(a => a.id === card.id);
+    if (!artist || !artist.nextRelease) return;
+
     // Optimistically add to history
     const tempEntry = {
       id:           `temp-${Date.now()}`,
@@ -552,12 +575,33 @@ const Music = () => {
       }
     } catch {}
 
-    await saveArtist({
-      ...artist,
-      nextRelease: '',
-      albumTitle: '',
-      lastRelease: artist.nextRelease,
-    }).catch(() => {});
+    const others = latest.filter(a => a.id !== artist.id && sameBand(a, artist));
+    try {
+      if (!others.length) {
+        await saveArtist({
+          ...artist,
+          nextRelease: '',
+          albumTitle: '',
+          lastRelease: laterRelease(artist.lastRelease, artist.nextRelease),
+        });
+        return;
+      }
+      // A band with several releases pending has an entry for each. This one is out, so it is folded
+      // into the band's other entries and removed, rather than leaving the band listed twice.
+      for (const other of others) {
+        await saveArtist({
+          ...other,
+          lastRelease: laterRelease(other.lastRelease, artist.nextRelease),
+          url: other.url || artist.url,
+          notes: other.notes || artist.notes,
+          incompleteCollection: other.incompleteCollection || artist.incompleteCollection,
+        });
+      }
+      await deleteArtist(artist.id);
+    } catch (err) {
+      setSaveErr(err.message || 'Save failed — please try again.');
+      fetchArtists().then(setArtists).catch(() => {});
+    }
   };
 
   const markHiatus = (artist) => saveArtist({ ...artist, hiatus: true }).catch(() => {});

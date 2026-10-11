@@ -3,6 +3,7 @@ package com.jacobleighty.musictracker.widget
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,9 +44,9 @@ class UpcomingWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val upcoming = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
-        if (upcoming.isEmpty()) return  // keep last rendered frame rather than blanking
+        val initial = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
         provideContent {
+            val upcoming by widgetCacheState("artists_json", Artist::class.java, initial)
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
             val size = LocalSize.current
@@ -56,22 +57,22 @@ class UpcomingWidget : GlanceAppWidget() {
 
     private suspend fun fetchUpcoming(context: Context): List<Artist> = withContext(Dispatchers.IO) {
         val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
-        val cached = loadCachedArtists(prefs).takeIf { it.isNotEmpty() }
+        val cached = loadCachedArtists(prefs)
         cached ?: try {
             val artists = ApiService.create().getArtists()
                 .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
                 .sortedBy { DateUtils.parseDate(it.nextRelease) }
-            if (artists.isNotEmpty()) prefs.edit().putString("artists_json", Gson().toJson(artists)).commit()
+            prefs.edit().putString("artists_json", Gson().toJson(artists)).commit()
             artists
         } catch (_: Exception) { emptyList() }
     }
 
-    private fun loadCachedArtists(prefs: SharedPreferences): List<Artist> {
-        val json = prefs.getString("artists_json", null) ?: return emptyList()
+    private fun loadCachedArtists(prefs: SharedPreferences): List<Artist>? {
+        val json = prefs.getString("artists_json", null) ?: return null
         return try {
             val type = object : TypeToken<List<Artist>>() {}.type
             Gson().fromJson(json, type)
-        } catch (_: Exception) { emptyList() }
+        } catch (_: Exception) { null }
     }
 }
 
@@ -121,7 +122,7 @@ private fun WidgetContent(artists: List<Artist>, twoColumn: Boolean, singleColum
         if (twoColumn) {
             val chunks = artists.chunked(2)
             LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-                items(chunks, itemId = { row -> row.first().name.hashCode().toLong() }) { rowArtists ->
+                items(chunks, itemId = { row -> row.first().id.toLong() }) { rowArtists ->
                     Row(
                         modifier = GlanceModifier.fillMaxWidth().padding(vertical = 3.dp),
                         horizontalAlignment = Alignment.Horizontal.Start,
@@ -135,7 +136,7 @@ private fun WidgetContent(artists: List<Artist>, twoColumn: Boolean, singleColum
             }
         } else {
             LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-                items(artists, itemId = { it.name.hashCode().toLong() }) { a ->
+                items(artists, itemId = { it.id.toLong() }) { a ->
                     WidgetCard(a, modifier = GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), large = true)
                 }
             }

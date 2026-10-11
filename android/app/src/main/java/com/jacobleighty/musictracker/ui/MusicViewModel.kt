@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
 
 enum class ViewType { SCHEDULE, HISTORY }
@@ -36,6 +38,7 @@ data class MusicUiState(
 
 class MusicViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = ArtistRepository()
+    private val acquireLock = Mutex()
 
     private val _uiState = MutableStateFlow(MusicUiState())
     val uiState: StateFlow<MusicUiState> = _uiState.asStateFlow()
@@ -115,21 +118,7 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
 
     fun saveArtist(artist: Artist) {
         val token = _uiState.value.editToken ?: return
-        val toSave = if (artist.id == 0) {
-            val existing = allArtistsList().find { it.name.equals(artist.name, ignoreCase = true) }
-            if (existing != null) {
-                existing.copy(
-                    name = artist.name,
-                    albumTitle = artist.albumTitle.ifBlank { existing.albumTitle },
-                    nextRelease = artist.nextRelease.ifBlank { existing.nextRelease },
-                    lastRelease = artist.lastRelease.ifBlank { existing.lastRelease },
-                    notes = artist.notes.ifBlank { existing.notes },
-                    url = artist.url.ifBlank { existing.url },
-                    hiatus = artist.hiatus || existing.hiatus,
-                    incompleteCollection = artist.incompleteCollection || existing.incompleteCollection,
-                )
-            } else artist
-        } else artist
+        val toSave = if (artist.id == 0) placeNewEntry(artist) else artist
         val normalized = toSave.copy(
             nextRelease = DateUtils.lockYearIfMD(toSave.nextRelease),
             lastRelease = DateUtils.lockYearIfMD(toSave.lastRelease),
@@ -142,16 +131,62 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingArtist = null) }
                 updateSections(allArtists)
                 DataChangeEvents.emit()
-                viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
-            }.onFailure { err ->
-                if (err.message == "UNAUTHORIZED") {
-                    EditModeManager.exitEditMode()
-                    _uiState.update { it.copy(saveError = "Incorrect password — re-enable Edit Mode in Settings.") }
-                } else {
-                    _uiState.update { it.copy(saveError = "Save failed — please try again.") }
-                }
-            }
+                warmWidgetCache(allArtists)
+            }.onFailure(::reportSaveFailure)
         }
+    }
+
+    private fun reportSaveFailure(err: Throwable) {
+        if (err.message == "UNAUTHORIZED") {
+            EditModeManager.exitEditMode()
+            _uiState.update { it.copy(saveError = "Incorrect password — re-enable Edit Mode in Settings.") }
+        } else {
+            _uiState.update { it.copy(saveError = "Save failed — please try again.") }
+        }
+    }
+
+    /**
+     * Where a newly added entry goes when the band is already listed. A band can have more than
+     * one release pending, so the new entry only updates an existing one if it is that same
+     * release, or if that entry has nothing definite pending yet. Otherwise it is added beside it.
+     */
+    private fun placeNewEntry(new: Artist): Artist {
+        val sameBand = allArtistsList().filter { it.name.equals(new.name, ignoreCase = true) }
+        val existing = when {
+            sameBand.isEmpty()        -> return new
+            new.nextRelease.isBlank() -> sameBand.first()
+            else -> sameBand.firstOrNull { isSameRelease(it, new) }
+                ?: sameBand.firstOrNull { it.nextRelease.isBlank() }
+                // an untitled "expected sometime" entry stands in for whatever gets announced
+                ?: sameBand.firstOrNull { it.albumTitle.isBlank() && !DateUtils.hasFullDate(it.nextRelease) }
+        }
+        if (existing == null) {
+            val known = sameBand.first()
+            return new.copy(
+                lastRelease = new.lastRelease.ifBlank { known.lastRelease },
+                url = new.url.ifBlank { known.url },
+                incompleteCollection = new.incompleteCollection || known.incompleteCollection,
+            )
+        }
+        return existing.copy(
+            name = new.name,
+            albumTitle = new.albumTitle.ifBlank { existing.albumTitle },
+            nextRelease = new.nextRelease.ifBlank { existing.nextRelease },
+            lastRelease = new.lastRelease.ifBlank { existing.lastRelease },
+            notes = new.notes.ifBlank { existing.notes },
+            url = new.url.ifBlank { existing.url },
+            hiatus = new.hiatus || existing.hiatus,
+            incompleteCollection = new.incompleteCollection || existing.incompleteCollection,
+        )
+    }
+
+    // Same album title; or, when a title is missing, the same date
+    private fun isSameRelease(existing: Artist, new: Artist): Boolean = when {
+        existing.nextRelease.isBlank() -> false
+        existing.albumTitle.isNotBlank() && new.albumTitle.isNotBlank() ->
+            existing.albumTitle.trim().equals(new.albumTitle.trim(), ignoreCase = true)
+        else -> DateUtils.hasFullDate(existing.nextRelease) == DateUtils.hasFullDate(new.nextRelease) &&
+            DateUtils.parseDate(existing.nextRelease) == DateUtils.parseDate(new.nextRelease)
     }
 
     fun deleteArtist(id: Int) {
@@ -162,6 +197,7 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingArtist = null) }
                 updateSections(allArtists)
                 DataChangeEvents.emit()
+                warmWidgetCache(allArtists)
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     EditModeManager.exitEditMode()
@@ -174,12 +210,54 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
     fun acquireArtist(artist: Artist) {
         val token = _uiState.value.editToken ?: return
         viewModelScope.launch {
-            repo.acquireArtist(artist, token).onSuccess { entry ->
-                _uiState.update { it.copy(history = listOf(entry) + it.history) }
+            // One at a time, each against the latest data: two entries for the same band fold into
+            // each other, so the second has to see what the first one did.
+            acquireLock.withLock {
+                val entry = allArtistsList().find { it.id == artist.id && it.nextRelease.isNotEmpty() } ?: return@withLock
+                repo.acquireArtist(entry, token).onSuccess { logged ->
+                    _uiState.update { it.copy(history = listOf(logged) + it.history) }
+                }
+                _uiState.update { it.copy(saveError = null) }
+                val others = allArtistsList().filter { it.id != entry.id && it.name.equals(entry.name, ignoreCase = true) }
+                runCatching {
+                    if (others.isEmpty()) {
+                        put(entry.copy(nextRelease = "", albumTitle = "",
+                            lastRelease = laterRelease(entry.lastRelease, entry.nextRelease)), token)
+                    } else {
+                        foldRelease(entry, others, token)
+                    }
+                }.onFailure(::reportSaveFailure)
+                DataChangeEvents.emit()
+                warmWidgetCache(allArtistsList())
             }
-            saveArtist(artist.copy(nextRelease = "", albumTitle = "", lastRelease = artist.nextRelease))
         }
     }
+
+    /**
+     * A band with several releases pending has an entry for each. When one comes out it is folded
+     * into the band's other entries and removed, rather than leaving the band listed twice.
+     */
+    private suspend fun foldRelease(released: Artist, others: List<Artist>, token: String) {
+        others.forEach { other ->
+            put(other.copy(
+                lastRelease = laterRelease(other.lastRelease, released.nextRelease),
+                url = other.url.ifBlank { released.url },
+                notes = other.notes.ifBlank { released.notes },
+                incompleteCollection = other.incompleteCollection || released.incompleteCollection,
+            ), token)
+        }
+        repo.deleteArtist(released.id, token).getOrThrow()
+        updateSections(allArtistsList().filter { it.id != released.id })
+    }
+
+    private suspend fun put(artist: Artist, token: String) {
+        updateSections(buildUpdatedList(repo.saveArtist(artist, token).getOrThrow()))
+    }
+
+    // A band's last release only ever moves forward
+    private fun laterRelease(current: String, released: String): String = DateUtils.lockYearIfMD(
+        if (current.isNotBlank() && DateUtils.parseDate(current).isAfter(DateUtils.parseDate(released))) current else released
+    )
 
     private fun buildUpdatedList(saved: Artist): List<Artist> {
         val current = allArtistsList()
@@ -200,7 +278,6 @@ class MusicViewModel(app: Application) : AndroidViewModel(app) {
         val upcoming = artists
             .filter { it.nextRelease.isNotEmpty() && DateUtils.hasFullDate(it.nextRelease) }
             .sortedBy { DateUtils.parseDate(it.nextRelease) }
-        if (upcoming.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("artists_json", Gson().toJson(upcoming)).commit()

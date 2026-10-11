@@ -171,7 +171,6 @@ class RunningViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun warmWidgetCache(weeks: List<RunningWeek>) {
-        if (weeks.isEmpty()) return
         val ctx = getApplication<Application>()
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)

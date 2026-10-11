@@ -42,7 +42,6 @@ class AllViewModel(app: Application) : AndroidViewModel(app) {
             .filter { DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) >= today }
             .sortedBy { DateUtils.parseDate(it.date) }
             .take(10)
-        if (upcoming.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("all_items_json", Gson().toJson(upcoming)).commit()

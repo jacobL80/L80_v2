@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,38 +42,44 @@ class RunningWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val (weeks, yearTotal, weekTotal) = runCatching { fetchData(context) }
-            .getOrDefault(Triple(emptyList(), 0f, 0f))
-        if (weeks.isEmpty()) return  // keep last rendered frame rather than blanking
-        provideContent { RunningWidgetContent(weekTotal, yearTotal, weeks.takeLast(10)) }
+        val initial = runCatching { fetchWeeks(context) }.getOrDefault(emptyList())
+        provideContent {
+            val cached by widgetCacheState("running_weeks_json", RunningWeek::class.java, initial)
+            val (weeks, yearTotal, weekTotal) = summarize(cached)
+            RunningWidgetContent(weekTotal, yearTotal, weeks.takeLast(10))
+        }
     }
 
-    private suspend fun fetchData(context: Context): Triple<List<RunningWeek>, Float, Float> =
+    private suspend fun fetchWeeks(context: Context): List<RunningWeek> =
         withContext(Dispatchers.IO) {
             val prefs = context.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
 
             // Prefer cache (warmed by RunningViewModel on every successful app fetch).
-            // Only hit the network when the cache is empty (e.g. first placement).
+            // Only hit the network when nothing is cached yet (e.g. first placement); an empty
+            // cached list is real data (every run was removed), not a miss.
             val cachedWeeks: List<RunningWeek>? = prefs.getString("running_weeks_json", null)?.let { json ->
                 try { Gson().fromJson(json, object : TypeToken<List<RunningWeek>>() {}.type) }
                 catch (_: Exception) { null }
-            }?.takeIf { (it as List<*>).isNotEmpty() }
-
-            val weeks: List<RunningWeek> = cachedWeeks ?: try {
-                val result = ApiService.create().getRunningWeeks().sortedBy { it.weekStart }
-                if (result.isNotEmpty()) prefs.edit().putString("running_weeks_json", Gson().toJson(result)).commit()
-                result
-            } catch (_: Exception) {
-                return@withContext Triple(emptyList<RunningWeek>(), 0f, 0f)
             }
 
-            val today = LocalDate.now()
-            val yearTotal = weeks.filter { it.year == today.year }.sumOf { it.total.toDouble() }.toFloat()
-            val thisMonday = today.with(DayOfWeek.MONDAY).toString()
-            val weekTotal = weeks.find { it.weekStart == thisMonday }?.total ?: 0f
-
-            Triple(weeks, yearTotal, weekTotal)
+            cachedWeeks ?: try {
+                val result = ApiService.create().getRunningWeeks().sortedBy { it.weekStart }
+                prefs.edit().putString("running_weeks_json", Gson().toJson(result)).commit()
+                result
+            } catch (_: Exception) {
+                emptyList()
+            }
         }
+
+    private fun summarize(cached: List<RunningWeek>): Triple<List<RunningWeek>, Float, Float> {
+        // The app caches weeks newest-first (API order) and WidgetRefreshWorker oldest-first.
+        val weeks = cached.sortedBy { it.weekStart }
+        val today = LocalDate.now()
+        val yearTotal = weeks.filter { it.year == today.year }.sumOf { it.total.toDouble() }.toFloat()
+        val thisMonday = today.with(DayOfWeek.MONDAY).toString()
+        val weekTotal = weeks.find { it.weekStart == thisMonday }?.total ?: 0f
+        return Triple(weeks, yearTotal, weekTotal)
+    }
 }
 
 class OpenRunningAction : ActionCallback {

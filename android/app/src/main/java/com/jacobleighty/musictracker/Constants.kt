@@ -11,4 +11,5 @@ object Constants {
     const val DEFAULT_NOTIF_HOUR = 7
 
     const val PREF_DARK_MODE = "dark_mode"
+    const val PREF_BAND_SORT = "band_sort"
 }

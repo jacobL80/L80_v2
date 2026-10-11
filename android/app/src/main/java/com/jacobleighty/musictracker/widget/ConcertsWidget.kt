@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,9 +45,9 @@ class ConcertsWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val upcoming = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
-        if (upcoming.isEmpty()) return  // keep last rendered frame rather than blanking
+        val initial = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
         provideContent {
+            val upcoming by widgetCacheState("concerts_json", Concert::class.java, initial)
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
             val size = LocalSize.current
@@ -60,13 +61,13 @@ class ConcertsWidget : GlanceAppWidget() {
         val cached: List<Concert>? = prefs.getString("concerts_json", null)?.let { json ->
             try { Gson().fromJson(json, object : TypeToken<List<Concert>>() {}.type) }
             catch (_: Exception) { null }
-        }?.takeIf { (it as List<*>).isNotEmpty() }
+        }
         cached ?: try {
             val concerts = ApiService.create().getConcerts()
                 .filter { !it.attended && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
                 .sortedBy { DateUtils.parseDate(it.date) }
                 .take(10)
-            if (concerts.isNotEmpty()) prefs.edit().putString("concerts_json", Gson().toJson(concerts)).commit()
+            prefs.edit().putString("concerts_json", Gson().toJson(concerts)).commit()
             concerts
         } catch (_: Exception) { emptyList() }
     }

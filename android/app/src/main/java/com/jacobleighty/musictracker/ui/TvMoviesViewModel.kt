@@ -124,7 +124,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingShow = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
-                viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
+                warmWidgetCache(all)
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     EditModeManager.exitEditMode()
@@ -144,6 +144,7 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingShow = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
+                warmWidgetCache(all)
             }
         }
     }
@@ -158,7 +159,6 @@ class TvMoviesViewModel(app: Application) : AndroidViewModel(app) {
             .filter { !it.watched && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
             .sortedBy { DateUtils.parseDate(it.date) }
             .take(10)
-        if (upcoming.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("tvmovies_json", Gson().toJson(upcoming)).commit()

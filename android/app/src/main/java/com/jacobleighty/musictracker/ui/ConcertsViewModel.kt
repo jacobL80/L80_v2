@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.jacobleighty.musictracker.Constants
 import com.jacobleighty.musictracker.data.ApiService
 import com.jacobleighty.musictracker.data.Concert
 import com.jacobleighty.musictracker.widget.updateAllWidgets
@@ -15,7 +16,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-enum class ConcertViewType { SCHEDULE, HISTORY }
+enum class ConcertViewType { SCHEDULE, HISTORY, BANDS }
+
+enum class BandSort(val label: String) {
+    NAME_ASC("A–Z"),
+    NAME_DESC("Z–A"),
+    RECENT_DESC("Most recent"),
+    RECENT_ASC("Least recent"),
+    COUNT_DESC("Most concerts"),
+    COUNT_ASC("Fewest concerts"),
+}
 
 data class ConcertsUiState(
     val loading: Boolean = true,
@@ -23,6 +33,8 @@ data class ConcertsUiState(
     val upcoming: List<Concert> = emptyList(),
     val attended: List<Concert> = emptyList(),
     val view: ConcertViewType = ConcertViewType.SCHEDULE,
+    val bandSort: BandSort = BandSort.NAME_ASC,
+    val expandedBands: Set<String> = emptySet(),
     val isEditing: Boolean = false,
     val editToken: String? = null,
     val saveError: String? = null,
@@ -31,8 +43,9 @@ data class ConcertsUiState(
 
 class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
     private val api = ApiService.create()
+    private val prefs = app.getSharedPreferences(Constants.NOTIF_PREFS, Context.MODE_PRIVATE)
 
-    private val _uiState = MutableStateFlow(ConcertsUiState())
+    private val _uiState = MutableStateFlow(ConcertsUiState(bandSort = savedBandSort()))
     val uiState: StateFlow<ConcertsUiState> = _uiState.asStateFlow()
 
     init {
@@ -76,24 +89,26 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
     fun openEdit(concert: Concert) = _uiState.update { it.copy(editingConcert = concert) }
     fun closeEdit() = _uiState.update { it.copy(editingConcert = null, saveError = null) }
     fun setView(v: ConcertViewType) = _uiState.update { it.copy(view = v) }
+    fun toggleBand(key: String) = _uiState.update {
+        it.copy(expandedBands = if (key in it.expandedBands) it.expandedBands - key else it.expandedBands + key)
+    }
+
+    // The band sort is remembered across launches
+    fun setBandSort(sort: BandSort) {
+        _uiState.update { it.copy(bandSort = sort) }
+        prefs.edit().putString(Constants.PREF_BAND_SORT, sort.name).apply()
+    }
+
+    private fun savedBandSort(): BandSort {
+        val saved = prefs.getString(Constants.PREF_BAND_SORT, null)
+        return BandSort.entries.find { it.name == saved } ?: BandSort.NAME_ASC
+    }
 
     fun saveConcert(concert: Concert) {
         val token = _uiState.value.editToken ?: return
-        val toSave = if (concert.id == 0) {
-            val existing = allConcerts().find { it.band.equals(concert.band, ignoreCase = true) }
-            if (existing != null) {
-                existing.copy(
-                    band = concert.band,
-                    tourName = concert.tourName.ifBlank { existing.tourName },
-                    venue = concert.venue.ifBlank { existing.venue },
-                    date = concert.date.ifBlank { existing.date },
-                    notes = concert.notes.ifBlank { existing.notes },
-                    attendees = concert.attendees.ifBlank { existing.attendees },
-                    attended = concert.attended || existing.attended,
-                )
-            } else concert
-        } else concert
-        val normalized = toSave.copy(date = DateUtils.lockYearIfMD(toSave.date))
+        // Unlike artists and shows, a new concert is never merged into an existing one by name:
+        // a band can have any number of concerts
+        val normalized = concert.copy(date = DateUtils.lockYearIfMD(concert.date))
         viewModelScope.launch {
             _uiState.update { it.copy(saveError = null) }
             val result = runCatching {
@@ -115,7 +130,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingConcert = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
-                viewModelScope.launch(Dispatchers.IO) { updateAllWidgets(getApplication()) }
+                warmWidgetCache(all)
             }.onFailure { err ->
                 if (err.message == "UNAUTHORIZED") {
                     EditModeManager.exitEditMode()
@@ -135,6 +150,7 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
                 _uiState.update { it.copy(editingConcert = null) }
                 updateSections(all)
                 DataChangeEvents.emit()
+                warmWidgetCache(all)
             }
         }
     }
@@ -151,7 +167,6 @@ class ConcertsViewModel(app: Application) : AndroidViewModel(app) {
             .filter { !it.attended && it.date.isNotEmpty() && DateUtils.hasFullDate(it.date) }
             .sortedBy { DateUtils.parseDate(it.date) }
             .take(10)
-        if (upcoming.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             ctx.getSharedPreferences("widget_cache", Context.MODE_PRIVATE)
                 .edit().putString("concerts_json", Gson().toJson(upcoming)).commit()

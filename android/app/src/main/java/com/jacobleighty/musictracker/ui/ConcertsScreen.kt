@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jacobleighty.musictracker.data.Concert
+import java.text.Collator
+import java.time.LocalDate
 import java.util.Calendar
 import kotlin.math.abs
 
@@ -104,6 +107,16 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
     // index of the Past section header in the LazyColumn
     val pastSectionIdx = if (state.upcoming.isNotEmpty()) state.upcoming.size + 2 else 1
 
+    val bands = remember(state.upcoming, state.attended) { groupByBand(state.upcoming + state.attended) }
+    val sortedBands = remember(bands, state.bandSort) { bands.sortedWith(bandComparator(state.bandSort)) }
+
+    // Each view starts at the top of the list
+    fun switchView(view: ConcertViewType) {
+        navFocusPast = false
+        if (state.view != view) coroutineScope.launch { listState.scrollToItem(0) }
+        vm.setView(view)
+    }
+
     Scaffold(
         containerColor = CPageBg,
         topBar = {
@@ -127,10 +140,7 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                     }
                     NavigationBarItem(
                         selected = state.view == ConcertViewType.SCHEDULE && !navFocusPast,
-                        onClick  = {
-                            navFocusPast = false
-                            vm.setView(ConcertViewType.SCHEDULE)
-                        },
+                        onClick  = { switchView(ConcertViewType.SCHEDULE) },
                         icon     = { Icon(Icons.Default.DateRange, null) },
                         label    = { Text("Schedule") },
                         colors   = cDefaultNavColors(),
@@ -148,12 +158,16 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                     )
                     NavigationBarItem(
                         selected = state.view == ConcertViewType.HISTORY,
-                        onClick  = {
-                            navFocusPast = false
-                            vm.setView(ConcertViewType.HISTORY)
-                        },
+                        onClick  = { switchView(ConcertViewType.HISTORY) },
                         icon     = { Icon(Icons.Default.BarChart, null) },
                         label    = { Text("History") },
+                        colors   = cDefaultNavColors(),
+                    )
+                    NavigationBarItem(
+                        selected = state.view == ConcertViewType.BANDS,
+                        onClick  = { switchView(ConcertViewType.BANDS) },
+                        icon     = { Icon(Icons.Default.Groups, null) },
+                        label    = { Text("Bands") },
                         colors   = cDefaultNavColors(),
                     )
                 }
@@ -174,7 +188,11 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
                         Text("CONCERTS", color = CAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 4.sp, modifier = Modifier.padding(start = 4.dp))
                     }
                     Text(
-                        text = if (state.view == ConcertViewType.HISTORY) "Concert History" else "Concert Schedule",
+                        text = when (state.view) {
+                            ConcertViewType.SCHEDULE -> "Concert Schedule"
+                            ConcertViewType.HISTORY  -> "Concert History"
+                            ConcertViewType.BANDS    -> "Concerts by Band"
+                        },
                         color = CTextPrimary, fontSize = 28.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 6.dp),
                     )
@@ -185,6 +203,15 @@ private fun CMainContent(state: ConcertsUiState, vm: ConcertsViewModel, onOpenDr
 
             if (state.view == ConcertViewType.HISTORY) {
                 item { ConcertHistorySection(state.attended) }
+            } else if (state.view == ConcertViewType.BANDS) {
+                if (bands.isEmpty()) {
+                    item { CCenteredText("No concerts yet. Tap Add to get started.") }
+                } else {
+                    item { BandsToolbar(bands.size, state.bandSort, vm::setBandSort) }
+                    items(sortedBands) { band ->
+                        BandCard(band, band.key in state.expandedBands) { vm.toggleBand(band.key) }
+                    }
+                }
             } else {
                 if (state.upcoming.isNotEmpty()) {
                     item { CSectionHeader("Upcoming", CAccent, state.upcoming.size) }
@@ -549,6 +576,151 @@ private fun ConcertTimeline(
                     style  = Stroke(width = if (isSelected) with(density) { 2.5.dp.toPx() } else with(density) { 2.dp.toPx() }),
                 )
             }
+        }
+    }
+}
+
+// ── Bands section ─────────────────────────────────────────────────────────────
+
+private data class BandConcert(val concert: Concert, val date: LocalDate?, val with: String)
+
+private data class BandGroup(val key: String, val name: String, val concerts: List<BandConcert>) {
+    val latest: BandConcert? = concerts.firstOrNull { it.date != null }
+}
+
+// Newest first; undated concerts sit on top while still upcoming, at the bottom once attended
+private val newestFirst = compareBy<BandConcert> { when { it.date != null -> 1; it.concert.attended -> 2; else -> 0 } }
+    .thenByDescending { it.date }
+    .thenByDescending { it.concert.id }
+
+private fun groupByBand(concerts: List<Concert>): List<BandGroup> =
+    concerts
+        .flatMap { c ->
+            // Everyone on the bill: the headliner, then any additional artists
+            val lineup = (listOf(c.band.trim()) + parseAttendeesKt(c.additionalArtists))
+                .filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
+            val date = if (c.date.isNotBlank() && DateUtils.isValidDate(c.date)) DateUtils.parseDate(c.date) else null
+            lineup.map { name ->
+                name to BandConcert(c, date, lineup.filter { it.lowercase() != name.lowercase() }.joinToString(", "))
+            }
+        }
+        .groupBy { (name, _) -> name.lowercase() }
+        .map { (key, entries) -> BandGroup(key, entries.first().first, entries.map { it.second }.sortedWith(newestFirst)) }
+
+// Collator rather than plain string order so accented and lowercase names sort where you'd look for them
+private val bandByName = compareBy<BandGroup, String>(Collator.getInstance()) { DateUtils.sortKey(it.name) }
+
+private fun bandComparator(sort: BandSort): Comparator<BandGroup> = when (sort) {
+    BandSort.NAME_ASC    -> bandByName
+    BandSort.NAME_DESC   -> bandByName.reversed()
+    // Bands with no dated concert stay at the bottom in both directions
+    BandSort.RECENT_DESC -> compareBy<BandGroup> { it.latest == null }.thenByDescending { it.latest?.date }.then(bandByName)
+    BandSort.RECENT_ASC  -> compareBy<BandGroup> { it.latest == null }.thenBy { it.latest?.date }.then(bandByName)
+    BandSort.COUNT_DESC  -> compareByDescending<BandGroup> { it.concerts.size }.then(bandByName)
+    BandSort.COUNT_ASC   -> compareBy<BandGroup> { it.concerts.size }.then(bandByName)
+}
+
+@Composable
+private fun BandsToolbar(count: Int, sort: BandSort, onSort: (BandSort) -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 20.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(modifier = Modifier.width(3.dp).height(14.dp).background(CAccent))
+        Text("BANDS ($count)", color = CAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+            letterSpacing = 3.sp, modifier = Modifier.weight(1f).padding(start = 10.dp))
+        Box {
+            Row(
+                modifier = Modifier
+                    .clip(cCardShape)
+                    .background(CCardBg)
+                    .border(BorderStroke(1.5.dp, CBorder), cCardShape)
+                    .clickable { menuOpen = true }
+                    .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Sort, "Sort", tint = CTextSec, modifier = Modifier.size(16.dp))
+                Text(sort.label, color = CTextPrimary, fontSize = 13.sp, modifier = Modifier.padding(start = 6.dp))
+                Icon(Icons.Default.ArrowDropDown, null, tint = CTextSec, modifier = Modifier.size(20.dp))
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }, containerColor = CCardBg) {
+                BandSort.entries.forEach { option ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(option.label, color = if (option == sort) CAccent else CTextPrimary,
+                                fontWeight = if (option == sort) FontWeight.Bold else FontWeight.Normal)
+                        },
+                        onClick = { menuOpen = false; onSort(option) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BandCard(band: BandGroup, expanded: Boolean, onToggle: () -> Unit) {
+    val count = band.concerts.size
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 4.dp)
+            .height(IntrinsicSize.Min)
+            .clip(cCardShape)
+            .background(CCardBg)
+            .border(BorderStroke(1.5.dp, if (expanded) CAccent else CBorder), cCardShape),
+    ) {
+        Box(modifier = Modifier.width(3.dp).fillMaxHeight().background(CAccent))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClickLabel = if (expanded) "Collapse" else "Expand", onClick = onToggle)
+                    .padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(band.name, color = CTextPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    band.latest?.let {
+                        Text("LATEST · ${DateUtils.formatLastDate(it.concert.date)}", color = CTextSec, fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold, letterSpacing = 1.sp, modifier = Modifier.padding(top = 2.dp))
+                    }
+                }
+                Text(if (count == 1) "1 concert" else "$count concerts", color = CTextSec, fontSize = 12.sp)
+                Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null,
+                    tint = if (expanded) CAccent else CTextDim, modifier = Modifier.size(20.dp))
+            }
+            if (expanded) {
+                band.concerts.forEach { entry ->
+                    HorizontalDivider(color = CBorder)
+                    BandConcertRow(entry)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BandConcertRow(entry: BandConcert) {
+    val concert = entry.concert
+    val dateLabel = if (entry.date != null) DateUtils.formatLastDate(concert.date)
+                    else concert.date.ifBlank { "No date" }.uppercase()
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(dateLabel, color = CAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp,
+            modifier = Modifier.widthIn(min = 92.dp).alignByBaseline())
+        Column(modifier = Modifier.weight(1f).alignByBaseline()) {
+            if (concert.venue.isNotEmpty()) Text(concert.venue, color = CTextPrimary, fontSize = 14.sp)
+            if (concert.tourName.isNotEmpty()) Text(concert.tourName, color = CTextSec, fontSize = 13.sp, fontStyle = FontStyle.Italic)
+            if (entry.with.isNotEmpty()) Text("w/ ${entry.with}", color = CTextSec, fontSize = 12.sp)
+        }
+        if (!concert.attended) {
+            Text("UPCOMING", color = CAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp,
+                modifier = Modifier.alignByBaseline())
         }
     }
 }

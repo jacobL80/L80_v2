@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,9 +61,9 @@ class AllWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val items = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
-        if (items.isEmpty()) return  // keep last rendered frame rather than blanking
+        val initial = runCatching { fetchUpcoming(context) }.getOrDefault(emptyList())
         provideContent {
+            val items by widgetCacheState("all_items_json", AllItem::class.java, initial)
             val prefs = currentState<Preferences>()
             val singleColumn = prefs[SINGLE_COLUMN_KEY] ?: false
             val size = LocalSize.current
@@ -76,14 +77,14 @@ class AllWidget : GlanceAppWidget() {
         val cached: List<AllItem>? = prefs.getString("all_items_json", null)?.let { json ->
             try { Gson().fromJson(json, object : TypeToken<List<AllItem>>() {}.type) }
             catch (_: Exception) { null }
-        }?.takeIf { (it as List<*>).isNotEmpty() }
+        }
         cached ?: try {
             val today = java.time.LocalDate.now()
             val items = ApiService.create().getAllItems()
                 .filter { DateUtils.hasFullDate(it.date) && DateUtils.parseDate(it.date) >= today }
                 .sortedBy { DateUtils.parseDate(it.date) }
                 .take(10)
-            if (items.isNotEmpty()) prefs.edit().putString("all_items_json", Gson().toJson(items)).commit()
+            prefs.edit().putString("all_items_json", Gson().toJson(items)).commit()
             items
         } catch (_: Exception) { emptyList() }
     }

@@ -5,6 +5,7 @@ import '../css/Music.css';
 import '../css/Concerts.css';
 import HamburgerMenu from './HamburgerMenu';
 import ConcertTimeline from './ConcertTimeline';
+import ConcertBands from './ConcertBands';
 import LoadingSpinner from './LoadingSpinner';
 import TruncText from './TruncText';
 
@@ -35,6 +36,8 @@ const parseParts  = (s) => {
 const getYear = (s) => String(expandYear(Number(s.split('/').slice(-1)[0])));
 
 const EMPTY = { band: '', tourName: '', venue: '', date: '', notes: '', attended: false, attendees: '', additionalArtists: '' };
+
+const VIEW_TITLES = { schedule: 'Concert Schedule', history: 'Concert History', bands: 'Concerts by Band' };
 
 const parseAttendees = (s) => s ? s.split(',').map(n => n.trim()).filter(Boolean) : [];
 const joinAttendees  = (arr) => arr.join(', ');
@@ -423,6 +426,12 @@ const ClockIcon = () => (
     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
   </svg>
 );
+const UsersIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -438,8 +447,9 @@ const Concerts = () => {
   const [showPass,      setShowPass]  = useState(false);
   const [pendingAdd,    setPendingAdd]= useState(false);
   const [history,       setHistory]   = useState([]);
-  const [view,          setView]      = useState('schedule'); // 'schedule' | 'history'
+  const [view,          setView]      = useState('schedule'); // 'schedule' | 'history' | 'bands'
   const [navFocus,      setNavFocus]  = useState('upcoming'); // 'upcoming' | 'past'
+  const scrollAreaRef     = useRef(null);
   const pastSectionRef    = useRef(null);
   const pendingScrollPast = useRef(false);
 
@@ -459,7 +469,7 @@ const Concerts = () => {
     ])
       .then(([concerts, artists]) => {
         setConcerts(concerts);
-        setArtistNames(artists.map(a => a.name));
+        setArtistNames([...new Set(artists.map(a => a.name))]);
         setLoading(false);
       })
       .catch(() => { setFetchErr(true); setLoading(false); });
@@ -485,6 +495,13 @@ const Concerts = () => {
     else { setPendingAdd(true); setShowPass(true); }
   };
   const exitEdit = () => { setToken(null); delCookie(); };
+
+  // Each view starts at the top — the page scrolls on desktop, the scroll area on mobile
+  const switchView = (next) => {
+    if (next !== view) { scrollAreaRef.current?.scrollTo(0, 0); window.scrollTo(0, 0); }
+    setView(next);
+    setNavFocus('upcoming');
+  };
 
   const saveConcert = async (form) => {
     const isNew = !form.id;
@@ -540,14 +557,14 @@ const Concerts = () => {
         </div>
       )}
 
-      <div className="musicScrollArea">
+      <div className="musicScrollArea" ref={scrollAreaRef}>
         <div className="musicHeader">
           <div className="musicHeaderInner">
             <div className="musicHeaderRow">
               <HamburgerMenu />
               <p className="musicEyebrow">Concerts</p>
             </div>
-            <h1 className="musicTitle">{view === 'history' ? 'Concert History' : 'Concert Schedule'}</h1>
+            <h1 className="musicTitle">{VIEW_TITLES[view]}</h1>
             <div className="musicHeaderRule" />
           </div>
         </div>
@@ -557,6 +574,8 @@ const Concerts = () => {
 
           {view === 'history' ? (
             <ConcertTimeline history={attendedConcerts} />
+          ) : view === 'bands' ? (
+            <ConcertBands concerts={concerts} />
           ) : (
             <>
               {upcoming.length > 0 && (
@@ -598,7 +617,7 @@ const Concerts = () => {
         <div className="bottomNavDivider" />
         <button
           className={`bottomNavBtn${view === 'schedule' && navFocus === 'upcoming' ? ' bottomNavBtn--active' : ''}`}
-          onClick={() => { setView('schedule'); setNavFocus('upcoming'); }}
+          onClick={() => switchView('schedule')}
         >
           <CalendarIcon />
           <span>Schedule</span>
@@ -620,10 +639,17 @@ const Concerts = () => {
         </button>
         <button
           className={`bottomNavBtn${view === 'history' ? ' bottomNavBtn--active' : ''}`}
-          onClick={() => { setView('history'); setNavFocus('upcoming'); }}
+          onClick={() => switchView('history')}
         >
           <BarChartIcon />
           <span>History</span>
+        </button>
+        <button
+          className={`bottomNavBtn${view === 'bands' ? ' bottomNavBtn--active' : ''}`}
+          onClick={() => switchView('bands')}
+        >
+          <UsersIcon />
+          <span>Bands</span>
         </button>
       </nav>
 
